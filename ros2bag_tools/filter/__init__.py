@@ -12,12 +12,17 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from ros2bag_tools.verb import BaseProcessVerb
-from ros2bag_tools.filter.cut import CutFilter
 
+class BagMessageFilter:
 
-class CutVerb(BaseProcessVerb):
-    """ros2 bag cut."""
+    def add_arguments(self, _parser):
+        pass
 
-    def __init__(self):
-        BaseProcessVerb.__init__(self, CutFilter())
+    def set_args(self, _in_file, _out_file, _args):
+        pass
+
+    def filter_topic(self, topic):
+        return topic
+
+    def filter_msg(self, msg):
+        return msg

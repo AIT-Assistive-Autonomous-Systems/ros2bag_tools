@@ -13,11 +13,24 @@
 # limitations under the License.
 
 from ros2bag_tools.verb import BaseProcessVerb
+from ros2bag_tools.filter.composite import CompositeFilter
+
 from ros2bag_tools.filter.cut import CutFilter
+from ros2bag_tools.filter.extract import ExtractFilter
+from ros2bag_tools.filter.replace import ReplaceFilter
+from ros2bag_tools.filter.restamp import RestampFilter
 
 
-class CutVerb(BaseProcessVerb):
-    """ros2 bag cut."""
+AVAILABLE_FILTERS = {
+    'cut': CutFilter,
+    'extract': ExtractFilter,
+    'replace': ReplaceFilter,
+    'restamp': RestampFilter,
+}
+
+
+class ProcessVerb(BaseProcessVerb):
+    """ros2 bag process."""
 
     def __init__(self):
-        BaseProcessVerb.__init__(self, CutFilter())
+        BaseProcessVerb.__init__(self, CompositeFilter(AVAILABLE_FILTERS))
