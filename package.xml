@@ -6,6 +6,8 @@
   <description>Tool extensions for ros2bag cli</description>
   <maintainer email="marcel.zeilinger@ait.ac.at">Marcel Zeilinger</maintainer>
   <license>Apache 2.0</license>
+  <url type="repository">https://github.com/Kettenhoax/ros2bag_tools</url>
+  <author email="marcel.zeilinger@ait.ac.at">Marcel Zeilinger</author>
 
   <depend>ros2bag</depend>
   <depend>rosidl_runtime_py</depend>

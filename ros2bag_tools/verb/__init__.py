@@ -51,7 +51,6 @@ class BaseProcessVerb(VerbExtension):
             '-f', '--serialization-format', default='',
             help='rmw serialization format in which the messages are saved, defaults to the'
                  ' rmw currently in use')
-        parser.add_argument('--dry-run', help='Print summary of result, but don\'t write output')
         self._filter.add_arguments(parser)
 
     def main(self, *, args):  # noqa: D102
@@ -82,27 +81,23 @@ class BaseProcessVerb(VerbExtension):
             return print_error(str(e))
         reader.open(in_storage_options, in_converter_options)
 
-        if not args.dry_run:
-            writer = SequentialWriter()
-            out_storage_options = StorageOptions(uri=uri, storage_id=args.out_storage)
-            out_converter_options = ConverterOptions(
-                input_serialization_format=args.serialization_format,
-                output_serialization_format=args.serialization_format)
-            writer.open(out_storage_options, out_converter_options)
+        writer = SequentialWriter()
+        out_storage_options = StorageOptions(uri=uri, storage_id=args.out_storage)
+        out_converter_options = ConverterOptions(
+            input_serialization_format=args.serialization_format,
+            output_serialization_format=args.serialization_format)
+        writer.open(out_storage_options, out_converter_options)
 
-            for topic_metadata in reader.get_all_topics_and_types():
-                new_topic = self._filter.filter_topic(topic_metadata)
-                if new_topic:
-                    writer.create_topic(new_topic)
+        for topic_metadata in reader.get_all_topics_and_types():
+            new_topic = self._filter.filter_topic(topic_metadata)
+            if new_topic:
+                writer.create_topic(new_topic)
 
-            while reader.has_next():
-                msg = reader.read_next()
-                new_msg = self._filter.filter_msg(msg)
-                if new_msg:
-                    writer.write(new_msg[0], new_msg[1], new_msg[2])
+        while reader.has_next():
+            msg = reader.read_next()
+            new_msg = self._filter.filter_msg(msg)
+            if new_msg:
+                writer.write(new_msg[0], new_msg[1], new_msg[2])
 
-            del writer
-            if os.path.isdir(uri) and not os.listdir(uri):
-                os.rmdir(uri)
-
+        del writer
         del reader
