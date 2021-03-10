@@ -10,6 +10,7 @@
   <author email="marcel.zeilinger@ait.ac.at">Marcel Zeilinger</author>
 
   <depend>ros2bag</depend>
+  <depend>rosbag2_py</depend>
   <depend>rosidl_runtime_py</depend>
   <depend>python3-yaml</depend>
 
