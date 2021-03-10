@@ -1,5 +1,7 @@
 # ros2bag_tools
 
+This package is built and tested with **ROS2 rolling**, as it depends on `rosbag2_py`, which as of March 2021 has not been released to foxy.
+
 Tool verb extensions to the ros2bag cli.
 
 | Verb    | Usage |
@@ -23,4 +25,4 @@ extract -t /image_rect
 restamp
 ```
 
-and run `ros2 bag process -c process.config in.bag -o out.bag`, to cut off the first 10 seconds, extract messages of one specific topic and restamp them in one go.
+and run `ros2 bag process -c process.config in.bag -o out.bag` to cut off the first 10 seconds, extract messages of the /image_rect topic and restamp them in one go.
