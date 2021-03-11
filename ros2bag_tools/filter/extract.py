@@ -1,4 +1,4 @@
-# Copyright 2020 AIT Austrian Institute of Technology GmbH
+# Copyright 2021 AIT Austrian Institute of Technology GmbH
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from ros2bag_tools.filter import BagMessageFilter
+from ros2bag_tools.filter import BagMessageFilter, FilterResult
 
 
 class ExtractFilter(BagMessageFilter):
@@ -44,7 +44,7 @@ class ExtractFilter(BagMessageFilter):
         (topic, _, _) = msg
         if self._args.invert:
             if topic in self._args.topic:
-                return None
+                return FilterResult.DROP_MESSAGE
         elif topic not in self._args.topic:
-            return None
+            return FilterResult.DROP_MESSAGE
         return msg

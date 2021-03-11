@@ -1,4 +1,4 @@
-# Copyright 2020 AIT Austrian Institute of Technology GmbH
+# Copyright 2021 AIT Austrian Institute of Technology GmbH
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -17,12 +17,12 @@ from datetime import datetime, timedelta, timezone
 import os
 import re
 import yaml
-from rclpy.time import Duration, Time
-from ros2bag_tools.filter import BagMessageFilter
+from rclpy.time import Duration, Time, CONVERSION_CONSTANT
+from ros2bag_tools.filter import BagMessageFilter, FilterResult
 
 
 def get_bag_bounds(bag_path):
-    # TODO(ZeilingerM): use rosbag2_py metadata read api as soon as it is available
+    # TODO(ZeilingerM): use rosbag2_py metadata read api instead, as soon as it is available
     with open(os.path.join(bag_path, 'metadata.yaml'), 'r') as f:
         metadata = yaml.safe_load(f)
 
@@ -31,10 +31,12 @@ def get_bag_bounds(bag_path):
     start_ns = int(bagfile_information['starting_time']['nanoseconds_since_epoch'])
     duration_ns = int(bagfile_information['duration']['nanoseconds'])
 
-    # TODO from sec impl
-    ns_scale = 1000 * 1000 * 1000
-    start_time = Time(seconds=start_ns / ns_scale, nanoseconds=start_ns % ns_scale)
-    duration = Duration(seconds=duration_ns / ns_scale, nanoseconds=duration_ns % ns_scale)
+    start_s = int(start_ns / CONVERSION_CONSTANT)
+    start_ns_only = start_ns % CONVERSION_CONSTANT
+    start_time = Time(seconds=start_s, nanoseconds=start_ns_only)
+    duration_s = int(duration_ns / CONVERSION_CONSTANT)
+    duration_ns_only = duration_ns % CONVERSION_CONSTANT
+    duration = Duration(seconds=duration_s, nanoseconds=duration_ns_only)
     end_time = start_time + duration
     return (start_time, end_time)
 
@@ -66,7 +68,7 @@ def compute_timespan(start, duration, end, bags_start_time, bags_end_time):
 
 
 def time_seconds(t):
-    return t.nanoseconds / (1000 * 1000 * 1000)
+    return t.seconds_nanoseconds()[0]
 
 
 def duration_seconds(d):
@@ -80,12 +82,6 @@ def ros_to_utc(ros_time):
 def utc_to_stamp(utc):
     epoch = datetime(1970, 1, 1, 0, 0, 0, tzinfo=timezone.utc)
     return int((utc - epoch).total_seconds())
-
-
-def time_str(t):
-    utc = ros_to_utc(t)
-    ns = t.nanoseconds % (1000 * 1000 * 1000)
-    return "{:02d}:{:02d}:{:02d}:{:09d}".format(utc.hour, utc.minute, utc.second, ns)
 
 
 def ros_add_daytime(t, daytime):
@@ -179,16 +175,6 @@ def DurationOrDayTimeType(values):
         return DurationType(values)
 
 
-def print_timeline(start, end, bag_start, bag_end, filename):
-    print('Cut times (UTC)')
-    print('bag start: {} ({} ns since epoch)'.format(time_str(bag_start), bag_start.nanoseconds))
-    print('bag end:   {} ({} ns since epoch)'.format(time_str(bag_end), bag_end.nanoseconds))
-    print('cut start: {} ({} ns since epoch)'.format(time_str(start), start.nanoseconds))
-    print('cut end:   {} ({} ns since epoch)'.format(time_str(end), end.nanoseconds))
-    perc = (duration_seconds(end - start) / duration_seconds(bag_end - bag_start)) * 100
-    print('{:.2f}% of bag will be copied to {}'.format(perc, filename))
-
-
 class CutFilter(BagMessageFilter):
 
     def __init__(self):
@@ -238,10 +224,10 @@ class CutFilter(BagMessageFilter):
         self._start = start
         self._end = end
 
-        print_timeline(self._start, self._end, bag_start, bag_end, out_file)
-
     def filter_msg(self, msg):
         (_, _, t) = msg
-        if t >= self._start.nanoseconds and t <= self._end.nanoseconds:
-            return msg
-        return None
+        if t < self._start.nanoseconds:
+            return FilterResult.DROP_MESSAGE
+        if t > self._end.nanoseconds:
+            return FilterResult.STOP_CURRENT_BAG
+        return msg

@@ -1,4 +1,4 @@
-# Copyright 2020 AIT Austrian Institute of Technology GmbH
+# Copyright 2021 AIT Austrian Institute of Technology GmbH
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -11,6 +11,12 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+from enum import Enum
+
+
+class FilterResult(Enum):
+    DROP_MESSAGE = 1
+    STOP_CURRENT_BAG = 2
 
 
 class BagMessageFilter:

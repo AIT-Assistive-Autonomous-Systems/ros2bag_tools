@@ -1,4 +1,4 @@
-# Copyright 2020 AIT Austrian Institute of Technology GmbH
+# Copyright 2021 AIT Austrian Institute of Technology GmbH
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -17,6 +17,7 @@ import os
 import datetime
 from ros2bag.api import print_error
 from ros2bag.verb import VerbExtension
+from ros2bag_tools.filter import FilterResult
 
 
 def get_rosbag_options(path, serialization_format='cdr'):
@@ -89,15 +90,21 @@ class BaseProcessVerb(VerbExtension):
         writer.open(out_storage_options, out_converter_options)
 
         for topic_metadata in reader.get_all_topics_and_types():
-            new_topic = self._filter.filter_topic(topic_metadata)
-            if new_topic:
-                writer.create_topic(new_topic)
+            result = self._filter.filter_topic(topic_metadata)
+            if result:
+                writer.create_topic(result)
 
         while reader.has_next():
             msg = reader.read_next()
-            new_msg = self._filter.filter_msg(msg)
-            if new_msg:
-                writer.write(new_msg[0], new_msg[1], new_msg[2])
+            result = self._filter.filter_msg(msg)
+            if result == FilterResult.STOP_CURRENT_BAG:
+                break
+            elif result == FilterResult.DROP_MESSAGE:
+                continue
+            elif isinstance(result, tuple):
+                writer.write(result[0], result[1], result[2])
+            else:
+                return print_error("Filter returned invalid result: '{}'.".format(result))
 
         del writer
         del reader

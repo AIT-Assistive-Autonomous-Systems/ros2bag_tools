@@ -1,4 +1,4 @@
-# Copyright 2020 AIT Austrian Institute of Technology GmbH
+# Copyright 2021 AIT Austrian Institute of Technology GmbH
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -15,10 +15,15 @@
 import argparse
 from rclpy.serialization import serialize_message, deserialize_message
 from rosbag2_py import TopicMetadata
-from ros2bag_tools.filter.replace import ReplaceFilter
-from ros2bag_tools.filter.extract import ExtractFilter
+from ros2bag_tools.filter import FilterResult
 from ros2bag_tools.filter.composite import CompositeFilter
+from ros2bag_tools.filter.cut import CutFilter
+from ros2bag_tools.filter.extract import ExtractFilter
+from ros2bag_tools.filter.replace import ReplaceFilter
+from ros2bag_tools.filter.restamp import RestampFilter
 from example_interfaces.msg import String
+from diagnostic_msgs.msg import DiagnosticArray
+
 
 import pytest
 
@@ -78,3 +83,59 @@ def test_replace_filter():
     result_msg = deserialize_message(result_data, String)
     assert(result_msg.data == 'out')
     assert(t == 0)
+
+
+def test_cut_filter():
+    filter = CutFilter()
+
+    parser = argparse.ArgumentParser('cut')
+    filter.add_arguments(parser)
+    args = parser.parse_args(['--duration', '0.5'])
+
+    in_file = 'test/test.bag'
+    out_file = '/dev/null'
+    filter.set_args(in_file, out_file, args)
+
+    string_msg = String()
+    string_msg.data = 'in'
+
+    # timestamp within the bag duration
+    msg = ('/data', serialize_message(string_msg), 0)
+    assert(filter.filter_msg(msg) == FilterResult.DROP_MESSAGE)
+
+    # exact start timestamp
+    msg = ('/data', serialize_message(string_msg), 100)
+    assert(filter.filter_msg(msg) == msg)
+
+    # timestamp within the bag and cut duration
+    msg = ('/data', serialize_message(string_msg), 500 * 1000 * 1000 - 200)
+    assert(filter.filter_msg(msg) == msg)
+
+    # timestamp after the requested duration, but before the last message in the test bag
+    msg = ('/data', serialize_message(string_msg), 1000 * 1000 * 1000 + 200)
+    assert(filter.filter_msg(msg) == FilterResult.STOP_CURRENT_BAG)
+
+
+def test_restamp_filter():
+    filter = RestampFilter()
+
+    parser = argparse.ArgumentParser('restamp')
+    filter.add_arguments(parser)
+    args = parser.parse_args([])
+
+    in_file = '/dev/null'
+    out_file = '/dev/null'
+    filter.set_args(in_file, out_file, args)
+
+    topic_metadata = TopicMetadata('/data', 'diagnostic_msgs/msg/DiagnosticArray', 'cdr')
+    assert(filter.filter_topic(topic_metadata) == topic_metadata)
+
+    ns_stamp = 500 * 1000 * 1000 - 100
+    msg = DiagnosticArray()
+    msg.header.stamp.sec = 0
+    msg.header.stamp.nanosec = ns_stamp
+
+    # timestamp within the bag and cut duration
+    bag_msg = ('/data', serialize_message(msg), 500 * 1000 * 1000)
+    (_, _, t) = filter.filter_msg(bag_msg)
+    assert(t == ns_stamp)
