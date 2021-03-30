@@ -13,13 +13,14 @@
 # limitations under the License.
 
 import argparse
-from ros2bag_tools.filter.reframe import ReframeFilter
 from rclpy.serialization import serialize_message, deserialize_message
 from rosbag2_py import TopicMetadata
 from ros2bag_tools.filter import FilterResult
 from ros2bag_tools.filter.composite import CompositeFilter
 from ros2bag_tools.filter.cut import CutFilter
 from ros2bag_tools.filter.extract import ExtractFilter
+from ros2bag_tools.filter.reframe import ReframeFilter
+from ros2bag_tools.filter.rename import RenameFilter
 from ros2bag_tools.filter.replace import ReplaceFilter
 from ros2bag_tools.filter.restamp import RestampFilter
 from example_interfaces.msg import String
@@ -141,6 +142,29 @@ def test_reframe_filter():
     (_, data, _) = filter.filter_msg(bag_msg)
     new_msg = deserialize_message(data, DiagnosticArray)
     assert(new_msg.header.frame_id == 'frame1')
+
+
+def test_rename_filter():
+    filter = RenameFilter()
+
+    parser = argparse.ArgumentParser('rename')
+    filter.add_arguments(parser)
+    args = parser.parse_args(['-t', '/data', '--name', '/renamed'])
+
+    in_file = '/dev/null'
+    out_file = '/dev/null'
+    filter.set_args(in_file, out_file, args)
+
+    topic_metadata = TopicMetadata('/data', 'example_interfaces/msg/String', 'cdr')
+    assert(filter.filter_topic(topic_metadata) == topic_metadata)
+
+    msg = String()
+    msg.data = 'test'
+
+    # timestamp within the bag and cut duration
+    bag_msg = ('/data', serialize_message(msg), 1)
+    (topic, _, _) = filter.filter_msg(bag_msg)
+    assert(topic == '/renamed')
 
 
 def test_restamp_filter():
