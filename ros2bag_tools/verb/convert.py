@@ -18,15 +18,6 @@ from ros2bag.api import print_error
 from ros2bag.verb import VerbExtension
 
 
-def get_rosbag_options(path, serialization_format='cdr'):
-    import rosbag2_py
-    storage_options = rosbag2_py.StorageOptions(uri=path, storage_id='sqlite3')
-    converter_options = rosbag2_py.ConverterOptions(
-        input_serialization_format=serialization_format,
-        output_serialization_format=serialization_format)
-    return storage_options, converter_options
-
-
 class ConvertVerb(VerbExtension):
     """ros2 bag convert."""
 
@@ -38,15 +29,18 @@ class ConvertVerb(VerbExtension):
             help='destination of the bagfile to create, \
             defaults to a timestamped folder in the current directory')
         parser.add_argument(
-            '-s', '--in-storage',
+            '-s', '--in-storage', default='sqlite3',
             help='storage identifier to be used for the input bag, defaults to "sqlite3"')
         parser.add_argument(
             '--out-storage', default='sqlite3',
             help='storage identifier to be used for the output bag, defaults to "sqlite3"')
         parser.add_argument(
             '-f', '--serialization-format', default='',
-            help='rmw serialization format in which the messages are saved, defaults to the'
+            help='rmw serialization format in which the messages are read, defaults to the'
                  ' rmw currently in use')
+        parser.add_argument(
+            '--output-serialization-format', default='cdr',
+            help='rmw serialization format in which the messages are saved, defaults to cdr')
 
     def main(self, *, args):  # noqa: D102
         bag_file = args.bag_file
@@ -71,19 +65,24 @@ class ConvertVerb(VerbExtension):
         )
 
         reader = SequentialReader()
-        in_storage_options, in_converter_options = get_rosbag_options(bag_file)
-        if args.in_storage:
-            in_storage_options.storage_id = args.in_storage
+        if not args.in_storage:
+            args.in_storage = 'sqlite3'
+
+        in_storage_options = StorageOptions(uri=bag_file, storage_id=args.in_storage)
+        in_converter_options = ConverterOptions(
+            input_serialization_format=args.serialization_format,
+            output_serialization_format=args.output_serialization_format)
         reader.open(in_storage_options, in_converter_options)
 
         writer = SequentialWriter()
         out_storage_options = StorageOptions(uri=uri, storage_id=args.out_storage)
         out_converter_options = ConverterOptions(
-            input_serialization_format=args.serialization_format,
-            output_serialization_format=args.serialization_format)
+            input_serialization_format=args.output_serialization_format,
+            output_serialization_format=args.output_serialization_format)
         writer.open(out_storage_options, out_converter_options)
 
         for topic_metadata in reader.get_all_topics_and_types():
+            topic_metadata.serialization_format = args.output_serialization_format
             writer.create_topic(topic_metadata)
 
         while reader.has_next():
