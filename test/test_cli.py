@@ -59,7 +59,7 @@ def read_all_messages(bag_path, topic, type):
     return result
 
 
-class TestGoodProcess(unittest.TestCase):
+class TestCli(unittest.TestCase):
 
     def test_cut(self, launch_service, proc_info, proc_output):
         from example_interfaces.msg import String

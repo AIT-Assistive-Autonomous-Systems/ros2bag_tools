@@ -13,6 +13,7 @@
 # limitations under the License.
 
 import argparse
+from ros2bag_tools.filter.reframe import ReframeFilter
 from rclpy.serialization import serialize_message, deserialize_message
 from rosbag2_py import TopicMetadata
 from ros2bag_tools.filter import FilterResult
@@ -114,6 +115,32 @@ def test_cut_filter():
     # timestamp after the requested duration, but before the last message in the test bag
     msg = ('/data', serialize_message(string_msg), 1000 * 1000 * 1000 + 200)
     assert(filter.filter_msg(msg) == FilterResult.STOP_CURRENT_BAG)
+
+
+def test_reframe_filter():
+    filter = ReframeFilter()
+
+    parser = argparse.ArgumentParser('reframe')
+    filter.add_arguments(parser)
+    args = parser.parse_args(['-t', '/data', '--frame', 'frame1'])
+
+    in_file = '/dev/null'
+    out_file = '/dev/null'
+    filter.set_args(in_file, out_file, args)
+
+    topic_metadata = TopicMetadata('/data', 'diagnostic_msgs/msg/DiagnosticArray', 'cdr')
+    assert(filter.filter_topic(topic_metadata) == topic_metadata)
+
+    msg = DiagnosticArray()
+    msg.header.frame_id = 'frame0'
+    msg.header.stamp.sec = 0
+    msg.header.stamp.nanosec = 1
+
+    # timestamp within the bag and cut duration
+    bag_msg = ('/data', serialize_message(msg), 1)
+    (_, data, _) = filter.filter_msg(bag_msg)
+    new_msg = deserialize_message(data, DiagnosticArray)
+    assert(new_msg.header.frame_id == 'frame1')
 
 
 def test_restamp_filter():
