@@ -27,7 +27,7 @@ class CompositeFilter(BagMessageFilter):
             '-c', '--config', required=True,
             help='Path to configuration file of filters')
 
-    def set_args(self, in_file, out_file, args):
+    def set_args(self, in_files, out_file, args):
         with open(args.config, 'r') as f:
             for line in f.readlines():
                 args_line = [word.strip() for word in line.split(' ')]
@@ -36,7 +36,7 @@ class CompositeFilter(BagMessageFilter):
                 filter = self._available_filters[tool]()
                 filter.add_arguments(parser)
                 filter_args = parser.parse_args(args_line[1:])
-                filter.set_args(in_file, out_file, filter_args)
+                filter.set_args(in_files, out_file, filter_args)
                 self._filters.append(filter)
         assert(len(self._filters) > 0)
 

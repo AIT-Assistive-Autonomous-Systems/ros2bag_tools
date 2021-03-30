@@ -37,7 +37,7 @@ class BaseProcessVerb(VerbExtension):
 
     def add_arguments(self, parser, _cli_name):  # noqa: D102
         parser.add_argument(
-            'bag_file', help='input bag file')
+            'bag_files', nargs='+', help='input bag files')
         parser.add_argument(
             '-o', '--output',
             help='destination of the bagfile to create, \
@@ -55,9 +55,9 @@ class BaseProcessVerb(VerbExtension):
         self._filter.add_arguments(parser)
 
     def main(self, *, args):  # noqa: D102
-        bag_file = args.bag_file
-        if not os.path.exists(bag_file):
-            return print_error("bag file '{}' does not exist!".format(bag_file))
+        for bag_file in args.bag_files:
+            if not os.path.exists(bag_file):
+                return print_error("bag file '{}' does not exist!".format(bag_file))
 
         uri = args.output or datetime.now().strftime('rosbag2_%Y_%m_%d-%H_%M_%S')
 
@@ -71,16 +71,19 @@ class BaseProcessVerb(VerbExtension):
             ConverterOptions,
         )
 
-        reader = SequentialReader()
-        in_storage_options, in_converter_options = get_rosbag_options(bag_file)
-        if args.in_storage:
-            in_storage_options.storage = args.in_storage
-
         try:
-            self._filter.set_args(bag_file, uri, args)
+            self._filter.set_args(args.bag_files, uri, args)
         except argparse.ArgumentError as e:
             return print_error(str(e))
-        reader.open(in_storage_options, in_converter_options)
+
+        readers = []
+        for bag_file in args.bag_files:
+            reader = SequentialReader()
+            in_storage_options, in_converter_options = get_rosbag_options(bag_file)
+            if args.in_storage:
+                in_storage_options.storage = args.in_storage
+            reader.open(in_storage_options, in_converter_options)
+            readers.append(reader)
 
         writer = SequentialWriter()
         out_storage_options = StorageOptions(uri=uri, storage_id=args.out_storage)
@@ -89,22 +92,21 @@ class BaseProcessVerb(VerbExtension):
             output_serialization_format=args.serialization_format)
         writer.open(out_storage_options, out_converter_options)
 
-        for topic_metadata in reader.get_all_topics_and_types():
-            result = self._filter.filter_topic(topic_metadata)
-            if result:
-                writer.create_topic(result)
+        for reader in readers:
+            for topic_metadata in reader.get_all_topics_and_types():
+                result = self._filter.filter_topic(topic_metadata)
+                if result:
+                    writer.create_topic(result)
 
-        while reader.has_next():
-            msg = reader.read_next()
-            result = self._filter.filter_msg(msg)
-            if result == FilterResult.STOP_CURRENT_BAG:
-                break
-            elif result == FilterResult.DROP_MESSAGE:
-                continue
-            elif isinstance(result, tuple):
-                writer.write(result[0], result[1], result[2])
-            else:
-                return print_error("Filter returned invalid result: '{}'.".format(result))
-
-        del writer
-        del reader
+        for reader in readers:
+            while reader.has_next():
+                msg = reader.read_next()
+                result = self._filter.filter_msg(msg)
+                if result == FilterResult.STOP_CURRENT_BAG:
+                    break
+                elif result == FilterResult.DROP_MESSAGE:
+                    continue
+                elif isinstance(result, tuple):
+                    writer.write(result[0], result[1], result[2])
+                else:
+                    return print_error("Filter returned invalid result: '{}'.".format(result))

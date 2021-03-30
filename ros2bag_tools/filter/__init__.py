@@ -24,7 +24,7 @@ class BagMessageFilter:
     def add_arguments(self, _parser):
         pass
 
-    def set_args(self, _in_file, _out_file, _args):
+    def set_args(self, _in_files, _out_file, _args):
         pass
 
     def filter_topic(self, topic):

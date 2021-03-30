@@ -21,24 +21,40 @@ from rclpy.time import Duration, Time, CONVERSION_CONSTANT
 from ros2bag_tools.filter import BagMessageFilter, FilterResult
 
 
-def get_bag_bounds(bag_path):
+def ros_time_from_nanoseconds(ns):
+    time_s = int(ns / CONVERSION_CONSTANT)
+    time_ns_only = ns % CONVERSION_CONSTANT
+    return Time(seconds=time_s, nanoseconds=time_ns_only)
+
+
+def ros_duration_from_nanoseconds(ns):
+    duration_s = int(ns / CONVERSION_CONSTANT)
+    duration_ns_only = ns % CONVERSION_CONSTANT
+    return Duration(seconds=duration_s, nanoseconds=duration_ns_only)
+
+
+def get_bag_bounds(bag_paths):
     # TODO(ZeilingerM): use rosbag2_py metadata read api instead, as soon as it is available
-    with open(os.path.join(bag_path, 'metadata.yaml'), 'r') as f:
-        metadata = yaml.safe_load(f)
+    total_start = Time(seconds=2**63/CONVERSION_CONSTANT)
+    total_end = Time()
 
-    bagfile_information = metadata['rosbag2_bagfile_information']
+    for bag_path in bag_paths:
+        with open(os.path.join(bag_path, 'metadata.yaml'), 'r') as f:
+            metadata = yaml.safe_load(f)
 
-    start_ns = int(bagfile_information['starting_time']['nanoseconds_since_epoch'])
-    duration_ns = int(bagfile_information['duration']['nanoseconds'])
+        bagfile_information = metadata['rosbag2_bagfile_information']
 
-    start_s = int(start_ns / CONVERSION_CONSTANT)
-    start_ns_only = start_ns % CONVERSION_CONSTANT
-    start_time = Time(seconds=start_s, nanoseconds=start_ns_only)
-    duration_s = int(duration_ns / CONVERSION_CONSTANT)
-    duration_ns_only = duration_ns % CONVERSION_CONSTANT
-    duration = Duration(seconds=duration_s, nanoseconds=duration_ns_only)
-    end_time = start_time + duration
-    return (start_time, end_time)
+        start_ns = int(bagfile_information['starting_time']['nanoseconds_since_epoch'])
+        duration_ns = int(bagfile_information['duration']['nanoseconds'])
+        start_time = ros_time_from_nanoseconds(start_ns)
+        duration = ros_duration_from_nanoseconds(duration_ns)
+        end_time = start_time + duration
+
+        if start_time < total_start:
+            total_start = start_time
+        if end_time > total_end:
+            total_end = end_time
+    return (total_start, total_end)
 
 
 def compute_timespan(start, duration, end, bags_start_time, bags_end_time):
@@ -180,23 +196,27 @@ class CutFilter(BagMessageFilter):
     def __init__(self):
         self._start = None
         self._end = None
+        self._start_arg = None
+        self._end_arg = None
+        self._duration_arg = None
 
     def add_arguments(self, parser):
-        parser.add_argument(
+        self._start_arg = parser.add_argument(
             '--start', help='cut start time (utc time of day or offset in seconds)',
             type=DurationOrDayTimeType)
-        parser.add_argument(
+        self._end_arg = parser.add_argument(
             '--end', help='cut end time (utc time of day or offset in seconds)',
             type=DurationOrDayTimeType)
-        parser.add_argument(
+        self._duration_arg = parser.add_argument(
             '--duration', help='duration of the time span that is cut',
             type=DurationType)
 
-    def set_args(self, in_file, out_file, args):
-        (bag_start, bag_end) = get_bag_bounds(in_file)
+    def set_args(self, in_files, out_file, args):
+        (bag_start, bag_end) = get_bag_bounds(in_files)
 
         if args.start is not None and args.end is not None and args.duration is not None:
             raise argparse.ArgumentError(
+                self._duration_arg,
                 'Only one or two of --start, --end and --duration may be used')
 
         start_end_on_same_day = is_same_day(ros_to_utc(bag_start), ros_to_utc(bag_end))
@@ -205,6 +225,7 @@ class CutFilter(BagMessageFilter):
         end_is_daytime = isinstance(args.end, DayTime)
         if not start_end_on_same_day and (start_is_daytime or end_is_daytime):
             raise argparse.ArgumentError(
+                self._end_arg,
                 """when using start and end day times
                 the start and end of the bag must be on the same day""")
 
@@ -213,11 +234,17 @@ class CutFilter(BagMessageFilter):
 
         bag_duration = bag_end - bag_start
         if args.duration is not None and args.duration > bag_duration:
-            raise argparse.ArgumentError('--duration is larger than bag duration')
+            raise argparse.ArgumentError(
+                self._duration_arg,
+                '--duration is larger than bag duration')
         if args.start is not None and not start_is_daytime and args.start > bag_duration:
-            raise argparse.ArgumentError('--start offset is larger than bag duration')
+            raise argparse.ArgumentError(
+                self._start_arg,
+                '--start offset is larger than bag duration')
         if args.end is not None and not end_is_daytime and args.end > bag_duration:
-            raise argparse.ArgumentError('--end offset is larger than bag duration')
+            raise argparse.ArgumentError(
+                self._end_arg,
+                '--end offset is larger than bag duration')
 
         (start, end) = compute_timespan(args.start, args.duration, args.end, bag_start, bag_end)
 

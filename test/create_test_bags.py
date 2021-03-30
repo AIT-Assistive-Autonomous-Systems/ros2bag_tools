@@ -17,6 +17,7 @@ import sys
 from rclpy.serialization import serialize_message
 from rosbag2_py import SequentialWriter, StorageOptions, ConverterOptions, TopicMetadata
 from example_interfaces.msg import String
+from diagnostic_msgs.msg import DiagnosticArray
 
 
 def get_rosbag_options(path, serialization_format='cdr'):
@@ -27,15 +28,32 @@ def get_rosbag_options(path, serialization_format='cdr'):
     return storage_options, converter_options
 
 
-writer = SequentialWriter()
-storage_options, converter_options = get_rosbag_options(sys.argv[1])
-writer.open(storage_options, converter_options)
+def create_test_bag(path):
+    writer = SequentialWriter()
+    storage_options, converter_options = get_rosbag_options(path)
+    writer.open(storage_options, converter_options)
 
-topic = TopicMetadata('/data', 'example_interfaces/msg/String', 'cdr')
-writer.create_topic(topic)
+    topic = TopicMetadata('/data', 'example_interfaces/msg/String', 'cdr')
+    writer.create_topic(topic)
 
-msg = String()
-msg.data = 'test_start'
-writer.write('/data', serialize_message(msg), 100)
-msg.data = 'test_end'
-writer.write('/data', serialize_message(msg), 1000 * 1000 * 1000 + 100)
+    msg = String()
+    msg.data = 'test_start'
+    writer.write('/data', serialize_message(msg), 100)
+    msg.data = 'test_end'
+    writer.write('/data', serialize_message(msg), 1000 * 1000 * 1000 + 100)
+
+
+def create_diagnostics_bag(path):
+    writer = SequentialWriter()
+    storage_options, converter_options = get_rosbag_options(path)
+    writer.open(storage_options, converter_options)
+
+    topic = TopicMetadata('/diagnostics', 'diagnostic_msgs/msg/DiagnosticArray', 'cdr')
+    writer.create_topic(topic)
+
+    msg = DiagnosticArray()
+    writer.write('/diagnostics', serialize_message(msg), 1)
+
+
+# create_test_bag(sys.argv[1])
+create_diagnostics_bag(sys.argv[1])

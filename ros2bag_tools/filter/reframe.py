@@ -32,7 +32,7 @@ class ReframeFilter(BagMessageFilter):
             '--frame', required=True,
             help='frame_id to set')
 
-    def set_args(self, _in_file, _out_file, args):
+    def set_args(self, _in_files, _out_file, args):
         self._topic = args.topic
         self._frame_id = args.frame
 

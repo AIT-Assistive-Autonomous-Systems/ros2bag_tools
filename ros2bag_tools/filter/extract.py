@@ -28,7 +28,7 @@ class ExtractFilter(BagMessageFilter):
             '-i', '--invert', default=False, action='store_true',
             help='invert the filter, i.e. specified topics are NOT copied to output bag')
 
-    def set_args(self, _in_file, _out_file, args):
+    def set_args(self, _in_files, _out_file, args):
         self._args = args
 
     def filter_topic(self, topic_metadata):

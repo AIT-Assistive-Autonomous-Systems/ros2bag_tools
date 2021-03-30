@@ -39,9 +39,9 @@ def test_composite_filter():
     filter.add_arguments(parser)
     args = parser.parse_args(['-c', 'test/composite.config'])
 
-    in_file = '/dev/null'
+    in_files = ['/dev/null']
     out_file = '/dev/null'
-    filter.set_args(in_file, out_file, args)
+    filter.set_args(in_files, out_file, args)
     assert(filter.filter_msg(('/data', None, 0)) is None)
 
 
@@ -66,9 +66,9 @@ def test_replace_filter():
     filter.add_arguments(parser)
     args = parser.parse_args(['-t', '/data', '-v', 'test/data.yaml'])
 
-    in_file = '/dev/null'
+    in_files = ['/dev/null']
     out_file = '/dev/null'
-    filter.set_args(in_file, out_file, args)
+    filter.set_args(in_files, out_file, args)
 
     string_msg = String()
     string_msg.data = 'in'
@@ -94,9 +94,9 @@ def test_cut_filter():
     filter.add_arguments(parser)
     args = parser.parse_args(['--duration', '0.5'])
 
-    in_file = 'test/test.bag'
+    in_files = ['test/test.bag']
     out_file = '/dev/null'
-    filter.set_args(in_file, out_file, args)
+    filter.set_args(in_files, out_file, args)
 
     string_msg = String()
     string_msg.data = 'in'
@@ -125,9 +125,9 @@ def test_reframe_filter():
     filter.add_arguments(parser)
     args = parser.parse_args(['-t', '/data', '--frame', 'frame1'])
 
-    in_file = '/dev/null'
+    in_files = ['/dev/null']
     out_file = '/dev/null'
-    filter.set_args(in_file, out_file, args)
+    filter.set_args(in_files, out_file, args)
 
     topic_metadata = TopicMetadata('/data', 'diagnostic_msgs/msg/DiagnosticArray', 'cdr')
     assert(filter.filter_topic(topic_metadata) == topic_metadata)
@@ -151,9 +151,9 @@ def test_rename_filter():
     filter.add_arguments(parser)
     args = parser.parse_args(['-t', '/data', '--name', '/renamed'])
 
-    in_file = '/dev/null'
+    in_files = ['/dev/null']
     out_file = '/dev/null'
-    filter.set_args(in_file, out_file, args)
+    filter.set_args(in_files, out_file, args)
 
     topic_metadata = TopicMetadata('/data', 'example_interfaces/msg/String', 'cdr')
     assert(filter.filter_topic(topic_metadata) == topic_metadata)
@@ -174,9 +174,9 @@ def test_restamp_filter():
     filter.add_arguments(parser)
     args = parser.parse_args([])
 
-    in_file = '/dev/null'
+    in_files = ['/dev/null']
     out_file = '/dev/null'
-    filter.set_args(in_file, out_file, args)
+    filter.set_args(in_files, out_file, args)
 
     topic_metadata = TopicMetadata('/data', 'diagnostic_msgs/msg/DiagnosticArray', 'cdr')
     assert(filter.filter_topic(topic_metadata) == topic_metadata)

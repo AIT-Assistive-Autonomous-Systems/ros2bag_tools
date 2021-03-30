@@ -23,7 +23,6 @@ class ReplaceFilter(BagMessageFilter):
 
     def __init__(self):
         self._args = None
-        self._in_file = None
         self._msg_module = None
         self._values_dictionary = {}
 
@@ -31,9 +30,8 @@ class ReplaceFilter(BagMessageFilter):
         parser.add_argument('-t', '--topic', required=True, help='topic to replace data for')
         parser.add_argument('-v', '--values', required=True, help='path to yaml data to load')
 
-    def set_args(self, in_file, _out_file, args):
+    def set_args(self, _in_files, _out_file, args):
         self._args = args
-        self._in_file = in_file
         with open(args.values, 'r') as f:
             self._values_dictionary = yaml.safe_load(f)
         if not isinstance(self._values_dictionary, dict):
@@ -51,8 +49,7 @@ class ReplaceFilter(BagMessageFilter):
     def filter_msg(self, msg):
         if not self._msg_module:
             tpc = self._args.topic
-            fnam = self._in_file
-            raise RuntimeError(f"topic '{tpc}' does not exist in bag file '{fnam}'")
+            raise RuntimeError(f"topic '{tpc}' does not exist in input bag files")
 
         (topic, data, t) = msg
         if topic == self._args.topic:
