@@ -156,7 +156,7 @@ def test_rename_filter():
     filter.set_args(in_files, out_file, args)
 
     topic_metadata = TopicMetadata('/data', 'example_interfaces/msg/String', 'cdr')
-    assert(filter.filter_topic(topic_metadata) == topic_metadata)
+    assert(filter.filter_topic(topic_metadata).name == '/renamed')
 
     msg = String()
     msg.data = 'test'

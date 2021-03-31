@@ -29,6 +29,10 @@ class RenameFilter(BagMessageFilter):
         self._topic = args.topic
         self._new_name = args.name
 
+    def filter_topic(self, topic_metadata):
+        topic_metadata.name = self._new_name
+        return topic_metadata
+
     def filter_msg(self, msg):
         (topic, data, t) = msg
         if topic == self._topic:

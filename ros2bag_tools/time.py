@@ -66,9 +66,7 @@ def ros_to_utc(ros_time):
 
 
 def ros_add_daytime(t, day_time: time):
-    """
-    Get ROS time of a point in time on the same day but at given day time.
-    """
+    """Get ROS time of a point in time on the same day but at given day time."""
     utc_day = ros_to_utc(t).date()
     utc_day_time = datetime.combine(utc_day, datetime.min.time())
     day_offset = datetime.combine(date.min, day_time) - datetime.min.replace(tzinfo=timezone.utc)
