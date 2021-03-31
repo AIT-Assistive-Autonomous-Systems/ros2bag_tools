@@ -12,18 +12,20 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from ros2bag_tools.verb import BaseProcessVerb
 from ros2bag_tools.filter.composite import CompositeFilter
-
 from ros2bag_tools.filter.cut import CutFilter
 from ros2bag_tools.filter.extract import ExtractFilter
+from ros2bag_tools.filter.reframe import ReframeFilter
+from ros2bag_tools.filter.rename import RenameFilter
 from ros2bag_tools.filter.replace import ReplaceFilter
 from ros2bag_tools.filter.restamp import RestampFilter
-
+from ros2bag_tools.verb import BaseProcessVerb
 
 AVAILABLE_FILTERS = {
     'cut': CutFilter,
     'extract': ExtractFilter,
+    'reframe': ReframeFilter,
+    'rename': RenameFilter,
     'replace': ReplaceFilter,
     'restamp': RestampFilter,
 }
