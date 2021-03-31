@@ -124,3 +124,27 @@ class TestCli(unittest.TestCase):
 
             msg_count = count_messages(str(outbag_path))
             assert msg_count == 3
+
+    def test_cut_day_time(self, launch_service, proc_info, proc_output):
+        inbag_path = 'test/day_time.bag'
+
+        with tempfile.TemporaryDirectory() as temp_dir:
+            outbag_path = Path(temp_dir) / 'ros2bag_cut_day_time_test.bag'
+            cmd = ['ros2', 'bag', 'cut', '--start', '13:00', '--end', '14:00']
+            cmd.append('-o')
+            cmd.append(str(outbag_path))
+            cmd.append(inbag_path)
+            bag_command_action = ExecuteProcess(
+                cmd=cmd,
+                name='ros2bag_tools-cli',
+                output='screen'
+            )
+            with launch_testing.tools.launch_process(
+                    launch_service, bag_command_action, proc_info, proc_output
+            ) as bag_command:
+                bag_command.wait_for_shutdown(timeout=SHUTDOWN_TIMEOUT)
+                assert bag_command.terminated
+                assert bag_command.exit_code == EXIT_OK
+
+            msg_count = count_messages(str(outbag_path))
+            assert msg_count == 2

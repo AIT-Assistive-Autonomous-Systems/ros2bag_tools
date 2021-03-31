@@ -13,48 +13,10 @@
 # limitations under the License.
 
 import argparse
-from datetime import datetime, timedelta, timezone
-import os
-import re
-import yaml
-from rclpy.time import Duration, Time, CONVERSION_CONSTANT
+from datetime import time
 from ros2bag_tools.filter import BagMessageFilter, FilterResult
-
-
-def ros_time_from_nanoseconds(ns):
-    time_s = int(ns / CONVERSION_CONSTANT)
-    time_ns_only = ns % CONVERSION_CONSTANT
-    return Time(seconds=time_s, nanoseconds=time_ns_only)
-
-
-def ros_duration_from_nanoseconds(ns):
-    duration_s = int(ns / CONVERSION_CONSTANT)
-    duration_ns_only = ns % CONVERSION_CONSTANT
-    return Duration(seconds=duration_s, nanoseconds=duration_ns_only)
-
-
-def get_bag_bounds(bag_paths):
-    # TODO(ZeilingerM): use rosbag2_py metadata read api instead, as soon as it is available
-    total_start = Time(seconds=2**63/CONVERSION_CONSTANT)
-    total_end = Time()
-
-    for bag_path in bag_paths:
-        with open(os.path.join(bag_path, 'metadata.yaml'), 'r') as f:
-            metadata = yaml.safe_load(f)
-
-        bagfile_information = metadata['rosbag2_bagfile_information']
-
-        start_ns = int(bagfile_information['starting_time']['nanoseconds_since_epoch'])
-        duration_ns = int(bagfile_information['duration']['nanoseconds'])
-        start_time = ros_time_from_nanoseconds(start_ns)
-        duration = ros_duration_from_nanoseconds(duration_ns)
-        end_time = start_time + duration
-
-        if start_time < total_start:
-            total_start = start_time
-        if end_time > total_end:
-            total_end = end_time
-    return (total_start, total_end)
+from ros2bag_tools.time import DurationOrDayTimeType, DurationType, get_bag_bounds, is_same_day,\
+    ros_to_utc, ros_add_daytime
 
 
 def compute_timespan(start, duration, end, bags_start_time, bags_end_time):
@@ -62,7 +24,7 @@ def compute_timespan(start, duration, end, bags_start_time, bags_end_time):
     end_time = bags_end_time
 
     if start is not None:
-        if isinstance(start, DayTime):
+        if isinstance(start, time):
             start_time = ros_add_daytime(start_time, start)
         else:
             start_time += start
@@ -70,7 +32,7 @@ def compute_timespan(start, duration, end, bags_start_time, bags_end_time):
             end_time = start_time + duration
 
     if end is not None:
-        if isinstance(end, DayTime):
+        if isinstance(end, time):
             end_time = ros_add_daytime(end_time, end)
         else:
             end_time = start_time + end
@@ -81,114 +43,6 @@ def compute_timespan(start, duration, end, bags_start_time, bags_end_time):
         end_time = start_time + duration
 
     return (start_time, end_time)
-
-
-def time_seconds(t):
-    return t.seconds_nanoseconds()[0]
-
-
-def duration_seconds(d):
-    return d.nanoseconds / (1000 * 1000 * 1000)
-
-
-def ros_to_utc(ros_time):
-    return datetime.utcfromtimestamp(time_seconds(ros_time))
-
-
-def utc_to_stamp(utc):
-    epoch = datetime(1970, 1, 1, 0, 0, 0, tzinfo=timezone.utc)
-    return int((utc - epoch).total_seconds())
-
-
-def ros_add_daytime(t, daytime):
-    utc = ros_to_utc(t)
-    utc_day = datetime(utc.year, utc.month, utc.day, 0, 0, 0, tzinfo=timezone.utc)
-    delta = timedelta(seconds=daytime.s, minutes=daytime.m, hours=daytime.h)
-    utc_stamp = utc_to_stamp(utc_day + delta)
-    return Time(seconds=utc_stamp, nanoseconds=daytime.ms * 1000 * 1000)
-
-
-def is_same_day(gmt1, gmt2):
-    return gmt1.year == gmt2.year and gmt1.month == gmt2.month and gmt1.day == gmt2.day
-
-
-class DayTime:
-    def __init__(self, h, m=0, s=0, ms=0):
-        self.h = h
-        self.m = m
-        self.s = s
-        # milliseconds
-        self.ms = ms
-
-    def to_ros_dur(self):
-        return Duration(self.h * 60 * 60 + self.m * 60 + self.s, self.ms * 1000 * 1000)
-
-    def __gt__(self, other):
-        if self.h > other.h:
-            return True
-        if self.h == other.h and self.m > other.m:
-            return True
-        if self.h == other.h and self.m == other.m and self.s > other.s:
-            return True
-        if (self.h == other.h and self.m == other.m
-                and self.s == other.s and self.ms > other.ms):
-            return True
-        return False
-
-    def __eq__(self, other):
-        return (self.h == other.h and self.m == other.m
-                and self.s == other.s and self.ms == other.ms)
-
-
-def DurationType(values):
-    try:
-        seconds = float(values)
-        if seconds < 0:
-            raise argparse.ArgumentTypeError("duration must be positive")
-        sn = int((seconds - int(seconds)) * 1000 * 1000 * 1000)
-        return Duration(seconds=int(seconds), nanoseconds=sn)
-    except ValueError:
-        raise argparse.ArgumentTypeError("duration must be float (in seconds)")
-
-
-def DayTimeType(values):
-    try:
-        match = re.findall(r"(\d+):(\d+):(\d+):(\d+)", values)
-        if len(match) == 0:
-            match = re.findall(r"(\d+):(\d+):(\d+)", values)
-        if len(match) == 0:
-            raise argparse.ArgumentTypeError("pass daytime as hh:mm:ss[:ms]")
-
-        if len(match[0]) < 3 or len(match[0]) > 4:
-            raise argparse.ArgumentTypeError("pass daytime as hh:mm:ss[:ms]")
-
-        h = int(match[0][0])
-        m = int(match[0][1])
-        s = int(match[0][2])
-        ms = 0
-
-        if len(match[0]) == 4:
-            ms = int(match[0][3])
-
-        if h < 0 or h > 23:
-            raise argparse.ArgumentTypeError("hour between 0 and 23")
-        if m < 0 or m > 59:
-            raise argparse.ArgumentTypeError("minute between 0 and 59")
-        if s < 0 or s > 59:
-            raise argparse.ArgumentTypeError("second between 0 and 59")
-        if ms < 0 or ms > 999:
-            raise argparse.ArgumentTypeError("millisecond between 0 and 999")
-
-        return DayTime(h, m, s, ms)
-    except ValueError:
-        raise argparse.ArgumentTypeError("duration must be float (in seconds)")
-
-
-def DurationOrDayTimeType(values):
-    try:
-        return DayTimeType(values)
-    except argparse.ArgumentTypeError:
-        return DurationType(values)
 
 
 class CutFilter(BagMessageFilter):
@@ -221,8 +75,8 @@ class CutFilter(BagMessageFilter):
 
         start_end_on_same_day = is_same_day(ros_to_utc(bag_start), ros_to_utc(bag_end))
 
-        start_is_daytime = isinstance(args.start, DayTime)
-        end_is_daytime = isinstance(args.end, DayTime)
+        start_is_daytime = isinstance(args.start, time)
+        end_is_daytime = isinstance(args.end, time)
         if not start_end_on_same_day and (start_is_daytime or end_is_daytime):
             raise argparse.ArgumentError(
                 self._end_arg,

@@ -55,5 +55,25 @@ def create_diagnostics_bag(path):
     writer.write('/diagnostics', serialize_message(msg), 1)
 
 
-# create_test_bag(sys.argv[1])
-create_diagnostics_bag(sys.argv[1])
+def create_daytime_bag(path):
+    writer = SequentialWriter()
+    storage_options, converter_options = get_rosbag_options(path)
+    writer.open(storage_options, converter_options)
+
+    topic = TopicMetadata('/data', 'example_interfaces/msg/String', 'cdr')
+    writer.create_topic(topic)
+
+    DAY_TO_NS = 60 * 60 * 1000 * 1000 * 1000
+
+    msg = String()
+    msg.data = 'msg0'
+    writer.write('/data', serialize_message(msg), 13 * DAY_TO_NS - 1)
+    msg.data = 'msg1'
+    writer.write('/data', serialize_message(msg), 13 * DAY_TO_NS)
+    msg.data = 'msg2'
+    writer.write('/data', serialize_message(msg), 14 * DAY_TO_NS)
+    msg.data = 'msg2'
+    writer.write('/data', serialize_message(msg), 14 * DAY_TO_NS + 1)
+
+
+create_daytime_bag(sys.argv[1])
