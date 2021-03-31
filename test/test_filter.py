@@ -118,6 +118,31 @@ def test_cut_filter():
     assert(filter.filter_msg(msg) == FilterResult.STOP_CURRENT_BAG)
 
 
+def test_cut_filter_args():
+    filter = CutFilter()
+
+    parser = argparse.ArgumentParser('cut')
+    filter.add_arguments(parser)
+
+    in_files = ['test/day_time.bag']
+    out_file = '/dev/null'
+
+    args = parser.parse_args(['--duration', '3603'])
+    with pytest.raises(argparse.ArgumentError):
+        # duration is too long for bag
+        filter.set_args(in_files, out_file, args)
+
+    args = parser.parse_args(['--start', '13:15', '--end', '13:10'])
+    with pytest.raises(argparse.ArgumentError):
+        # end before start
+        filter.set_args(in_files, out_file, args)
+
+    args = parser.parse_args(['--start', '12:00', '--end', '12:59'])
+    with pytest.raises(argparse.ArgumentError):
+        # error since time bounds are not covered by bag
+        filter.set_args(in_files, out_file, args)
+
+
 def test_reframe_filter():
     filter = ReframeFilter()
 
