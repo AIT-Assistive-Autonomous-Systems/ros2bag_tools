@@ -47,12 +47,11 @@ class ReplaceFilter(BagMessageFilter):
         return topic_metadata
 
     def filter_msg(self, msg):
-        if not self._msg_module:
-            tpc = self._args.topic
-            raise RuntimeError(f"topic '{tpc}' does not exist in input bag files")
-
         (topic, data, t) = msg
         if topic == self._args.topic:
+            if not self._msg_module:
+                raise RuntimeError(f"Could not load message type of topic '{topic}'")
+
             msg = deserialize_message(data, self._msg_module)
             new_data = self._msg_module()
             try:
