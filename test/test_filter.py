@@ -42,7 +42,7 @@ def test_composite_filter():
     in_files = ['/dev/null']
     out_file = '/dev/null'
     filter.set_args(in_files, out_file, args)
-    assert(filter.filter_msg(('/data', None, 0)) is None)
+    assert(filter.filter_msg(('/data', None, 0)) == FilterResult.DROP_MESSAGE)
 
 
 def test_extract_filter():

@@ -53,5 +53,7 @@ class CompositeFilter(BagMessageFilter):
         for f in self._filters:
             current_msg = f.filter_msg(current_msg)
             if current_msg == FilterResult.DROP_MESSAGE:
-                return None
+                return FilterResult.DROP_MESSAGE
+            if current_msg == FilterResult.STOP_CURRENT_BAG:
+                return FilterResult.STOP_CURRENT_BAG
         return current_msg
