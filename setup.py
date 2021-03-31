@@ -40,6 +40,7 @@ The package provides the additional commands for the ROS 2 bag command line tool
             'rename = ros2bag_tools.verb.rename:RenameVerb',
             'replace = ros2bag_tools.verb.replace:ReplaceVerb',
             'restamp = ros2bag_tools.verb.restamp:RestampVerb',
+            'summary = ros2bag_tools.verb.summary:SummaryVerb',
             'process = ros2bag_tools.verb.process:ProcessVerb',
         ],
     }
