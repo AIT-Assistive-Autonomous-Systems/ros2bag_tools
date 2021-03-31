@@ -39,9 +39,8 @@ class ReplaceFilter(BagMessageFilter):
 
     def filter_topic(self, topic_metadata):
         if topic_metadata.name == self._args.topic:
-            topic_type = topic_metadata.type
             try:
-                self._msg_module = get_message(topic_type)
+                self._msg_module = get_message(topic_metadata.type)
             except (AttributeError, ModuleNotFoundError, ValueError):
                 raise RuntimeError('The passed message type is invalid')
         return topic_metadata
