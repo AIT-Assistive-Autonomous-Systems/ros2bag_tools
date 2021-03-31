@@ -14,7 +14,7 @@
 
 import argparse
 import os
-import datetime
+from datetime import datetime
 from ros2bag.api import print_error
 from ros2bag.verb import VerbExtension
 from ros2bag_tools.filter import FilterResult

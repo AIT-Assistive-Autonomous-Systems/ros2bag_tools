@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import datetime
+from datetime import datetime
 import os
 from ros2bag.api import print_error
 from ros2bag.verb import VerbExtension
@@ -47,7 +47,7 @@ class ConvertVerb(VerbExtension):
         if not os.path.exists(bag_file):
             return print_error("bag file '{}' does not exist!".format(bag_file))
 
-        uri = args.output or datetime.datetime.now().strftime('rosbag2_%Y_%m_%d-%H_%M_%S')
+        uri = args.output or datetime.now().strftime('rosbag2_%Y_%m_%d-%H_%M_%S')
 
         if os.path.isdir(uri):
             return print_error("Output folder '{}' already exists.".format(uri))
