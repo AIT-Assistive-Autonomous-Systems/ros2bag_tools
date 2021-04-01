@@ -67,6 +67,7 @@ class BaseProcessVerb(VerbExtension):
         from rosbag2_py import (
             SequentialReader,
             SequentialWriter,
+            StorageFilter,
             StorageOptions,
             ConverterOptions,
         )
@@ -83,6 +84,9 @@ class BaseProcessVerb(VerbExtension):
             if args.in_storage:
                 in_storage_options.storage = args.in_storage
             reader.open(in_storage_options, in_converter_options)
+            storage_filter = StorageFilter()
+            self._filter.set_storage_filter(storage_filter)
+            reader.set_filter(storage_filter)
             readers.append(reader)
 
         writer = SequentialWriter()

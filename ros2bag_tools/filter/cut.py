@@ -53,6 +53,7 @@ class CutFilter(BagMessageFilter):
         self._start_arg = None
         self._end_arg = None
         self._duration_arg = None
+        self._i = 0
 
     def add_arguments(self, parser):
         self._start_arg = parser.add_argument(
@@ -103,13 +104,20 @@ class CutFilter(BagMessageFilter):
         (start, end) = compute_timespan(args.start, args.duration, args.end, bag_start, bag_end)
 
         if end < bag_start or start > bag_end:
-            raise argparse.ArgumentError(None, 'time bounds are outside of bag')
+            raise argparse.ArgumentError(
+                None,
+                "time bounds are outside the duration of the input bags")
 
         self._start = start
         self._end = end
 
+    def set_storage_filter(self, storage_filter):
+        storage_filter.start_time = self._start.nanoseconds
+        storage_filter.stop_time = self._end.nanoseconds
+
     def filter_msg(self, msg):
         (_, _, t) = msg
+        self._i += 1
         if t < self._start.nanoseconds:
             return FilterResult.DROP_MESSAGE
         if t > self._end.nanoseconds:

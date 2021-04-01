@@ -40,6 +40,10 @@ class CompositeFilter(BagMessageFilter):
                 self._filters.append(filter)
         assert(len(self._filters) > 0)
 
+    def set_storage_filter(self, storage_filter):
+        for filter in self._filters:
+            filter.set_storage_filter(storage_filter)
+
     def filter_topic(self, topic_metadata):
         current_tm = topic_metadata
         for f in self._filters:
