@@ -8,6 +8,7 @@ Tool verb extensions to the ros2bag cli.
 | ------- |:------------------|
 | extract | extract topics from a bag and store in new output bag |
 | cut     | cut time slice from a bag and store in new output bag |
+| merge   | merge multiple bags into one |
 | reframe | change frame_id on messages with headers |
 | rename  | change name of a topic |
 | restamp | write header timestamps of all messages with headers as message timestamp in a new output bag |

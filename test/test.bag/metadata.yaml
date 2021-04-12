@@ -4,9 +4,9 @@ rosbag2_bagfile_information:
   relative_file_paths:
     - test.bag_0.db3
   duration:
-    nanoseconds: 1000000000
+    nanoseconds: 1000001000
   starting_time:
-    nanoseconds_since_epoch: 100
+    nanoseconds_since_epoch: 1000
   message_count: 2
   topics_with_message_count:
     - topic_metadata:

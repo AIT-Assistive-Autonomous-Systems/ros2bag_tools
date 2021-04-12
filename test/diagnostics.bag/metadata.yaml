@@ -6,7 +6,7 @@ rosbag2_bagfile_information:
   duration:
     nanoseconds: 0
   starting_time:
-    nanoseconds_since_epoch: 1
+    nanoseconds_since_epoch: 1000
   message_count: 1
   topics_with_message_count:
     - topic_metadata:

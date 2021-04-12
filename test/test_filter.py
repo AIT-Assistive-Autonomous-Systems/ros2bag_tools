@@ -101,20 +101,20 @@ def test_cut_filter():
     string_msg = String()
     string_msg.data = 'in'
 
-    # timestamp within the bag duration
+    # timestamp before bag start
     msg = ('/data', serialize_message(string_msg), 0)
     assert(filter.filter_msg(msg) == FilterResult.DROP_MESSAGE)
 
     # exact start timestamp
-    msg = ('/data', serialize_message(string_msg), 100)
+    msg = ('/data', serialize_message(string_msg), 1000)
     assert(filter.filter_msg(msg) == msg)
 
     # timestamp within the bag and cut duration
-    msg = ('/data', serialize_message(string_msg), 500 * 1000 * 1000 - 200)
+    msg = ('/data', serialize_message(string_msg), 500 * 1000 * 1000 - 1000)
     assert(filter.filter_msg(msg) == msg)
 
     # timestamp after the requested duration, but before the last message in the test bag
-    msg = ('/data', serialize_message(string_msg), 1000 * 1000 * 1000 + 200)
+    msg = ('/data', serialize_message(string_msg), 1000 * 1000 * 1000 + 1000)
     assert(filter.filter_msg(msg) == FilterResult.STOP_CURRENT_BAG)
 
 

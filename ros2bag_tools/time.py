@@ -13,69 +13,55 @@
 # limitations under the License.
 
 import argparse
-from datetime import date, datetime, timezone, time
-import os
 import re
-import yaml
+from typing import Tuple
+from datetime import date, timedelta, datetime, timezone, time
 from rclpy.time import Duration, Time, CONVERSION_CONSTANT
 
 
-def ros_time_from_nanoseconds(ns):
+def datetime_to_ros_time(t: datetime) -> Time:
+    return Time(seconds=t.timestamp())
+
+
+def ros_time_from_nanoseconds(ns) -> Time:
     time_s = int(ns / CONVERSION_CONSTANT)
     time_ns_only = ns % CONVERSION_CONSTANT
     return Time(seconds=time_s, nanoseconds=time_ns_only)
 
 
-def ros_duration_from_nanoseconds(ns):
+def ros_duration_from_nanoseconds(ns) -> Duration:
     duration_s = int(ns / CONVERSION_CONSTANT)
     duration_ns_only = ns % CONVERSION_CONSTANT
     return Duration(seconds=duration_s, nanoseconds=duration_ns_only)
 
 
-def get_bag_bounds(bag_paths):
-    # TODO(ZeilingerM): use rosbag2_py metadata read api instead, as soon as it is available
-    total_start = Time(seconds=2**63/CONVERSION_CONSTANT)
-    total_end = Time()
-
-    for bag_path in bag_paths:
-        with open(os.path.join(bag_path, 'metadata.yaml'), 'r') as f:
-            metadata = yaml.safe_load(f)
-
-        bagfile_information = metadata['rosbag2_bagfile_information']
-
-        start_ns = int(bagfile_information['starting_time']['nanoseconds_since_epoch'])
-        duration_ns = int(bagfile_information['duration']['nanoseconds'])
-        start_time = ros_time_from_nanoseconds(start_ns)
-        duration = ros_duration_from_nanoseconds(duration_ns)
-        end_time = start_time + duration
-
-        if start_time < total_start:
-            total_start = start_time
+def get_bag_bounds(readers) -> Tuple[datetime, datetime]:
+    total_start = datetime.max
+    total_end = datetime.min
+    for reader in readers:
+        metadata = reader.get_metadata()
+        end_time = metadata.starting_time + metadata.duration
+        if metadata.starting_time < total_start:
+            total_start = metadata.starting_time
         if end_time > total_end:
             total_end = end_time
     return (total_start, total_end)
 
 
-def duration_seconds(d):
-    return d.nanoseconds / (1000 * 1000 * 1000)
-
-
-def ros_to_utc(ros_time):
+def ros_to_datetime_utc(ros_time: Time):
     s = ros_time.seconds_nanoseconds()[0]
     return datetime.utcfromtimestamp(s)
 
 
-def ros_add_daytime(t, day_time: time):
-    """Get ROS time of a point in time on the same day but at given day time."""
-    utc_day = ros_to_utc(t).date()
-    utc_day_time = datetime.combine(utc_day, datetime.min.time())
+def add_daytime(t: date, day_time: time) -> datetime:
+    """Combine date of t with day_time to a datetime object."""
+    utc_day_time = datetime.combine(t, datetime.min.time())
     day_offset = datetime.combine(date.min, day_time) - datetime.min.replace(tzinfo=timezone.utc)
-    utc_stamp = (utc_day_time + day_offset).timestamp()
-    return Time(seconds=utc_stamp)
+    return utc_day_time + day_offset
 
 
-def is_same_day(gmt1, gmt2):
-    return gmt1.year == gmt2.year and gmt1.month == gmt2.month and gmt1.day == gmt2.day
+def is_same_day(date1: datetime, date2: datetime) -> bool:
+    return date1.date() == date2.date()
 
 
 def DurationType(values):
@@ -83,8 +69,7 @@ def DurationType(values):
         seconds = float(values)
         if seconds < 0:
             raise argparse.ArgumentTypeError("duration must be positive")
-        sn = int((seconds - int(seconds)) * 1000 * 1000 * 1000)
-        return Duration(seconds=int(seconds), nanoseconds=sn)
+        return timedelta(seconds=seconds)
     except ValueError:
         raise argparse.ArgumentTypeError("duration must be float (in seconds)")
 

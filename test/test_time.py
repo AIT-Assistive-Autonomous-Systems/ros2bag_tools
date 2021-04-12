@@ -13,28 +13,29 @@
 # limitations under the License.
 
 from argparse import ArgumentTypeError
-from rclpy.time import Duration, Time, CONVERSION_CONSTANT
-from datetime import time, timezone
-from ros2bag_tools.time import DurationOrDayTimeType, ros_add_daytime
+from datetime import date, datetime, time, timedelta, timezone
+from rclpy.time import CONVERSION_CONSTANT
+from rosbag2_py import SequentialReader, StorageOptions, ConverterOptions
+from ros2bag_tools.time import DurationOrDayTimeType, add_daytime, datetime_to_ros_time, \
+    get_bag_bounds
 import pytest
 
 
 def test_duration_or_daytime_type():
     day_time = DurationOrDayTimeType('13:00')
-    assert(isinstance(day_time, time))
     assert(day_time == time(13, tzinfo=timezone.utc))
 
     day_time = DurationOrDayTimeType('0:10:10:999')
-    assert(isinstance(day_time, time))
     assert(day_time == time(0, 10, 10, 999 * 1000, tzinfo=timezone.utc))
 
     day_time = DurationOrDayTimeType('0:00:00:500')
-    assert(isinstance(day_time, time))
     assert(day_time == time(0, 0, 0, 500 * 1000, tzinfo=timezone.utc))
 
     duration = DurationOrDayTimeType('10')
-    assert(isinstance(duration, Duration))
-    assert(duration == Duration(seconds=10))
+    assert(duration == timedelta(seconds=10))
+
+    duration = DurationOrDayTimeType('10.5')
+    assert(duration == timedelta(seconds=10, milliseconds=500))
 
     with pytest.raises(ArgumentTypeError):
         DurationOrDayTimeType('a')
@@ -45,14 +46,28 @@ def test_duration_or_daytime_type():
 
 def test_ros_day_time():
     day_time = DurationOrDayTimeType('0:01')
-    t_start = Time(seconds=1)
-    t_end = ros_add_daytime(t_start, day_time)
-    assert(t_end.nanoseconds == 60 * CONVERSION_CONSTANT)
+    t_start = date(1970, 1, 1)
+    t_end = add_daytime(t_start, day_time)
+    ros_t_end = datetime_to_ros_time(t_end)
+    assert(ros_t_end.nanoseconds == 60 * CONVERSION_CONSTANT)
 
     day_time = DurationOrDayTimeType('0:00:00:500')
-    t_start = Time(seconds=1 + 24 * 60 * 60)
-    t_end = ros_add_daytime(t_start, day_time)
+    t_start = date(1970, 1, 2)
+    t_end = add_daytime(t_start, day_time)
+    ros_t_end = datetime_to_ros_time(t_end)
 
     day_ns = 24 * 60 * 60 * CONVERSION_CONSTANT
     time_ns = 500 * 1000 * 1000
-    assert(t_end.nanoseconds == day_ns + time_ns)
+    assert(ros_t_end.nanoseconds == day_ns + time_ns)
+
+
+def test_bag_bounds():
+    reader = SequentialReader()
+    storage_options = StorageOptions(uri='test/day_time.bag', storage_id='sqlite3')
+    converter_options = ConverterOptions(
+        input_serialization_format='cdr',
+        output_serialization_format='cdr')
+    reader.open(storage_options, converter_options)
+    (bag_start, bag_end) = get_bag_bounds([reader])
+    assert(bag_start == datetime(1970, 1, 1, hour=12, minute=59, second=59, microsecond=999999))
+    assert(bag_end == datetime(1970, 1, 1, hour=14, minute=0, second=0, microsecond=1))

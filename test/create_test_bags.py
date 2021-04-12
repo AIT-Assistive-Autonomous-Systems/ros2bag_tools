@@ -14,6 +14,7 @@
 # limitations under the License.
 """Create the test.bag file."""
 import sys
+from rclpy.time import CONVERSION_CONSTANT
 from rclpy.serialization import serialize_message
 from rosbag2_py import SequentialWriter, StorageOptions, ConverterOptions, TopicMetadata
 from example_interfaces.msg import String
@@ -38,9 +39,9 @@ def create_test_bag(path):
 
     msg = String()
     msg.data = 'test_start'
-    writer.write('/data', serialize_message(msg), 100)
+    writer.write('/data', serialize_message(msg), 1000)
     msg.data = 'test_end'
-    writer.write('/data', serialize_message(msg), 1000 * 1000 * 1000 + 100)
+    writer.write('/data', serialize_message(msg), CONVERSION_CONSTANT + 2000)
 
 
 def create_diagnostics_bag(path):
@@ -52,10 +53,10 @@ def create_diagnostics_bag(path):
     writer.create_topic(topic)
 
     msg = DiagnosticArray()
-    writer.write('/diagnostics', serialize_message(msg), 1)
+    writer.write('/diagnostics', serialize_message(msg), 1000)
 
 
-def create_daytime_bag(path):
+def create_day_time_bag(path):
     writer = SequentialWriter()
     storage_options, converter_options = get_rosbag_options(path)
     writer.open(storage_options, converter_options)
@@ -63,17 +64,17 @@ def create_daytime_bag(path):
     topic = TopicMetadata('/data', 'example_interfaces/msg/String', 'cdr')
     writer.create_topic(topic)
 
-    DAY_TO_NS = 60 * 60 * 1000 * 1000 * 1000
+    HOUR_TO_NS = 60 * 60 * CONVERSION_CONSTANT
 
     msg = String()
     msg.data = 'msg0'
-    writer.write('/data', serialize_message(msg), 13 * DAY_TO_NS - 1)
+    writer.write('/data', serialize_message(msg), 13 * HOUR_TO_NS - 1000)
     msg.data = 'msg1'
-    writer.write('/data', serialize_message(msg), 13 * DAY_TO_NS)
+    writer.write('/data', serialize_message(msg), 13 * HOUR_TO_NS)
     msg.data = 'msg2'
-    writer.write('/data', serialize_message(msg), 14 * DAY_TO_NS)
+    writer.write('/data', serialize_message(msg), 14 * HOUR_TO_NS)
     msg.data = 'msg2'
-    writer.write('/data', serialize_message(msg), 14 * DAY_TO_NS + 1)
+    writer.write('/data', serialize_message(msg), 14 * HOUR_TO_NS + 1000)
 
 
-create_daytime_bag(sys.argv[1])
+create_day_time_bag(sys.argv[1])
