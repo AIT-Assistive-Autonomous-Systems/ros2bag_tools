@@ -17,7 +17,7 @@ from ros2bag_tools.filter.replace import ReplaceFilter
 
 
 class ReplaceVerb(BaseProcessVerb):
-    """ros2 bag replace."""
+    """Replace content of messages in a bag with a constant, and write to new bag."""
 
     def __init__(self):
         BaseProcessVerb.__init__(self, ReplaceFilter())

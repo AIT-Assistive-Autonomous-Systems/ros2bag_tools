@@ -17,7 +17,7 @@ from ros2bag_tools.filter.extract import ExtractFilter
 
 
 class ExtractVerb(BaseProcessVerb):
-    """ros2 bag extract."""
+    """Extract specific topics from a bag and write to new bag."""
 
     def __init__(self):
         BaseProcessVerb.__init__(self, ExtractFilter())

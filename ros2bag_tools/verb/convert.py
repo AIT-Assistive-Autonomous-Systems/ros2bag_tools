@@ -19,7 +19,7 @@ from ros2bag.verb import VerbExtension
 
 
 class ConvertVerb(VerbExtension):
-    """ros2 bag convert."""
+    """Convert storage and/or serialization format of bag and write to new bag."""
 
     def add_arguments(self, parser, cli_name):  # noqa: D102
         parser.add_argument(

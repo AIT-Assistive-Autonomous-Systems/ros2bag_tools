@@ -29,7 +29,7 @@ class Summary(NamedTuple):
 
 
 class SummaryVerb(VerbExtension):
-    """ros2 bag summary."""
+    """Print a summary of the contents of a specific bag."""
 
     def add_arguments(self, parser, cli_name):  # noqa: D102
         parser.add_argument(

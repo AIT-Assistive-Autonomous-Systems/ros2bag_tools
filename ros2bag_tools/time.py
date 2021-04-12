@@ -49,8 +49,8 @@ def get_bag_bounds(readers) -> Tuple[datetime, datetime]:
 
 
 def ros_to_datetime_utc(ros_time: Time):
-    s = ros_time.seconds_nanoseconds()[0]
-    return datetime.utcfromtimestamp(s)
+    (secs, nanosecs) = ros_time.seconds_nanoseconds()
+    return datetime.utcfromtimestamp(secs + nanosecs / CONVERSION_CONSTANT)
 
 
 def add_daytime(t: date, day_time: time) -> datetime:

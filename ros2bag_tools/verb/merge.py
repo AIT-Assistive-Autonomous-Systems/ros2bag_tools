@@ -17,7 +17,7 @@ from ros2bag_tools.verb import BaseProcessVerb
 
 
 class MergeVerb(BaseProcessVerb):
-    """ros2 bag merge."""
+    """Merge multiple bags into new bag."""
 
     def __init__(self):
         # Instantiate identity filter to just pass all topics and messages through for merging

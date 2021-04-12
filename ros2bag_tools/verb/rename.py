@@ -17,7 +17,7 @@ from ros2bag_tools.filter.rename import RenameFilter
 
 
 class RenameVerb(BaseProcessVerb):
-    """ros2 bag rename."""
+    """Rename specific topics in a bag, and write to new bag."""
 
     def __init__(self):
         BaseProcessVerb.__init__(self, RenameFilter())

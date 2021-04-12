@@ -17,7 +17,7 @@ from ros2bag_tools.filter.reframe import ReframeFilter
 
 
 class ReframeVerb(BaseProcessVerb):
-    """ros2 bag reframe."""
+    """Change header.frame_id of some messages, and write to a new bag."""
 
     def __init__(self):
         BaseProcessVerb.__init__(self, ReframeFilter())

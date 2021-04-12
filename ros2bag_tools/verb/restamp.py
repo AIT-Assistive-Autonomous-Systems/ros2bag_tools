@@ -17,7 +17,7 @@ from ros2bag_tools.filter.restamp import RestampFilter
 
 
 class RestampVerb(BaseProcessVerb):
-    """ros2 bag restamp."""
+    """Set bag timestamps to message header timestamps and write to new bag."""
 
     def __init__(self):
         BaseProcessVerb.__init__(self, RestampFilter())

@@ -32,7 +32,7 @@ AVAILABLE_FILTERS = {
 
 
 class ProcessVerb(BaseProcessVerb):
-    """ros2 bag process."""
+    """Run a set of filters on input bags and write to new bag."""
 
     def __init__(self):
         BaseProcessVerb.__init__(self, CompositeFilter(AVAILABLE_FILTERS))

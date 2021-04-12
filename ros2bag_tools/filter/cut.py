@@ -123,8 +123,12 @@ class CutFilter(BagMessageFilter):
         self._end_time = datetime_to_ros_time(end)
 
     def set_storage_filter(self, storage_filter):
-        storage_filter.start_time = self._start_time.nanoseconds
-        storage_filter.stop_time = self._end_time.nanoseconds
+        # check existing filter values, to ensure the filter is not changed to filter less than
+        # previously set
+        if self._start_time.nanoseconds > storage_filter.start_time:
+            storage_filter.start_time = self._start_time.nanoseconds
+        if self._start_time.nanoseconds < storage_filter.stop_time:
+            storage_filter.stop_time = self._end_time.nanoseconds
 
     def filter_msg(self, msg):
         (_, _, t) = msg

@@ -17,7 +17,7 @@ from ros2bag_tools.filter.cut import CutFilter
 
 
 class CutVerb(BaseProcessVerb):
-    """ros2 bag cut."""
+    """Cut timespan from a bag and write to new bag."""
 
     def __init__(self):
         BaseProcessVerb.__init__(self, CutFilter())

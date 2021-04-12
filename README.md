@@ -30,3 +30,8 @@ restamp
 ```
 
 and run `ros2 bag process -c process.config in.bag -o out.bag` to cut off the first 10 seconds, extract messages of the /image_rect topic and restamp them in one go.
+
+## Current limitations
+
+* Tools do not operate in-place, they all create new output bags, potentially doubling the required disk space
+* The time filters used in the `cut` verb truncate timestamps to the microsecond, due to the precision loss of the pybind11-conversion of C++ chrono time objects to python3 datetime objects. Thus, filters are not sufficiently precise to handle timestamp deltas below 1000ns.
