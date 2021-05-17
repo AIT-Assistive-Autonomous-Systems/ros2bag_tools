@@ -12,28 +12,26 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from typing import NamedTuple, List
 import os
-import numpy as np
-from rclpy.time import Time
+import matplotlib.pyplot as plt
+from rosbag2_tools.bag_view import BagView
+from rosbag2_tools.data_frame import read_data_frames
 from ros2bag.api import print_error
 from ros2bag.verb import VerbExtension
-from rclpy.serialization import deserialize_message
-from rosidl_runtime_py.utilities import get_message
 
 
-class Summary(NamedTuple):
-    count: int
-    frame_id: str
-    delays: List[float]
+def default_fields(msg_type):
+    if msg_type == 'four_wheel_steering_msgs/msg/FourWheelSteeringStamped':
+        return ['data.speed']
+    return set()
 
 
-class SummaryVerb(VerbExtension):
-    """Print a summary of the contents of a specific bag."""
+class PlotVerb(VerbExtension):
+    """Display a plot of bag data."""
 
     def add_arguments(self, parser, cli_name):  # noqa: D102
         parser.add_argument(
-            'bag_file', help='bag file summarize')
+            'bag_file', help='bag file to read data from')
         parser.add_argument(
             '-s', '--storage', default='sqlite3',
             help='storage identifier to be used for the input bag, defaults to "sqlite3"')
@@ -41,6 +39,8 @@ class SummaryVerb(VerbExtension):
             '-f', '--serialization-format', default='',
             help='rmw serialization format in which the messages are read, defaults to the'
                  ' rmw currently in use')
+        parser.add_argument('-t', '--topic', nargs='+', type=str,
+                            help='topic with field name to visualize')
 
     def main(self, *, args):  # noqa: D102
         if not os.path.exists(args.bag_file):
@@ -55,47 +55,36 @@ class SummaryVerb(VerbExtension):
             SequentialReader,
             StorageOptions,
             ConverterOptions,
+            StorageFilter
         )
 
         reader = SequentialReader()
-        in_storage_options = StorageOptions(uri=args.bag_file, storage_id=args.storage)
+        in_storage_options = StorageOptions(
+            uri=args.bag_file, storage_id=args.storage)
         in_converter_options = ConverterOptions(
             input_serialization_format=args.serialization_format,
             output_serialization_format=args.serialization_format)
         reader.open(in_storage_options, in_converter_options)
 
-        type_name_to_type_map = {}
-        topic_to_type_map = {}
-        summaries = {}
+        topics_with_field = [tuple(t.split('.', 1)) for t in args.topic]
 
-        for topic_metadata in reader.get_all_topics_and_types():
-            if topic_metadata.type not in type_name_to_type_map:
-                try:
-                    type_name_to_type_map[topic_metadata.type] = get_message(topic_metadata.type)
-                except (AttributeError, ModuleNotFoundError, ValueError):
-                    raise RuntimeError(f"Cannot load message type '{topic_metadata.type}'")
-            topic_to_type_map[topic_metadata.name] = type_name_to_type_map[topic_metadata.type]
-            summaries[topic_metadata.name] = {
-                'count': 0,
-                'frame_id': '',
-                'delays': []
-            }
+        filter = StorageFilter()
+        filter.topics = [twf[0] for twf in topics_with_field]
 
-        while reader.has_next():
-            (topic, data, t) = reader.read_next()
-            msg_type = topic_to_type_map[topic]
-            msg = deserialize_message(data, msg_type)
-            if hasattr(msg, 'header'):
-                summaries[topic]['count'] += 1
-                if summaries[topic]['frame_id']:
-                    assert(summaries[topic]['frame_id'] == msg.header.frame_id)
-                summaries[topic]['frame_id'] = msg.header.frame_id
-                delay = t - Time.from_msg(msg.header.stamp).nanoseconds
-                summaries[topic]['delays'].append(delay)
+        fields_by_topic = {}
+        for topic, field in topics_with_field:
+            if topic not in fields_by_topic:
+                fields_by_topic[topic] = []
+            fields_by_topic[topic].append(field)
 
-        for topic, summary in summaries.items():
-            print(topic)
-            frame_id = summary['frame_id']
-            mean_delay = np.mean(np.array(summary['delays']))
-            print(f'\tframe_id: {frame_id}')
-            print(f'\tmean delay: {int(mean_delay / 1000 / 1000)}ms')
+        bag_view = BagView(reader, filter)
+        dfs = read_data_frames(bag_view, fields_by_topic)
+        _, ax = plt.subplots()
+        print(fields_by_topic)
+        for topic, fields in fields_by_topic.items():
+            for field in fields:
+                dfs[topic].plot(x='header.stamp', y=field, ax=ax, label=f'{topic} {field}')
+        ax.axhline(y=0, color='black', linestyle='--', linewidth=1.0)
+        ax.grid(True)
+        ax.set_xlabel('t (UTC header.stamp)')
+        plt.show()

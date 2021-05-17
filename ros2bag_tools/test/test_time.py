@@ -69,5 +69,5 @@ def test_bag_bounds():
         output_serialization_format='cdr')
     reader.open(storage_options, converter_options)
     (bag_start, bag_end) = get_bag_bounds([reader])
-    assert(bag_start == datetime(1970, 1, 1, hour=12, minute=59, second=59, microsecond=999999))
-    assert(bag_end == datetime(1970, 1, 1, hour=14, minute=0, second=0, microsecond=1))
+    assert(bag_start == datetime(1970, 1, 1, hour=12, minute=59, second=59, microsecond=999999, tzinfo=timezone.utc))
+    assert(bag_end == datetime(1970, 1, 1, hour=14, minute=0, second=0, microsecond=1, tzinfo=timezone.utc))

@@ -97,7 +97,8 @@ class CutFilter(BagMessageFilter):
                 the start and end of the bag must be on the same day""")
 
         if start_is_daytime and end_is_daytime and args.start > args.end:
-            raise argparse.ArgumentError(None, 'start daytime is after end daytime')
+            raise argparse.ArgumentError(
+                None, 'start daytime is after end daytime')
 
         bag_duration = bag_end - bag_start
         if args.duration is not None and args.duration > bag_duration:
@@ -113,11 +114,12 @@ class CutFilter(BagMessageFilter):
                 self._end_arg,
                 '--end offset is larger than bag duration')
 
-        (start, end) = compute_timespan(args.start, args.duration, args.end, bag_start, bag_end)
+        (start, end) = compute_timespan(args.start,
+                                        args.duration, args.end, bag_start, bag_end)
         if end < bag_start or start > bag_end:
             raise argparse.ArgumentError(
                 None,
-                "time bounds are outside the duration of the input bags")
+                f'time bounds ({start}, {end}) are outside the duration of the input bags ({bag_start}, {bag_end})')
 
         self._start_time = datetime_to_ros_time(start)
         self._end_time = datetime_to_ros_time(end)

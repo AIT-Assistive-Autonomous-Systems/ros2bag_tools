@@ -36,6 +36,7 @@ The package provides the additional commands for the ROS 2 bag command line tool
             'cut = ros2bag_tools.verb.cut:CutVerb',
             'extract = ros2bag_tools.verb.extract:ExtractVerb',
             'merge = ros2bag_tools.verb.merge:MergeVerb',
+            'plot = ros2bag_tools.verb.plot:PlotVerb',
             'reframe = ros2bag_tools.verb.reframe:ReframeVerb',
             'rename = ros2bag_tools.verb.rename:RenameVerb',
             'replace = ros2bag_tools.verb.replace:ReplaceVerb',

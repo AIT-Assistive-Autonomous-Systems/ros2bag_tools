@@ -36,13 +36,14 @@ def ros_duration_from_nanoseconds(ns) -> Duration:
 
 
 def get_bag_bounds(readers) -> Tuple[datetime, datetime]:
-    total_start = datetime.max
-    total_end = datetime.min
+    total_start = datetime.max.replace(tzinfo=timezone.utc)
+    total_end = datetime.min.replace(tzinfo=timezone.utc)
     for reader in readers:
         metadata = reader.get_metadata()
-        end_time = metadata.starting_time + metadata.duration
-        if metadata.starting_time < total_start:
-            total_start = metadata.starting_time
+        starting_time_utc = metadata.starting_time.astimezone(timezone.utc)
+        end_time = starting_time_utc + metadata.duration
+        if starting_time_utc < total_start:
+            total_start = starting_time_utc
         if end_time > total_end:
             total_end = end_time
     return (total_start, total_end)
@@ -50,13 +51,14 @@ def get_bag_bounds(readers) -> Tuple[datetime, datetime]:
 
 def ros_to_datetime_utc(ros_time: Time):
     (secs, nanosecs) = ros_time.seconds_nanoseconds()
-    return datetime.utcfromtimestamp(secs + nanosecs / CONVERSION_CONSTANT)
+    return datetime.fromtimestamp(secs + nanosecs / CONVERSION_CONSTANT, tz=timezone.utc)
 
 
 def add_daytime(t: date, day_time: time) -> datetime:
     """Combine date of t with day_time to a datetime object."""
-    utc_day_time = datetime.combine(t, datetime.min.time())
-    day_offset = datetime.combine(date.min, day_time) - datetime.min.replace(tzinfo=timezone.utc)
+    min_utc = datetime.min.replace(tzinfo=timezone.utc)
+    utc_day_time = datetime.combine(t, min_utc.time(), tzinfo=timezone.utc)
+    day_offset = datetime.combine(date.min, day_time, tzinfo=timezone.utc) - min_utc
     return utc_day_time + day_offset
 
 

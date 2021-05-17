@@ -1,0 +1,19 @@
+rosbag2_bagfile_information:
+  version: 4
+  storage_identifier: sqlite3
+  relative_file_paths:
+    - range.bag_0.db3
+  duration:
+    nanoseconds: 100
+  starting_time:
+    nanoseconds_since_epoch: 100
+  message_count: 2
+  topics_with_message_count:
+    - topic_metadata:
+        name: /range
+        type: sensor_msgs/msg/Range
+        serialization_format: cdr
+        offered_qos_profiles: ""
+      message_count: 2
+  compression_format: ""
+  compression_mode: ""
