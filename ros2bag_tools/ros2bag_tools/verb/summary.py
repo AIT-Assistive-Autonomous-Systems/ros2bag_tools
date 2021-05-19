@@ -15,6 +15,13 @@
 from typing import NamedTuple, List
 import os
 import numpy as np
+from rosbag2_py import (
+    SequentialReader,
+    StorageOptions,
+    StorageFilter,
+    ConverterOptions,
+)
+from ros2bag_tools.verb import ProgressTracker
 from rclpy.time import Time
 from ros2bag.api import print_error
 from ros2bag.verb import VerbExtension
@@ -29,7 +36,7 @@ class Summary(NamedTuple):
 
 
 class SummaryVerb(VerbExtension):
-    """Print a summary of the contents of a specific bag."""
+    """Print a summary of the contents of a bag."""
 
     def add_arguments(self, parser, cli_name):  # noqa: D102
         parser.add_argument(
@@ -41,21 +48,15 @@ class SummaryVerb(VerbExtension):
             '-f', '--serialization-format', default='',
             help='rmw serialization format in which the messages are read, defaults to the'
                  ' rmw currently in use')
+        parser.add_argument(
+            '--progress', default=False, action='store_true',
+            help='display reader progress in terminal')
+        parser.add_argument('-t', '--topic', nargs='*', type=str,
+                            help='topics to summarize, summarize all if empty')
 
     def main(self, *, args):  # noqa: D102
         if not os.path.exists(args.bag_file):
             return print_error("bag file '{}' does not exist!".format(args.bag_file))
-
-        # NOTE(hidmic): in merged install workspaces on Windows, Python entrypoint lookups
-        #               combined with constrained environments (as imposed by colcon test)
-        #               may result in DLL loading failures when attempting to import a C
-        #               extension. Therefore, do not import rosbag2_transport at the module
-        #               level but on demand, right before first use.
-        from rosbag2_py import (
-            SequentialReader,
-            StorageOptions,
-            ConverterOptions,
-        )
 
         reader = SequentialReader()
         in_storage_options = StorageOptions(uri=args.bag_file, storage_id=args.storage)
@@ -69,6 +70,8 @@ class SummaryVerb(VerbExtension):
         summaries = {}
 
         for topic_metadata in reader.get_all_topics_and_types():
+            if args.topic and topic_metadata.name not in args.topic:
+                continue
             if topic_metadata.type not in type_name_to_type_map:
                 try:
                     type_name_to_type_map[topic_metadata.type] = get_message(topic_metadata.type)
@@ -77,9 +80,17 @@ class SummaryVerb(VerbExtension):
             topic_to_type_map[topic_metadata.name] = type_name_to_type_map[topic_metadata.type]
             summaries[topic_metadata.name] = {
                 'count': 0,
-                'frame_id': '',
-                'delays': []
+                'frame_ids': set(),
+                'write_delays_ns': []
             }
+
+        filter = StorageFilter()
+        filter.topics = args.topic
+        reader.set_filter(filter)
+
+        progress = ProgressTracker()
+        if args.progress:
+            progress.add_estimated_work(reader, filter)
 
         while reader.has_next():
             (topic, data, t) = reader.read_next()
@@ -87,15 +98,22 @@ class SummaryVerb(VerbExtension):
             msg = deserialize_message(data, msg_type)
             if hasattr(msg, 'header'):
                 summaries[topic]['count'] += 1
-                if summaries[topic]['frame_id']:
-                    assert(summaries[topic]['frame_id'] == msg.header.frame_id)
-                summaries[topic]['frame_id'] = msg.header.frame_id
+                summaries[topic]['frame_ids'].add(msg.header.frame_id)
                 delay = t - Time.from_msg(msg.header.stamp).nanoseconds
-                summaries[topic]['delays'].append(delay)
+                summaries[topic]['write_delays_ns'].append(delay)
+            if args.progress:
+                progress.print_update(progress.update(topic), every=100)
+
+        if args.progress:
+            progress.print_finish()
 
         for topic, summary in summaries.items():
             print(topic)
-            frame_id = summary['frame_id']
-            mean_delay = np.mean(np.array(summary['delays']))
-            print(f'\tframe_id: {frame_id}')
-            print(f'\tmean delay: {int(mean_delay / 1000 / 1000)}ms')
+            frame_id_str = ', '.join(summary['frame_ids'])
+            print(f'\tframe_id: {frame_id_str}')
+            if summary['write_delays_ns']:
+                # only messages with header.stamp have delays
+                write_delays = np.array(summary['write_delays_ns'])
+                delay_ms_mean = np.mean(write_delays) / 1000 / 1000
+                delay_ms_stddev = np.std(write_delays) / 1000 / 1000
+                print(f'\twrite delay: {delay_ms_mean:.2f}ms (stddev {delay_ms_stddev:.2f})')

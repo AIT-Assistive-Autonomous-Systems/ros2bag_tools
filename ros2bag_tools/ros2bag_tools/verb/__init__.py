@@ -15,6 +15,13 @@
 import argparse
 import os
 from datetime import datetime, timezone
+from rosbag2_py import (
+    SequentialReader,
+    SequentialWriter,
+    StorageFilter,
+    StorageOptions,
+    ConverterOptions,
+)
 from ros2bag.api import print_error
 from ros2bag.verb import VerbExtension
 from ros2bag_tools.filter import FilterResult
@@ -37,7 +44,7 @@ class ProgressTracker:
         self._expected_topics = set()
         self._no_of_expected_messages = 0
 
-    def add_estimated_work(self, reader, storage_filter):
+    def add_estimated_work(self, reader, storage_filter=StorageFilter()):
         metadata = reader.get_metadata()
         start = metadata.starting_time.astimezone(timezone.utc)
         end = start + metadata.duration
@@ -76,6 +83,16 @@ class ProgressTracker:
         if topic in self._expected_topics:
             self._i += 1
         return min(1, (self._i + 1) / self._no_of_expected_messages)
+
+    def print_update(self, update, every=1):
+        if self._i % every != 0:
+            return
+        values = (update, self.n_processed, self.n_expected)
+        print("{0[0]:.2%} {0[1]}/{0[2]} ...".format(values), end='\r')
+
+    def print_finish(self):
+        # print done and clear to end of line
+        print("100% Done\033[K")
 
 
 class BaseProcessVerb(VerbExtension):
@@ -116,13 +133,6 @@ class BaseProcessVerb(VerbExtension):
         if os.path.isdir(uri):
             return print_error("Output folder '{}' already exists.".format(uri))
 
-        from rosbag2_py import (
-            SequentialReader,
-            SequentialWriter,
-            StorageFilter,
-            StorageOptions,
-            ConverterOptions,
-        )
         try:
             self._filter.set_args(args.bag_files, uri, args)
         except argparse.ArgumentError as e:
@@ -163,8 +173,7 @@ class BaseProcessVerb(VerbExtension):
                 result = self._filter.filter_msg(msg)
                 if args.progress:
                     prog_perc = progress.update(msg[0])
-                    values = (prog_perc, progress.n_processed, progress.n_expected)
-                    print("{0[0]:.2%} {0[1]}/{0[2]} ...".format(values), end='\r')
+                    progress.print_update(prog_perc)
                 if result == FilterResult.STOP_CURRENT_BAG:
                     break
                 elif result == FilterResult.DROP_MESSAGE:
@@ -174,5 +183,4 @@ class BaseProcessVerb(VerbExtension):
                 else:
                     return print_error("Filter returned invalid result: '{}'.".format(result))
         if args.progress:
-            # print done and clear to end of line
-            print("100% Done\033[K")
+            progress.print_finish()
