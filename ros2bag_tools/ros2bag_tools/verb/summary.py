@@ -29,10 +29,50 @@ from rclpy.serialization import deserialize_message
 from rosidl_runtime_py.utilities import get_message
 
 
-class Summary(NamedTuple):
-    count: int
-    frame_id: str
-    delays: List[float]
+class ConstantFieldSummaryOutput:
+    """Get constant value of a specific field and add to summary"""
+
+    def __init__(self, field_name):
+        self._field_name = field_name
+        self._value = None
+
+    def update(self, message):
+        assert(hasattr(message, self._field_name))
+        value = getattr(message, self._field_name)
+        assert(not self._value or value == self._value)
+        self._value = value
+
+    def write(self):
+        print(f'\t{self._field_name}: {self._value}')
+
+
+class ValueRangeSummaryOutput:
+    """Accumulate values of a field and print statistics"""
+
+    def __init__(self, field_name):
+        self._field_name = field_name
+        self._values = []
+
+    def update(self, message):
+        assert(hasattr(message, self._field_name))
+        value = getattr(message, self._field_name)
+        self._values.append(value)
+
+    def write(self):
+        values = np.array(self._values)
+        mean = np.mean(values)
+        stddev = np.std(values)
+        print(f'\t{self._field_name}: mean {mean:.3f} (stddev {stddev:.3f})')
+
+
+def default_summary_output(message_type):
+    if message_type == 'sensor_msgs/msg/Image':
+        return [ConstantFieldSummaryOutput(field) for field in ['width', 'height', 'encoding']]
+    if message_type == 'sensor_msgs/msg/CameraInfo':
+        return [ConstantFieldSummaryOutput('distortion_model')]
+    if message_type == 'sensor_msgs/msg/NavSatFix':
+        return [ValueRangeSummaryOutput(field) for field in ['latitude', 'longitude', 'altitude']]
+    return []
 
 
 class SummaryVerb(VerbExtension):
@@ -58,12 +98,22 @@ class SummaryVerb(VerbExtension):
         if not os.path.exists(args.bag_file):
             return print_error("bag file '{}' does not exist!".format(args.bag_file))
 
+        if not args.topic:
+            args.topic = []
+
         reader = SequentialReader()
-        in_storage_options = StorageOptions(uri=args.bag_file, storage_id=args.storage)
+        in_storage_options = StorageOptions(
+            uri=args.bag_file, storage_id=args.storage)
         in_converter_options = ConverterOptions(
             input_serialization_format=args.serialization_format,
             output_serialization_format=args.serialization_format)
         reader.open(in_storage_options, in_converter_options)
+
+        metadata = reader.get_metadata()
+        message_counts = {}
+        for entry in metadata.topics_with_message_count:
+            message_counts[entry.topic_metadata.name] = entry.message_count
+        bag_duration_s = metadata.duration.total_seconds()
 
         type_name_to_type_map = {}
         topic_to_type_map = {}
@@ -74,14 +124,16 @@ class SummaryVerb(VerbExtension):
                 continue
             if topic_metadata.type not in type_name_to_type_map:
                 try:
-                    type_name_to_type_map[topic_metadata.type] = get_message(topic_metadata.type)
+                    type_name_to_type_map[topic_metadata.type] = get_message(
+                        topic_metadata.type)
                 except (AttributeError, ModuleNotFoundError, ValueError):
-                    raise RuntimeError(f"Cannot load message type '{topic_metadata.type}'")
+                    raise RuntimeError(
+                        f"Cannot load message type '{topic_metadata.type}'")
             topic_to_type_map[topic_metadata.name] = type_name_to_type_map[topic_metadata.type]
             summaries[topic_metadata.name] = {
-                'count': 0,
                 'frame_ids': set(),
-                'write_delays_ns': []
+                'write_delays_ns': [],
+                'custom': default_summary_output(topic_metadata.type)
             }
 
         filter = StorageFilter()
@@ -96,8 +148,9 @@ class SummaryVerb(VerbExtension):
             (topic, data, t) = reader.read_next()
             msg_type = topic_to_type_map[topic]
             msg = deserialize_message(data, msg_type)
+            for custom in summaries[topic]['custom']:
+                custom.update(msg)
             if hasattr(msg, 'header'):
-                summaries[topic]['count'] += 1
                 summaries[topic]['frame_ids'].add(msg.header.frame_id)
                 delay = t - Time.from_msg(msg.header.stamp).nanoseconds
                 summaries[topic]['write_delays_ns'].append(delay)
@@ -109,11 +162,19 @@ class SummaryVerb(VerbExtension):
 
         for topic, summary in summaries.items():
             print(topic)
+            if not message_counts[topic]:
+                print(f'\tNo messages')
+                continue
             frame_id_str = ', '.join(summary['frame_ids'])
             print(f'\tframe_id: {frame_id_str}')
+            freq = message_counts[topic] / bag_duration_s
+            print(f'\tfrequency: {freq:.2f} hz')
             if summary['write_delays_ns']:
                 # only messages with header.stamp have delays
                 write_delays = np.array(summary['write_delays_ns'])
                 delay_ms_mean = np.mean(write_delays) / 1000 / 1000
                 delay_ms_stddev = np.std(write_delays) / 1000 / 1000
-                print(f'\twrite delay: {delay_ms_mean:.2f}ms (stddev {delay_ms_stddev:.2f})')
+                print(
+                    f'\twrite delay: {delay_ms_mean:.2f}ms (stddev {delay_ms_stddev:.2f})')
+                for custom in summaries[topic]['custom']:
+                    custom.write()
