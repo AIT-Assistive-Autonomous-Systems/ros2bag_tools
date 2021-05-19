@@ -20,12 +20,6 @@ from ros2bag.api import print_error
 from ros2bag.verb import VerbExtension
 
 
-def default_fields(msg_type):
-    if msg_type == 'four_wheel_steering_msgs/msg/FourWheelSteeringStamped':
-        return ['data.speed']
-    return set()
-
-
 class PlotVerb(VerbExtension):
     """Display a plot of bag data."""
 
@@ -40,7 +34,7 @@ class PlotVerb(VerbExtension):
             help='rmw serialization format in which the messages are read, defaults to the'
                  ' rmw currently in use')
         parser.add_argument('-t', '--topic', nargs='+', type=str,
-                            help='topic with field name to visualize')
+                            help='topics with field name to visualize')
 
     def main(self, *, args):  # noqa: D102
         if not os.path.exists(args.bag_file):
@@ -80,7 +74,6 @@ class PlotVerb(VerbExtension):
         bag_view = BagView(reader, filter)
         dfs = read_data_frames(bag_view, fields_by_topic)
         _, ax = plt.subplots()
-        print(fields_by_topic)
         for topic, fields in fields_by_topic.items():
             for field in fields:
                 dfs[topic].plot(x='header.stamp', y=field, ax=ax, label=f'{topic} {field}')
