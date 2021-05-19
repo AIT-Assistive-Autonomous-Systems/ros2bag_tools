@@ -14,7 +14,7 @@
 
 import argparse
 import os
-from datetime import datetime
+from datetime import datetime, timezone
 from ros2bag.api import print_error
 from ros2bag.verb import VerbExtension
 from ros2bag_tools.filter import FilterResult
@@ -39,8 +39,8 @@ class ProgressTracker:
 
     def add_estimated_work(self, reader, storage_filter):
         metadata = reader.get_metadata()
-        start = metadata.starting_time
-        end = metadata.starting_time + metadata.duration
+        start = metadata.starting_time.astimezone(timezone.utc)
+        end = start + metadata.duration
         filter_start = ros_to_datetime_utc(ros_time_from_nanoseconds(storage_filter.start_time))
         filter_end = ros_to_datetime_utc(ros_time_from_nanoseconds(storage_filter.stop_time))
         if start < filter_start:
