@@ -43,6 +43,7 @@ The package provides the additional commands for the ROS 2 bag command line tool
             'restamp = ros2bag_tools.verb.restamp:RestampVerb',
             'summary = ros2bag_tools.verb.summary:SummaryVerb',
             'process = ros2bag_tools.verb.process:ProcessVerb',
+            'video = ros2bag_tools.verb.video:VideoVerb',
         ],
     }
 )
