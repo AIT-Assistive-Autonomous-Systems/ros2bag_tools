@@ -11,6 +11,7 @@
 
   <depend>ros2bag</depend>
   <depend>rosbag2_py</depend>
+  <depend>rosbag2_tools</depend>
   <depend>rosidl_runtime_py</depend>
   <depend>python3-yaml</depend>
 
