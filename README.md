@@ -15,7 +15,7 @@ This package adds verb extensions to the ros2bag cli.
 | rename  | change name of a topic |
 | restamp | write header timestamps of all messages with headers as message timestamp in a new output bag |
 | replace | replace messages of a specific topic with message data specified in a yaml file, write all messages to new bag |
-| summary | (WIP) print summary on data in a rosbag |
+| summary | print summary on data in a rosbag |
 | video | show or write video of image data in bag |
 
 You can check detailed usage information with `ros2 bag $VERB --help`.
