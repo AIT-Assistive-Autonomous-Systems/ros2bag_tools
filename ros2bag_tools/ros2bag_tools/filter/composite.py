@@ -40,9 +40,22 @@ class CompositeFilter(BagMessageFilter):
                 self._filters.append(filter)
         assert(len(self._filters) > 0)
 
-    def set_storage_filter(self, storage_filter):
+    def get_storage_filter(self):
+        """
+        Take the first storage filter computed by inner filters, fail if two storage filters
+        are computed.
+
+        Currently there is no concept of sequential storage filters, i.e. combinations of
+        two topic filters or two time bounds.
+        """
+        composite_storage_filter = None
         for filter in self._filters:
-            filter.set_storage_filter(storage_filter)
+            storage_filter = filter.get_storage_filter()
+            if not composite_storage_filter:
+                composite_storage_filter = storage_filter
+            else:
+                raise ValueError('Cannot combine storage filters')
+        return composite_storage_filter
 
     def filter_topic(self, topic_metadata):
         current_tm = topic_metadata

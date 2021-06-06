@@ -12,23 +12,43 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from rosbag2_py import StorageFilter
+from typing import Union
+from rosbag2_py import SequentialReader, StorageOptions, ConverterOptions
 from rclpy.serialization import deserialize_message
 from rosidl_runtime_py.utilities import get_message
 
 
+def open_reader(bag_file_path: str):
+    reader = SequentialReader()
+    storage_options = StorageOptions(uri=bag_file_path, storage_id='sqlite3')
+    converter_options = ConverterOptions(
+        input_serialization_format='cdr',
+        output_serialization_format='cdr')
+    reader.open(storage_options, converter_options)
+    return reader
+
+
 class BagView:
 
-    def __init__(self, reader, storage_filter=StorageFilter()):
-        self._reader = reader
+    def __init__(self, reader: Union[str, SequentialReader], storage_filter=None):
+        """
+        Open bag view from reader or file path.
+        """
+        if isinstance(reader, str):
+            self._reader = open_reader(reader)
+        else:
+            self._reader = reader
         self._topic_type_map = {}
         self._storage_filter = storage_filter
-        self._reader.set_filter(storage_filter)
+        if storage_filter is not None:
+            self._reader.set_filter(storage_filter)
 
         type_map = {}
-        tpcs = self._storage_filter.topics
+        chosen_topics = set()
+        if self._storage_filter:
+            chosen_topics = set(self._storage_filter.topics)
         for topic_metadata in self._reader.get_all_topics_and_types():
-            if not tpcs or topic_metadata.name in tpcs:
+            if not chosen_topics or topic_metadata.name in chosen_topics:
                 topic_type = topic_metadata.type
                 if topic_type not in type_map:
                     try:
@@ -36,10 +56,6 @@ class BagView:
                     except (AttributeError, ModuleNotFoundError, ValueError):
                         raise RuntimeError(f"Cannot load message type '{topic_type}'")
                 self._topic_type_map[topic_metadata.name] = type_map[topic_type]
-
-    @property
-    def filter(self):
-        return self._storage_filter
 
     def topics(self):
         for (topic, msg_type) in self._topic_type_map.items():

@@ -1,7 +1,6 @@
 # ROS2 bag tools
 
-This package is built and tested with **ROS2 rolling** because it depends on the rolling package `rosbag2_py`.
-You also need my branch of [rosbag2](https://github.com/Kettenhoax/rosbag2/tree/time_filter) to use storage time filters.
+This package is built and tested with **ROS2 galactic**.
 
 This package adds verb extensions to the ros2bag cli.
 
@@ -69,4 +68,5 @@ dfs['/range'].summary()
 ## Current limitations
 
 * Tools do not operate in-place, they all create new output bags, potentially doubling the required disk space
+* Time filters are only performed by the underlying storage implementation when using [this branch of rosbag2](https://github.com/Kettenhoax/rosbag2/tree/time_filter).
 * The time filters used in the `cut` verb truncate timestamps to the microsecond, due to the precision loss of the pybind11-conversion of C++ chrono time objects to python3 datetime objects. Thus, filters are not sufficiently precise to handle timestamp deltas below 1000ns.

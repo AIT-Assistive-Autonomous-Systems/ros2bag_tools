@@ -14,6 +14,7 @@
 
 import argparse
 from datetime import datetime, time
+from rosbag2_py import StorageFilter
 from ros2bag_tools.filter import BagMessageFilter, FilterResult
 from ros2bag_tools.time import DurationOrDayTimeType, DurationType, get_bag_bounds, is_same_day,\
     datetime_to_ros_time, add_daytime
@@ -124,16 +125,30 @@ class CutFilter(BagMessageFilter):
         self._start_time = datetime_to_ros_time(start)
         self._end_time = datetime_to_ros_time(end)
 
-    def set_storage_filter(self, storage_filter):
+    def get_storage_filter(self):
         # check existing filter values, to ensure the filter is not changed to filter less than
         # previously set
-        if self._start_time.nanoseconds > storage_filter.start_time:
-            storage_filter.start_time = self._start_time.nanoseconds
-        if self._start_time.nanoseconds < storage_filter.stop_time:
-            storage_filter.stop_time = self._end_time.nanoseconds
+        try:
+            storage_filter = StorageFilter()
+            if hasattr(storage_filter, 'start_time'):
+                if self._start_time.nanoseconds > storage_filter.start_time:
+                    storage_filter.start_time = self._start_time.nanoseconds
+            if hasattr(storage_filter, 'stop_time'):
+                if self._start_time.nanoseconds < storage_filter.stop_time:
+                    storage_filter.stop_time = self._end_time.nanoseconds
+            return storage_filter
+        except TypeError:
+            # If time storage filters are not supported by the installed rosbag2_py, return empty
+            # filter.
+            return None
 
     def filter_msg(self, msg):
         (_, _, t) = msg
+        # You may assume that this filtering is not necessary, as get_storage_filter sets
+        # the filters on storage level. There are two cases when this is not sufficient:
+        # * filters sequenced before or after this instance of cut may change the message
+        #   timestamp to something else than in the bag data
+        # * the underlying storage implementation does not support storage time filters
         if t < self._start_time.nanoseconds:
             return FilterResult.DROP_MESSAGE
         if t > self._end_time.nanoseconds:

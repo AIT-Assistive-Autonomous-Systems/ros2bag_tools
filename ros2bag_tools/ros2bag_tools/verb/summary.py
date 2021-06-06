@@ -30,7 +30,7 @@ from rosidl_runtime_py.utilities import get_message
 
 
 class ConstantFieldSummaryOutput:
-    """Get constant value of a specific field and add to summary"""
+    """Get constant value of a specific field and add to summary."""
 
     def __init__(self, field_name):
         self._field_name = field_name
@@ -47,7 +47,7 @@ class ConstantFieldSummaryOutput:
 
 
 class ValueRangeSummaryOutput:
-    """Accumulate values of a field and print statistics"""
+    """Accumulate values of a field and print statistics."""
 
     def __init__(self, field_name):
         self._field_name = field_name

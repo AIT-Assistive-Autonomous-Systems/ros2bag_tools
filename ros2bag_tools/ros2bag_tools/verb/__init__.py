@@ -44,12 +44,17 @@ class ProgressTracker:
         self._expected_topics = set()
         self._no_of_expected_messages = 0
 
-    def add_estimated_work(self, reader, storage_filter=StorageFilter()):
+    def add_estimated_work(self, reader, storage_filter=None):
         metadata = reader.get_metadata()
         start = metadata.starting_time.astimezone(timezone.utc)
         end = start + metadata.duration
-        filter_start = ros_to_datetime_utc(ros_time_from_nanoseconds(storage_filter.start_time))
-        filter_end = ros_to_datetime_utc(ros_time_from_nanoseconds(storage_filter.stop_time))
+        filter_start = start
+        filter_end = end
+        if storage_filter:
+            if hasattr(storage_filter, 'start_time'):
+                filter_start = ros_to_datetime_utc(ros_time_from_nanoseconds(storage_filter.start_time))
+            if hasattr(storage_filter, 'stop_time'):
+                filter_end = ros_to_datetime_utc(ros_time_from_nanoseconds(storage_filter.stop_time))
         if start < filter_start:
             start = filter_start
         if filter_end < end:
@@ -58,10 +63,11 @@ class ProgressTracker:
         for topic in metadata.topics_with_message_count:
             n = topic.message_count
             topic_name = topic.topic_metadata.name
-            if not storage_filter.topics or topic_name in storage_filter.topics:
-                self._expected_topics.add(topic_name)
-                # assume that messages are spread uniformly across filtered timespan
-                self._no_of_expected_messages += n * filter_factor
+            if storage_filter:
+                if not storage_filter.topics or topic_name in storage_filter.topics:
+                    self._expected_topics.add(topic_name)
+                    # assume that messages are spread uniformly across filtered timespan
+                    self._no_of_expected_messages += n * filter_factor
         self._no_of_expected_messages = int(self._no_of_expected_messages)
 
     @property
@@ -138,8 +144,7 @@ class BaseProcessVerb(VerbExtension):
         except argparse.ArgumentError as e:
             return print_error(str(e))
 
-        storage_filter = StorageFilter()
-        self._filter.set_storage_filter(storage_filter)
+        storage_filter = self._filter.get_storage_filter()
 
         progress = ProgressTracker()
         readers = []
@@ -149,7 +154,8 @@ class BaseProcessVerb(VerbExtension):
             if args.in_storage:
                 in_storage_options.storage = args.in_storage
             reader.open(in_storage_options, in_converter_options)
-            reader.set_filter(storage_filter)
+            if storage_filter:
+                reader.set_filter(storage_filter)
             if args.progress:
                 progress.add_estimated_work(reader, storage_filter)
             readers.append(reader)

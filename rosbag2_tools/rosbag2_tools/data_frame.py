@@ -17,7 +17,6 @@ from typing import Dict, List
 import pandas as pd
 from rclpy.time import Time
 from rosidl_runtime_py.utilities import get_message
-
 from rosbag2_tools.bag_view import BagView
 
 
