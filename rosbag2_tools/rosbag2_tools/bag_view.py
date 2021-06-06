@@ -13,6 +13,7 @@
 # limitations under the License.
 
 from typing import Union
+from datetime import datetime, timezone, timedelta
 from rosbag2_py import SequentialReader, StorageOptions, ConverterOptions
 from rclpy.serialization import deserialize_message
 from rosidl_runtime_py.utilities import get_message
@@ -54,12 +55,31 @@ class BagView:
                     try:
                         type_map[topic_metadata.type] = get_message(topic_type)
                     except (AttributeError, ModuleNotFoundError, ValueError):
-                        raise RuntimeError(f"Cannot load message type '{topic_type}'")
+                        raise RuntimeError(
+                            f"Cannot load message type '{topic_type}'")
                 self._topic_type_map[topic_metadata.name] = type_map[topic_type]
 
     def topics(self):
         for (topic, msg_type) in self._topic_type_map.items():
             yield topic, msg_type
+
+    @property
+    def duration(self) -> timedelta:
+        metadata = self._reader.get_metadata()
+        start_time = metadata.starting_time.astimezone(timezone.utc)
+        stop_time = start_time + metadata.duration
+        if self._storage_filter:
+            if hasattr(self._storage_filter, 'start_time'):
+                filter_start = datetime.fromtimestamp(
+                    self._storage_filter.start_time / 1e9, timezone.utc)
+                if filter_start > start_time:
+                    start_time = filter_start
+            if hasattr(self._storage_filter, 'stop_time'):
+                filter_stop = datetime.fromtimestamp(
+                    self._storage_filter.stop_time / 1e9, timezone.utc)
+                if filter_stop < stop_time:
+                    stop_time = filter_stop
+        return stop_time - start_time
 
     def __iter__(self):
         return self
