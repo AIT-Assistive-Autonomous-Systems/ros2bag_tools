@@ -34,6 +34,7 @@ The package provides the additional commands for the ROS 2 bag command line tool
         'ros2bag.verb': [
             'convert = ros2bag_tools.verb.convert:ConvertVerb',
             'cut = ros2bag_tools.verb.cut:CutVerb',
+            'export = ros2bag_tools.verb.export:ExportVerb',
             'extract = ros2bag_tools.verb.extract:ExtractVerb',
             'merge = ros2bag_tools.verb.merge:MergeVerb',
             'plot = ros2bag_tools.verb.plot:PlotVerb',

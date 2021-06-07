@@ -18,7 +18,6 @@ from datetime import datetime, timezone
 from rosbag2_py import (
     SequentialReader,
     SequentialWriter,
-    StorageFilter,
     StorageOptions,
     ConverterOptions,
 )
@@ -29,9 +28,8 @@ from ros2bag_tools.time import ros_time_from_nanoseconds, ros_to_datetime_utc
 
 
 def get_rosbag_options(path, serialization_format='cdr'):
-    import rosbag2_py
-    storage_options = rosbag2_py.StorageOptions(uri=path, storage_id='sqlite3')
-    converter_options = rosbag2_py.ConverterOptions(
+    storage_options = StorageOptions(uri=path, storage_id='sqlite3')
+    converter_options = ConverterOptions(
         input_serialization_format=serialization_format,
         output_serialization_format=serialization_format)
     return storage_options, converter_options

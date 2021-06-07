@@ -6,8 +6,9 @@ This package adds verb extensions to the ros2bag cli.
 
 | Verb    | Usage |
 | ------- |:------------------|
-| extract | extract topics from a bag and store in new output bag |
 | cut     | cut time slice from a bag and store in new output bag |
+| export  | export data to other formats |
+| extract | extract topics from a bag and store in new output bag |
 | merge   | merge multiple bags into one |
 | plot    | plot message data to a new window |
 | reframe | change frame_id on messages with headers |
