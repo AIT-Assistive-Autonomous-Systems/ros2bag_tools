@@ -50,9 +50,11 @@ class ProgressTracker:
         filter_end = end
         if storage_filter:
             if hasattr(storage_filter, 'start_time'):
-                filter_start = ros_to_datetime_utc(ros_time_from_nanoseconds(storage_filter.start_time))
+                filter_start = ros_to_datetime_utc(
+                    ros_time_from_nanoseconds(storage_filter.start_time))
             if hasattr(storage_filter, 'stop_time'):
-                filter_end = ros_to_datetime_utc(ros_time_from_nanoseconds(storage_filter.stop_time))
+                filter_end = ros_to_datetime_utc(
+                    ros_time_from_nanoseconds(storage_filter.stop_time))
         if start < filter_start:
             start = filter_start
         if filter_end < end:
@@ -116,6 +118,12 @@ class BaseProcessVerb(VerbExtension):
             '-s', '--in-storage',
             help='storage identifier to be used for the input bag, defaults to "sqlite3"')
         parser.add_argument(
+            '-b', '--max-bag-size', type=int, default=0,
+            help='maximum size in bytes before the bagfile will be split. '
+                  'Default it is zero, resulting in a single bagfile and disabled '
+                  'splitting.'
+        )
+        parser.add_argument(
             '--out-storage', default='sqlite3',
             help='storage identifier to be used for the output bag, defaults to "sqlite3"')
         parser.add_argument(
@@ -148,7 +156,8 @@ class BaseProcessVerb(VerbExtension):
         readers = []
         for bag_file in args.bag_files:
             reader = SequentialReader()
-            in_storage_options, in_converter_options = get_rosbag_options(bag_file)
+            in_storage_options, in_converter_options = get_rosbag_options(
+                bag_file)
             if args.in_storage:
                 in_storage_options.storage = args.in_storage
             reader.open(in_storage_options, in_converter_options)
@@ -159,7 +168,8 @@ class BaseProcessVerb(VerbExtension):
             readers.append(reader)
 
         writer = SequentialWriter()
-        out_storage_options = StorageOptions(uri=uri, storage_id=args.out_storage)
+        out_storage_options = StorageOptions(
+            uri=uri, storage_id=args.out_storage, max_bagfile_size=args.max_bag_size)
         out_converter_options = ConverterOptions(
             input_serialization_format=args.serialization_format,
             output_serialization_format=args.serialization_format)
