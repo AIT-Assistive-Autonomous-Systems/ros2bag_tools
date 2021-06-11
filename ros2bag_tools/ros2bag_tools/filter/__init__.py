@@ -27,8 +27,8 @@ class BagMessageFilter:
     def set_args(self, _in_files, _out_file, _args):
         pass
 
-    def get_storage_filter(self, _storage_filter):
-        pass
+    def get_storage_filter(self):
+        return None
 
     def filter_topic(self, topic):
         return topic
