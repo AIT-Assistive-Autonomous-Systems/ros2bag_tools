@@ -112,6 +112,8 @@ class VideoVerb(VerbExtension):
                             help='image topic to read')
         parser.add_argument('-o', '--output', type=str,
                             help='file path to video to write')
+        parser.add_argument('-e', '--encoding', default='passthrough', type=str,
+                            help='desired encoding for the output image')
 
     def main(self, *, args):  # noqa: D102
         if not os.path.exists(args.bag_file):
@@ -153,7 +155,7 @@ class VideoVerb(VerbExtension):
 
         image_bridge = CvBridge()
         for _, image, _ in bag_view:
-            cv_image = image_bridge.imgmsg_to_cv2(image)
+            cv_image = image_bridge.imgmsg_to_cv2(image, args.encoding)
             processor.process(cv_image)
             if args.progress:
                 progress.print_update(progress.update(args.topic), every=10)
