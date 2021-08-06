@@ -49,6 +49,7 @@ The package provides the additional commands for the ROS 2 bag command line tool
         'ros2bag_tools.filter': [
             'cut = ros2bag_tools.filter.cut:CutFilter',
             'extract = ros2bag_tools.filter.extract:ExtractFilter',
+            'image = ros2bag_tools.filter.image:ImageFilter',
             'reframe = ros2bag_tools.filter.reframe:ReframeFilter',
             'rename = ros2bag_tools.filter.rename:RenameFilter',
             'replace = ros2bag_tools.filter.replace:ReplaceFilter',
