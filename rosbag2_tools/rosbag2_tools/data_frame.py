@@ -54,7 +54,7 @@ def read_data_frames(bag_view: BagView, field_dict: Dict[str, List[str]], auto_s
         if ('header.stamp' not in fields and auto_stamp
                 and 'header' in fields_and_types
                 and fields_and_types['header'] == 'std_msgs/Header'):
-            fields = fields.copy() # ensure not to mutate the input
+            fields = fields.copy()  # ensure not to mutate the input
             fields.append('header.stamp')
         for field in fields:
             field_types[topic][field] = _field_type(msg_type, field)

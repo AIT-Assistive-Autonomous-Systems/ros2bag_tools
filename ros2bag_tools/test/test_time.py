@@ -63,11 +63,14 @@ def test_ros_day_time():
 
 def test_bag_bounds():
     reader = SequentialReader()
-    storage_options = StorageOptions(uri='test/day_time.bag', storage_id='sqlite3')
+    storage_options = StorageOptions(
+        uri='test/day_time.bag', storage_id='sqlite3')
     converter_options = ConverterOptions(
         input_serialization_format='cdr',
         output_serialization_format='cdr')
     reader.open(storage_options, converter_options)
     (bag_start, bag_end) = get_bag_bounds([reader])
-    assert(bag_start == datetime(1970, 1, 1, hour=12, minute=59, second=59, microsecond=999999, tzinfo=timezone.utc))
-    assert(bag_end == datetime(1970, 1, 1, hour=14, minute=0, second=0, microsecond=1, tzinfo=timezone.utc))
+    assert(bag_start == datetime(1970, 1, 1, hour=12, minute=59,
+           second=59, microsecond=999999, tzinfo=timezone.utc))
+    assert(bag_end == datetime(1970, 1, 1, hour=14, minute=0,
+           second=0, microsecond=1, tzinfo=timezone.utc))

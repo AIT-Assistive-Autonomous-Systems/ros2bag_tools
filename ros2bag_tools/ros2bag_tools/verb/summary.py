@@ -12,7 +12,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from typing import NamedTuple, List
 import os
 import numpy as np
 from rosbag2_py import (
@@ -163,7 +162,7 @@ class SummaryVerb(VerbExtension):
         for topic, summary in summaries.items():
             print(topic)
             if not message_counts[topic]:
-                print(f'\tNo messages')
+                print('\tNo messages')
                 continue
             frame_id_str = ', '.join(summary['frame_ids'])
             print(f'\tframe_id: {frame_id_str}')

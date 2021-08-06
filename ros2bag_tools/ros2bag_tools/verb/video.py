@@ -22,9 +22,7 @@ from ros2bag.verb import VerbExtension
 
 
 def get_screen_size():
-    """
-    Get size of currently active screen.
-    """
+    """Get pixel size of the currently active screen."""
     import tkinter as tk
     root = tk.Tk()
     screen_width = root.winfo_screenwidth()

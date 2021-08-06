@@ -32,9 +32,7 @@ def open_reader(bag_file_path: str):
 class BagView:
 
     def __init__(self, reader: Union[str, SequentialReader], storage_filter=None):
-        """
-        Open bag view from reader or file path.
-        """
+        """Open bag view from reader or file path."""
         if isinstance(reader, str):
             self._reader = open_reader(reader)
         else:
