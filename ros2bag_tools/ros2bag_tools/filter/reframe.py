@@ -12,12 +12,12 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from ros2bag_tools.filter import BagMessageFilter
+from ros2bag_tools.filter import FilterExtension
 from rclpy.serialization import deserialize_message, serialize_message
 from rosidl_runtime_py.utilities import get_message
 
 
-class ReframeFilter(BagMessageFilter):
+class ReframeFilter(FilterExtension):
 
     def __init__(self):
         self._topic = None

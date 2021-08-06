@@ -31,9 +31,7 @@ import pytest
 
 
 def test_composite_filter():
-    filter = CompositeFilter({
-        'extract': ExtractFilter
-    })
+    filter = CompositeFilter()
 
     parser = argparse.ArgumentParser('composite')
     filter.add_arguments(parser)

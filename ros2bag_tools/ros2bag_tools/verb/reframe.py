@@ -12,12 +12,12 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from ros2bag_tools.verb import BaseProcessVerb
+from ros2bag_tools.verb import FilterVerb
 from ros2bag_tools.filter.reframe import ReframeFilter
 
 
-class ReframeVerb(BaseProcessVerb):
+class ReframeVerb(FilterVerb):
     """Change header.frame_id of some messages, and write to a new bag."""
 
     def __init__(self):
-        BaseProcessVerb.__init__(self, ReframeFilter())
+        FilterVerb.__init__(self, ReframeFilter())

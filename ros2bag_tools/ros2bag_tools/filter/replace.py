@@ -16,10 +16,10 @@ import yaml
 from rosidl_runtime_py import set_message_fields
 from rosidl_runtime_py.utilities import get_message
 from rclpy.serialization import serialize_message, deserialize_message
-from ros2bag_tools.filter import BagMessageFilter
+from ros2bag_tools.filter import FilterExtension
 
 
-class ReplaceFilter(BagMessageFilter):
+class ReplaceFilter(FilterExtension):
 
     def __init__(self):
         self._args = None

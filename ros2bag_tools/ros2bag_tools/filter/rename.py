@@ -12,10 +12,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from ros2bag_tools.filter import BagMessageFilter
+from ros2bag_tools.filter import FilterExtension
 
 
-class RenameFilter(BagMessageFilter):
+class RenameFilter(FilterExtension):
 
     def __init__(self):
         self._topic = None

@@ -12,13 +12,13 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from ros2bag_tools.filter import BagMessageFilter
-from ros2bag_tools.verb import BaseProcessVerb
+from ros2bag_tools.filter import FilterExtension
+from ros2bag_tools.verb import FilterVerb
 
 
-class MergeVerb(BaseProcessVerb):
+class MergeVerb(FilterVerb):
     """Merge multiple bags into new bag."""
 
     def __init__(self):
         # Instantiate identity filter to just pass all topics and messages through for merging
-        BaseProcessVerb.__init__(self, BagMessageFilter())
+        FilterVerb.__init__(self, FilterExtension())

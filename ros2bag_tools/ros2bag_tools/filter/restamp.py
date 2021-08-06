@@ -15,10 +15,10 @@
 from rclpy.time import Time
 from rclpy.serialization import deserialize_message
 from rosidl_runtime_py.utilities import get_message
-from ros2bag_tools.filter import BagMessageFilter
+from ros2bag_tools.filter import FilterExtension
 
 
-class RestampFilter(BagMessageFilter):
+class RestampFilter(FilterExtension):
 
     def __init__(self):
         self._args = None

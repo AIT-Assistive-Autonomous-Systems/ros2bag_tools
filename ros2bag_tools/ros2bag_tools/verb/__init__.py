@@ -101,7 +101,7 @@ class ProgressTracker:
         print("100% Done\033[K")
 
 
-class BaseProcessVerb(VerbExtension):
+class FilterVerb(VerbExtension):
     """Abstract base class for bag message processing verbs."""
 
     def __init__(self, filter):

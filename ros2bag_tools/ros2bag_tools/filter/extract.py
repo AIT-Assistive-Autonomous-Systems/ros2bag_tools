@@ -12,10 +12,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from ros2bag_tools.filter import BagMessageFilter, FilterResult
+from ros2bag_tools.filter import FilterExtension, FilterResult
 
 
-class ExtractFilter(BagMessageFilter):
+class ExtractFilter(FilterExtension):
 
     def __init__(self):
         self._args = None

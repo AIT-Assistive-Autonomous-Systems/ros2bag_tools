@@ -15,7 +15,7 @@
 import argparse
 from datetime import datetime, time
 from rosbag2_py import StorageFilter
-from ros2bag_tools.filter import BagMessageFilter, FilterResult
+from ros2bag_tools.filter import FilterExtension, FilterResult
 from ros2bag_tools.time import DurationOrDayTimeType, DurationType, get_bag_bounds, is_same_day,\
     datetime_to_ros_time, add_daytime
 
@@ -59,7 +59,7 @@ def open_reader(path):
     return reader
 
 
-class CutFilter(BagMessageFilter):
+class CutFilter(FilterExtension):
 
     def __init__(self):
         self._start_time = None
@@ -120,7 +120,8 @@ class CutFilter(BagMessageFilter):
         if end < bag_start or start > bag_end:
             raise argparse.ArgumentError(
                 None,
-                f'time bounds ({start}, {end}) are outside the duration of the input bags ({bag_start}, {bag_end})')
+                f'time bounds ({start}, {end}) are outside the '
+                + 'duration of the input bags ({bag_start}, {bag_end})')
 
         self._start_time = datetime_to_ros_time(start)
         self._end_time = datetime_to_ros_time(end)

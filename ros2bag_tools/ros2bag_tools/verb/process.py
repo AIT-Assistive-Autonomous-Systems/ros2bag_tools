@@ -13,26 +13,11 @@
 # limitations under the License.
 
 from ros2bag_tools.filter.composite import CompositeFilter
-from ros2bag_tools.filter.cut import CutFilter
-from ros2bag_tools.filter.extract import ExtractFilter
-from ros2bag_tools.filter.reframe import ReframeFilter
-from ros2bag_tools.filter.rename import RenameFilter
-from ros2bag_tools.filter.replace import ReplaceFilter
-from ros2bag_tools.filter.restamp import RestampFilter
-from ros2bag_tools.verb import BaseProcessVerb
-
-AVAILABLE_FILTERS = {
-    'cut': CutFilter,
-    'extract': ExtractFilter,
-    'reframe': ReframeFilter,
-    'rename': RenameFilter,
-    'replace': ReplaceFilter,
-    'restamp': RestampFilter,
-}
+from ros2bag_tools.verb import FilterVerb
 
 
-class ProcessVerb(BaseProcessVerb):
+class ProcessVerb(FilterVerb):
     """Run a set of filters on input bags and write to new bag."""
 
     def __init__(self):
-        BaseProcessVerb.__init__(self, CompositeFilter(AVAILABLE_FILTERS))
+        FilterVerb.__init__(self, CompositeFilter())

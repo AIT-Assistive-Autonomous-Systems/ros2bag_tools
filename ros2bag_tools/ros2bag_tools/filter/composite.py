@@ -12,28 +12,45 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import logging
 import argparse
-from ros2bag_tools.filter import BagMessageFilter, FilterResult
+from ros2cli.plugin_system import PluginException
+from ros2cli.entry_points import load_entry_points
+from ros2bag_tools.filter import FilterResult
+
+logger = logging.getLogger(__name__)
 
 
-class CompositeFilter(BagMessageFilter):
+class CompositeFilter:
 
-    def __init__(self, filters):
-        self._available_filters = filters
+    def __init__(self):
+        self._filter_extensions = {}
         self._filters = []
 
     def add_arguments(self, parser):
         parser.add_argument(
             '-c', '--config', required=True,
             help='Path to configuration file of filters')
+        self._filter_extensions = load_entry_points('ros2bag_tools.filter')
 
     def set_args(self, in_files, out_file, args):
         with open(args.config, 'r') as f:
             for line in f.readlines():
                 args_line = [word.strip() for word in line.split(' ')]
-                tool = args_line[0]
-                parser = argparse.ArgumentParser(tool)
-                filter = self._available_filters[tool]()
+                filter_name = args_line[0]
+                parser = argparse.ArgumentParser(filter_name)
+                try:
+                    filter = self._filter_extensions[filter_name]()
+                except PluginException as e:  # noqa: F841
+                    logger.warning(
+                        f"Failed to instantiate ros2bag_tools.filter extension "
+                        f"'{filter_name}': {e}")
+                    return None
+                except Exception as e:  # noqa: F841
+                    logger.error(
+                        f"Failed to instantiate ros2bag_tools.filter extension "
+                        f"'{filter_name}': {e}")
+                    return None
                 filter.add_arguments(parser)
                 filter_args = parser.parse_args(args_line[1:])
                 filter.set_args(in_files, out_file, filter_args)
@@ -42,19 +59,19 @@ class CompositeFilter(BagMessageFilter):
 
     def get_storage_filter(self):
         """
-        Take the first storage filter computed by inner filters, fail if two storage filters
-        are computed.
+        Get the first storage filter returned by inner filters.
 
-        Currently there is no concept of sequential storage filters, i.e. combinations of
-        two topic filters or two time bounds.
+        Fails if storage filters are emitted by multiple filters, as current sequential storage
+        filters can not be generally combined. For instance, combination of two time bounds
+        can be either the intersection or union.
         """
         composite_storage_filter = None
         for filter in self._filters:
             storage_filter = filter.get_storage_filter()
             if not composite_storage_filter:
                 composite_storage_filter = storage_filter
-            else:
-                raise ValueError('Cannot combine storage filters')
+            elif storage_filter:
+                raise ValueError('cannot combine storage filters')
         return composite_storage_filter
 
     def filter_topic(self, topic_metadata):

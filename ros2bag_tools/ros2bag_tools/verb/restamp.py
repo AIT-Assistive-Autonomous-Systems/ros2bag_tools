@@ -12,12 +12,12 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from ros2bag_tools.verb import BaseProcessVerb
+from ros2bag_tools.verb import FilterVerb
 from ros2bag_tools.filter.restamp import RestampFilter
 
 
-class RestampVerb(BaseProcessVerb):
+class RestampVerb(FilterVerb):
     """Set bag timestamps to message header timestamps and write to new bag."""
 
     def __init__(self):
-        BaseProcessVerb.__init__(self, RestampFilter())
+        FilterVerb.__init__(self, RestampFilter())

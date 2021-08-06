@@ -46,5 +46,13 @@ The package provides the additional commands for the ROS 2 bag command line tool
             'process = ros2bag_tools.verb.process:ProcessVerb',
             'video = ros2bag_tools.verb.video:VideoVerb',
         ],
+        'ros2bag_tools.filter': [
+            'cut = ros2bag_tools.filter.cut:CutFilter',
+            'extract = ros2bag_tools.filter.extract:ExtractFilter',
+            'reframe = ros2bag_tools.filter.reframe:ReframeFilter',
+            'rename = ros2bag_tools.filter.rename:RenameFilter',
+            'replace = ros2bag_tools.filter.replace:ReplaceFilter',
+            'restamp = ros2bag_tools.filter.restamp:RestampFilter',
+        ],
     }
 )
