@@ -63,12 +63,13 @@ class ProgressTracker:
         for topic in metadata.topics_with_message_count:
             n = topic.message_count
             topic_name = topic.topic_metadata.name
-            if storage_filter:
-                if not storage_filter.topics or topic_name in storage_filter.topics:
-                    self._expected_topics.add(topic_name)
-                    # assume that messages are spread uniformly across filtered timespan
-                    self._no_of_expected_messages += n * filter_factor
-        self._no_of_expected_messages = int(self._no_of_expected_messages)
+            if not storage_filter or (not storage_filter.topics or topic_name in storage_filter.topics):
+                self._expected_topics.add(topic_name)
+
+                # assume that messages are spread uniformly across filtered timespan
+                # this might not be true, but gives a good enough estimation for a
+                # progress bar
+                self._no_of_expected_messages += int(n * filter_factor)
 
     @property
     def n_processed(self):
