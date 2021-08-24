@@ -18,6 +18,14 @@ from ros2bag.api import print_error
 from ros2bag.verb import VerbExtension
 from rosbag2_py import StorageFilter
 from rclpy.time import Time
+from geometry_msgs.msg import Vector3, Quaternion
+from nav_msgs.msg import Odometry
+from sensor_msgs.msg import NavSatFix
+from geodesy.utm import fromLatLong
+
+
+class ExporterError(Exception):
+    pass
 
 
 class TUMTrajectoryExporter:
@@ -29,11 +37,33 @@ class TUMTrajectoryExporter:
     def process(self, args, odometry_iter):
         with open(args.output, 'w') as f:
             fmt = '{0:.' + str(args.tum_precision) + 'f}'
-            for _, msg, _ in odometry_iter:
-                pos = msg.pose.pose.position
-                ori = msg.pose.pose.orientation
+            
+            # if the input is a geo pose it is UTM-projected, and we need to detect
+            # (zone, band) changes from message to message
+            previous_utm_zone_band = None
+
+            for topic_name, msg, _ in odometry_iter:
+                if isinstance(msg, Odometry):
+                    pos = msg.pose.pose.position
+                    ori = msg.pose.pose.orientation
+                elif isinstance(msg, NavSatFix):
+                    utm_point = fromLatLong(msg.latitude, msg.longitude, msg.altitude)
+                    pos = Vector3()
+                    pos.x = utm_point.easting
+                    pos.y = utm_point.northing
+                    pos.z = utm_point.altitude
+                    utm_lattice_coordinate = (utm_point.zone, utm_point.band)
+                    if previous_utm_zone_band and previous_utm_zone_band != utm_lattice_coordinate:
+                        raise ExporterError(f'UTM (zone, band) changes between messages in topic {topic_name}')
+                    previous_utm_zone_band = utm_lattice_coordinate
+                    # orientation is unit for NavSatFix
+                    ori = Quaternion()
+                else:
+                    raise TypeError(f'{self.__class__.__name__} can not export messages of type {msg.__class__.__name__}')
+
                 t_ros = Time.from_msg(msg.header.stamp)
                 t_sec = t_ros.nanoseconds / 1e9
+
                 f.write(str(t_sec))
                 f.write(' ')
                 f.write(fmt.format(pos.x))
@@ -80,4 +110,7 @@ class ExportVerb(VerbExtension):
         view = BagView(args.bag_file, filter)
 
         exporter = TUMTrajectoryExporter()
-        exporter.process(args, view)
+        try:
+            exporter.process(args, view)
+        except ExporterError as e:
+            return print_error(f'export failed: {str(e)}')
