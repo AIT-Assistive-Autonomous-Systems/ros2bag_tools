@@ -36,6 +36,13 @@ class CompositeFilter:
     def set_args(self, in_files, out_file, args):
         with open(args.config, 'r') as f:
             for line in f.readlines():
+                line = line.strip()
+                if not line:
+                    # empty lines in config file are acceptable
+                    continue
+                if line.startswith('#'):
+                    # allow comment lines
+                    continue
                 args_line = [word.strip() for word in line.split(' ')]
                 filter_name = args_line[0]
                 parser = argparse.ArgumentParser(filter_name)
