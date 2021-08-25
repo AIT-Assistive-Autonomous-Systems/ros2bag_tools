@@ -17,7 +17,7 @@ from ros2bag_tools.verb import FilterVerb
 
 
 class PruneVerb(FilterVerb):
-    """Remove empty topics and write rest to new bag"""
+    """Remove empty topics and write rest to new bag."""
 
     def __init__(self):
         # Instantiate identity filter to just pass all topics and messages through for merging

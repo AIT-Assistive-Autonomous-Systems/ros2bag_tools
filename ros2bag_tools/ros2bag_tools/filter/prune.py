@@ -25,7 +25,7 @@ def get_rosbag_options(path, serialization_format='cdr'):
 
 
 class PruneFilter(FilterExtension):
-    """Remove empty topics"""
+    """Remove empty topics."""
 
     def __init__(self):
         self._empty_topics = set()
