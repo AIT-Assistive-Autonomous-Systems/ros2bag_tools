@@ -48,6 +48,7 @@ The package provides the additional commands for the ROS 2 bag command line tool
             'video = ros2bag_tools.verb.video:VideoVerb',
         ],
         'ros2bag_tools.filter': [
+            'add = ros2bag_tools.filter.add:AddFilter',
             'cut = ros2bag_tools.filter.cut:CutFilter',
             'extract = ros2bag_tools.filter.extract:ExtractFilter',
             'image = ros2bag_tools.filter.image:ImageFilter',

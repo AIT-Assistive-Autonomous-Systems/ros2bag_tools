@@ -17,6 +17,7 @@ from rclpy.serialization import serialize_message, deserialize_message
 from rosbag2_py import TopicMetadata
 from ros2bag_tools.filter import FilterResult
 from ros2bag_tools.filter.composite import CompositeFilter
+from ros2bag_tools.filter.add import AddFilter
 from ros2bag_tools.filter.cut import CutFilter
 from ros2bag_tools.filter.extract import ExtractFilter
 from ros2bag_tools.filter.reframe import ReframeFilter
@@ -41,6 +42,42 @@ def test_composite_filter():
     out_file = '/dev/null'
     filter.set_args(in_files, out_file, args)
     assert(filter.filter_msg(('/data', None, 0)) == FilterResult.DROP_MESSAGE)
+
+
+def test_add_filter():
+    filter = AddFilter()
+
+    parser = argparse.ArgumentParser('add')
+    filter.add_arguments(parser)
+    args = parser.parse_args(
+        ['-t', '/data', '--type', 'example_interfaces/msg/String', '-v', 'test/data.yaml',
+         '--align-to', '/align'])
+
+    in_files = ['/dev/null']
+    out_file = '/dev/null'
+    filter.set_args(in_files, out_file, args)
+
+    topic_metadata = TopicMetadata(
+        '/align', 'example_interfaces/msg/String', 'cdr')
+    topics = filter.filter_topic(topic_metadata)
+    assert(len(topics) == 2)
+    assert(topics[0].name == '/align')
+    assert(topics[0].type == 'example_interfaces/msg/String')
+    assert(topics[1].name == '/data')
+    assert(topics[1].type == 'example_interfaces/msg/String')
+
+    msg = String()
+    msg.data = 'align'
+    msgs = filter.filter_msg(('/align', serialize_message(msg), 1))
+
+    assert(len(msgs) == 2)
+    (topic0, data0, t0) = msgs[0]
+    (topic1, data1, t1) = msgs[1]
+    assert(topic0 == '/align')
+    assert(topic1 == '/data')
+    assert(t0 == t1)
+    assert(deserialize_message(data0, String).data == 'align')
+    assert(deserialize_message(data1, String).data == 'out')
 
 
 def test_extract_filter():
@@ -76,7 +113,8 @@ def test_replace_filter():
         # if topic hasn't been found, filter_msg fails with error
         filter.filter_msg(msg)
 
-    topic_metadata = TopicMetadata('/data', 'example_interfaces/msg/String', 'cdr')
+    topic_metadata = TopicMetadata(
+        '/data', 'example_interfaces/msg/String', 'cdr')
     assert(filter.filter_topic(topic_metadata) == topic_metadata)
     (topic, result_data, t) = filter.filter_msg(msg)
     assert(topic == '/data')
@@ -152,7 +190,8 @@ def test_reframe_filter():
     out_file = '/dev/null'
     filter.set_args(in_files, out_file, args)
 
-    topic_metadata = TopicMetadata('/data', 'diagnostic_msgs/msg/DiagnosticArray', 'cdr')
+    topic_metadata = TopicMetadata(
+        '/data', 'diagnostic_msgs/msg/DiagnosticArray', 'cdr')
     assert(filter.filter_topic(topic_metadata) == topic_metadata)
 
     msg = DiagnosticArray()
@@ -178,7 +217,8 @@ def test_rename_filter():
     out_file = '/dev/null'
     filter.set_args(in_files, out_file, args)
 
-    topic_metadata = TopicMetadata('/data', 'example_interfaces/msg/String', 'cdr')
+    topic_metadata = TopicMetadata(
+        '/data', 'example_interfaces/msg/String', 'cdr')
     assert(filter.filter_topic(topic_metadata).name == '/renamed')
 
     msg = String()
@@ -201,7 +241,8 @@ def test_restamp_filter():
     out_file = '/dev/null'
     filter.set_args(in_files, out_file, args)
 
-    topic_metadata = TopicMetadata('/data', 'diagnostic_msgs/msg/DiagnosticArray', 'cdr')
+    topic_metadata = TopicMetadata(
+        '/data', 'diagnostic_msgs/msg/DiagnosticArray', 'cdr')
     assert(filter.filter_topic(topic_metadata) == topic_metadata)
 
     ns_stamp = 500 * 1000 * 1000 - 100

@@ -180,7 +180,10 @@ class FilterVerb(VerbExtension):
             for topic_metadata in reader.get_all_topics_and_types():
                 result = self._filter.filter_topic(topic_metadata)
                 if result:
-                    writer.create_topic(result)
+                    if not isinstance(result, list):
+                        result = [result]
+                    for item in result:
+                        writer.create_topic(item)
 
         for reader in readers:
             while reader.has_next():
@@ -193,6 +196,9 @@ class FilterVerb(VerbExtension):
                     break
                 elif result == FilterResult.DROP_MESSAGE:
                     continue
+                elif isinstance(result, list):
+                    for item in result:
+                        writer.write(item[0], item[1], item[2])
                 elif isinstance(result, tuple):
                     writer.write(result[0], result[1], result[2])
                 else:

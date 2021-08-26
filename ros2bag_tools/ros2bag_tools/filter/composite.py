@@ -52,12 +52,12 @@ class CompositeFilter:
                     logger.warning(
                         f"Failed to instantiate ros2bag_tools.filter extension "
                         f"'{filter_name}': {e}")
-                    return None
+                    raise argparse.ArgumentError(None, 'invalid filter')
                 except Exception as e:  # noqa: F841
                     logger.error(
                         f"Failed to instantiate ros2bag_tools.filter extension "
                         f"'{filter_name}': {e}")
-                    return None
+                    raise argparse.ArgumentError(None, 'invalid filter')
                 filter.add_arguments(parser)
                 filter_args = parser.parse_args(args_line[1:])
                 filter.set_args(in_files, out_file, filter_args)
@@ -82,19 +82,31 @@ class CompositeFilter:
         return composite_storage_filter
 
     def filter_topic(self, topic_metadata):
-        current_tm = topic_metadata
+        current_tm = [topic_metadata]
         for f in self._filters:
-            current_tm = f.filter_topic(current_tm)
-            if not current_tm:
-                return None
+            new_tm = []
+            for tm in current_tm:
+                tm = f.filter_topic(tm)
+                if isinstance(tm, list):
+                    new_tm.extend(tm)
+                elif tm:
+                    new_tm.append(tm)
+            current_tm = new_tm
         return current_tm
 
     def filter_msg(self, msg):
-        current_msg = msg
+        current_msgs = [msg]
         for f in self._filters:
-            current_msg = f.filter_msg(current_msg)
-            if current_msg == FilterResult.DROP_MESSAGE:
-                return FilterResult.DROP_MESSAGE
-            if current_msg == FilterResult.STOP_CURRENT_BAG:
-                return FilterResult.STOP_CURRENT_BAG
-        return current_msg
+            new_msgs = []
+            for item in current_msgs:
+                result = f.filter_msg(item)
+                if result == FilterResult.DROP_MESSAGE:
+                    return FilterResult.DROP_MESSAGE
+                elif result == FilterResult.STOP_CURRENT_BAG:
+                    return FilterResult.STOP_CURRENT_BAG
+                elif isinstance(result, list):
+                    new_msgs.extend(result)
+                else:
+                    new_msgs.append(result)
+            current_msgs = new_msgs
+        return current_msgs

@@ -12,8 +12,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 from enum import Enum
-from typing import Tuple, Union
+from typing import Tuple, Union, List
 import argparse
+from rosbag2_py import TopicMetadata
 from rclpy.exceptions import InvalidTopicNameException
 from rclpy.validate_topic_name import validate_topic_name
 from rclpy.serialization import deserialize_message, serialize_message
@@ -56,10 +57,10 @@ class FilterExtension:
     def get_storage_filter(self):
         return None
 
-    def filter_topic(self, topic):
+    def filter_topic(self, topic) -> Union[TopicMetadata, List[TopicMetadata]]:
         return topic
 
-    def filter_msg(self, msg) -> Union[FilterResult, Tuple[str, bytes, int]]:
+    def filter_msg(self, msg) -> Union[FilterResult, Tuple[str, bytes, int], List]:
         return msg
 
 
