@@ -14,7 +14,7 @@
 
 import argparse
 from rclpy.serialization import serialize_message, deserialize_message
-from rosbag2_py import TopicMetadata
+from rosbag2_py import Info, TopicMetadata
 from ros2bag_tools.filter import FilterResult
 from ros2bag_tools.filter.composite import CompositeFilter
 from ros2bag_tools.filter.add import AddFilter
@@ -31,6 +31,11 @@ from diagnostic_msgs.msg import DiagnosticArray
 import pytest
 
 
+def read_metadata(path: str):
+    info = Info()
+    return info.read_metadata(path, '')
+
+
 def test_composite_filter():
     filter = CompositeFilter()
 
@@ -38,9 +43,7 @@ def test_composite_filter():
     filter.add_arguments(parser)
     args = parser.parse_args(['-c', 'test/composite.config'])
 
-    in_files = ['/dev/null']
-    out_file = '/dev/null'
-    filter.set_args(in_files, out_file, args)
+    filter.set_args(None, args)
     assert(filter.filter_msg(('/data', None, 0)) == FilterResult.DROP_MESSAGE)
 
 
@@ -52,10 +55,7 @@ def test_add_filter():
     args = parser.parse_args(
         ['-t', '/data', '--type', 'example_interfaces/msg/String', '-v', 'test/data.yaml',
          '--align-to', '/align'])
-
-    in_files = ['/dev/null']
-    out_file = '/dev/null'
-    filter.set_args(in_files, out_file, args)
+    filter.set_args(None, args)
 
     topic_metadata = TopicMetadata(
         '/align', 'example_interfaces/msg/String', 'cdr')
@@ -86,10 +86,8 @@ def test_extract_filter():
     parser = argparse.ArgumentParser('extract')
     filter.add_arguments(parser)
     args = parser.parse_args(['-t', '/data'])
+    filter.set_args(None, args)
 
-    in_file = '/dev/null'
-    out_file = '/dev/null'
-    filter.set_args(in_file, out_file, args)
     msg = ('/data', None, 0)
     assert(filter.filter_msg(msg) == msg)
 
@@ -100,10 +98,7 @@ def test_replace_filter():
     parser = argparse.ArgumentParser('replace')
     filter.add_arguments(parser)
     args = parser.parse_args(['-t', '/data', '-v', 'test/data.yaml'])
-
-    in_files = ['/dev/null']
-    out_file = '/dev/null'
-    filter.set_args(in_files, out_file, args)
+    filter.set_args(None, args)
 
     string_msg = String()
     string_msg.data = 'in'
@@ -129,10 +124,7 @@ def test_cut_filter():
     parser = argparse.ArgumentParser('cut')
     filter.add_arguments(parser)
     args = parser.parse_args(['--duration', '0.5'])
-
-    in_files = ['test/test.bag']
-    out_file = '/dev/null'
-    filter.set_args(in_files, out_file, args)
+    filter.set_args([read_metadata('test/test.bag')], args)
 
     string_msg = String()
     string_msg.data = 'in'
@@ -160,23 +152,20 @@ def test_cut_filter_args():
     parser = argparse.ArgumentParser('cut')
     filter.add_arguments(parser)
 
-    in_files = ['test/day_time.bag']
-    out_file = '/dev/null'
-
     args = parser.parse_args(['--duration', '3603'])
     with pytest.raises(argparse.ArgumentError):
         # duration is too long for bag
-        filter.set_args(in_files, out_file, args)
+        filter.set_args([read_metadata('test/day_time.bag')], args)
 
     args = parser.parse_args(['--start', '13:15', '--end', '13:10'])
     with pytest.raises(argparse.ArgumentError):
         # end before start
-        filter.set_args(in_files, out_file, args)
+        filter.set_args([read_metadata('test/day_time.bag')], args)
 
     args = parser.parse_args(['--start', '12:00', '--end', '12:59'])
     with pytest.raises(argparse.ArgumentError):
         # error since time bounds are not covered by bag
-        filter.set_args(in_files, out_file, args)
+        filter.set_args([read_metadata('test/day_time.bag')], args)
 
 
 def test_reframe_filter():
@@ -185,10 +174,7 @@ def test_reframe_filter():
     parser = argparse.ArgumentParser('reframe')
     filter.add_arguments(parser)
     args = parser.parse_args(['-t', '/data', '--frame', 'frame1'])
-
-    in_files = ['/dev/null']
-    out_file = '/dev/null'
-    filter.set_args(in_files, out_file, args)
+    filter.set_args(None, args)
 
     topic_metadata = TopicMetadata(
         '/data', 'diagnostic_msgs/msg/DiagnosticArray', 'cdr')
@@ -212,10 +198,7 @@ def test_rename_filter():
     parser = argparse.ArgumentParser('rename')
     filter.add_arguments(parser)
     args = parser.parse_args(['-t', '/data', '--name', '/renamed'])
-
-    in_files = ['/dev/null']
-    out_file = '/dev/null'
-    filter.set_args(in_files, out_file, args)
+    filter.set_args(None, args)
 
     topic_metadata = TopicMetadata(
         '/data', 'example_interfaces/msg/String', 'cdr')
@@ -236,10 +219,7 @@ def test_restamp_filter():
     parser = argparse.ArgumentParser('restamp')
     filter.add_arguments(parser)
     args = parser.parse_args([])
-
-    in_files = ['/dev/null']
-    out_file = '/dev/null'
-    filter.set_args(in_files, out_file, args)
+    filter.set_args(None, args)
 
     topic_metadata = TopicMetadata(
         '/data', 'diagnostic_msgs/msg/DiagnosticArray', 'cdr')

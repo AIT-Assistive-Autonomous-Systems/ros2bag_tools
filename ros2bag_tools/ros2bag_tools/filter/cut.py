@@ -14,7 +14,7 @@
 
 import argparse
 from datetime import datetime, time
-from rosbag2_py import StorageFilter, Info
+from rosbag2_py import StorageFilter
 from ros2bag_tools.filter import FilterExtension, FilterResult
 from ros2bag_tools.time import DurationOrDayTimeType, DurationType, get_bag_bounds, is_same_day,\
     datetime_to_ros_time, add_daytime
@@ -68,10 +68,8 @@ class CutFilter(FilterExtension):
             '--duration', help='duration of the output time span',
             type=DurationType)
 
-    def set_args(self, in_files, _out_file, args):
-        info = Info()
-        metadatas = [info.read_metadata(file_name, '') for file_name in in_files]
-        (bag_start, bag_end) = get_bag_bounds(metadatas)
+    def set_args(self, metadata, args):
+        (bag_start, bag_end) = get_bag_bounds(metadata)
 
         if args.start is not None and args.end is not None and args.duration is not None:
             raise argparse.ArgumentError(

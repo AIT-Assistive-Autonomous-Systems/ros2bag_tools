@@ -39,7 +39,7 @@ class AddFilter(FilterExtension):
         parser.add_argument('-v', '--values', required=True,
                             help='path to yaml data to load')
 
-    def set_args(self, _in_files, _out_file, args):
+    def set_args(self, _metadata, args):
         self._args = args
         self._msg_module = get_message(args.type)
         with open(args.values, 'r') as f:

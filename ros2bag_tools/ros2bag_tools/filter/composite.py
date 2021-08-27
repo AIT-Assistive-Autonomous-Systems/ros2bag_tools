@@ -33,7 +33,7 @@ class CompositeFilter:
             help='Path to configuration file of filters')
         self._filter_extensions = load_entry_points('ros2bag_tools.filter')
 
-    def set_args(self, in_files, out_file, args):
+    def set_args(self, metadata, args):
         with open(args.config, 'r') as f:
             for line in f.readlines():
                 line = line.strip()
@@ -60,7 +60,7 @@ class CompositeFilter:
                     raise argparse.ArgumentError(None, 'invalid filter')
                 filter.add_arguments(parser)
                 filter_args = parser.parse_args(args_line[1:])
-                filter.set_args(in_files, out_file, filter_args)
+                filter.set_args(metadata, filter_args)
                 self._filters.append(filter)
         assert(len(self._filters) > 0)
 

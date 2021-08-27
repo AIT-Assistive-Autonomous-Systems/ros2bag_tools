@@ -49,8 +49,8 @@ class ImageFilter(TypeAwareTopicFilter):
         parser.add_argument('--image-size', type=ImageResizeArg,
                             help=ImageResizeArg.__doc__)
 
-    def set_args(self, in_files, out_file, args):
-        super().set_args(in_files, out_file, args)
+    def set_args(self, metadata, args):
+        super().set_args(metadata, args)
         self._image_encoding = args.image_encoding
         self._image_size = args.image_size
 

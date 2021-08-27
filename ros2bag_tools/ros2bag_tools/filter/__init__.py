@@ -12,9 +12,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 from enum import Enum
-from typing import Tuple, Union, List
+from typing import Tuple, Union, List, Sequence
 import argparse
-from rosbag2_py import TopicMetadata
+from rosbag2_py import TopicMetadata, BagMetadata
 from rclpy.exceptions import InvalidTopicNameException
 from rclpy.validate_topic_name import validate_topic_name
 from rclpy.serialization import deserialize_message, serialize_message
@@ -51,7 +51,7 @@ class FilterExtension:
     def add_arguments(self, _args):
         pass
 
-    def set_args(self, _in_files, _out_file, _args):
+    def set_args(self, _metadata: Sequence[BagMetadata], _args):
         pass
 
     def get_storage_filter(self):
@@ -87,7 +87,7 @@ class TypeAwareTopicFilter(FilterExtension):
     def topic(self):
         return self._topic
 
-    def set_args(self, _in_files, _out_file, args):
+    def set_args(self, _metadata, args):
         self._topic = args.topic
 
     def filter_topic(self, topic_metadata):

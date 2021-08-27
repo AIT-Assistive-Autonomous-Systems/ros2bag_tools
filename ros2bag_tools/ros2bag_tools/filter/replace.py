@@ -30,7 +30,7 @@ class ReplaceFilter(FilterExtension):
         parser.add_argument('-t', '--topic', required=True, help='topic to replace data for')
         parser.add_argument('-v', '--values', required=True, help='path to yaml data to load')
 
-    def set_args(self, _in_files, _out_file, args):
+    def set_args(self, _metadata, args):
         self._args = args
         with open(args.values, 'r') as f:
             self._values_dictionary = yaml.safe_load(f)

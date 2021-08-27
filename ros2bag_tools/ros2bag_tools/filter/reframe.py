@@ -32,7 +32,7 @@ class ReframeFilter(FilterExtension):
             '--frame', required=True,
             help='frame_id to set')
 
-    def set_args(self, _in_files, _out_file, args):
+    def set_args(self, _metadata, args):
         self._topic = args.topic
         self._frame_id = args.frame
 

@@ -25,7 +25,7 @@ class RenameFilter(FilterExtension):
         parser.add_argument('-t', '--topic', help='topic to rename')
         parser.add_argument('--name', required=True, help='new name to set')
 
-    def set_args(self, _in_files, _out_file, args):
+    def set_args(self, _metadata, args):
         self._topic = args.topic
         self._new_name = args.name
 

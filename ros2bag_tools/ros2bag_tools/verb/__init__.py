@@ -146,8 +146,10 @@ class FilterVerb(VerbExtension):
         if os.path.isdir(uri):
             return print_error("Output folder '{}' already exists.".format(uri))
 
+        info = Info()
+        metadatas = [info.read_metadata(f, args.in_storage or '') for f in args.bag_files]
         try:
-            self._filter.set_args(args.bag_files, uri, args)
+            self._filter.set_args(metadatas, args)
         except argparse.ArgumentError as e:
             return print_error(str(e))
 
@@ -155,7 +157,7 @@ class FilterVerb(VerbExtension):
 
         progress = ProgressTracker()
         readers = []
-        for bag_file in args.bag_files:
+        for bag_file, metadata in zip(args.bag_files, metadatas):
             reader = SequentialReader()
             in_storage_options, in_converter_options = get_rosbag_options(
                 bag_file)
@@ -165,8 +167,6 @@ class FilterVerb(VerbExtension):
             if storage_filter:
                 reader.set_filter(storage_filter)
             if args.progress:
-                info = Info()
-                metadata = info.read_metadata(bag_file, in_storage_options.storage)
                 progress.add_estimated_work(metadata, storage_filter)
             readers.append(reader)
 

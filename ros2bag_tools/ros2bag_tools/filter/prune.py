@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from rosbag2_py import TopicMetadata, Info, StorageOptions, ConverterOptions
+from rosbag2_py import TopicMetadata, StorageOptions, ConverterOptions
 from ros2bag_tools.filter import FilterExtension, FilterResult
 
 
@@ -30,10 +30,8 @@ class PruneFilter(FilterExtension):
     def __init__(self):
         self._empty_topics = set()
 
-    def set_args(self, in_files, _out_file, _args):
-        info = Info()
-        for file in in_files:
-            metadata = info.read_metadata(file, '')
+    def set_args(self, metadatas, _args):
+        for metadata in metadatas:
             for topic in metadata.topics_with_message_count:
                 n = topic.message_count
                 topic_name = topic.topic_metadata.name
@@ -50,9 +48,3 @@ class PruneFilter(FilterExtension):
         if topic in self._empty_topics:
             return None
         return topic_metadata
-
-    def filter_msg(self, msg):
-        (topic, _, _) = msg
-        if topic in self._empty_topics:
-            return FilterResult.DROP_MESSAGE
-        return msg
