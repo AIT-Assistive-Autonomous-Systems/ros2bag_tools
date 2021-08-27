@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from rosbag2_py import TopicMetadata, SequentialReader, StorageOptions, ConverterOptions
+from rosbag2_py import TopicMetadata, Info, StorageOptions, ConverterOptions
 from ros2bag_tools.filter import FilterExtension, FilterResult
 
 
@@ -31,11 +31,9 @@ class PruneFilter(FilterExtension):
         self._empty_topics = set()
 
     def set_args(self, in_files, _out_file, _args):
+        info = Info()
         for file in in_files:
-            reader = SequentialReader()
-            storage_options, converter_options = get_rosbag_options(file)
-            reader.open(storage_options, converter_options)
-            metadata = reader.get_metadata()
+            metadata = info.read_metadata(file, '')
             for topic in metadata.topics_with_message_count:
                 n = topic.message_count
                 topic_name = topic.topic_metadata.name

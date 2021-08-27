@@ -15,6 +15,7 @@
 import os
 import cv2
 from cv_bridge import CvBridge
+from rosbag2_py import Info
 from ros2bag_tools.verb import ProgressTracker
 from rosbag2_tools.bag_view import BagView
 from ros2bag.api import print_error
@@ -85,8 +86,9 @@ class VideoDisplay:
         return True
 
 
-def get_fps(reader, topic_name):
-    metadata = reader.get_metadata()
+def estimate_fps(bag_path: str, storage_id: str, topic_name):
+    info = Info()
+    metadata = info.read_metadata(bag_path, storage_id)
     for entry in metadata.topics_with_message_count:
         if entry.topic_metadata.name == topic_name:
             return entry.message_count / metadata.duration.total_seconds()
@@ -149,7 +151,8 @@ class VideoVerb(VerbExtension):
         # TODO ensure the input topic is an image topic
         bag_view = BagView(reader, filter)
         if args.output:
-            processor = VideoWriter(args.output, get_fps(reader, args.topic))
+            processor = VideoWriter(args.output, estimate_fps(
+                args.bag_file, args.storage, args.topic))
         else:
             processor = VideoDisplay(args.topic)
 

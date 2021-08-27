@@ -14,7 +14,8 @@
 
 import argparse
 import re
-from typing import Tuple
+from rosbag2_py import BagMetadata
+from typing import Sequence, Tuple
 from datetime import date, timedelta, datetime, timezone, time
 from rclpy.time import Duration, Time, CONVERSION_CONSTANT
 
@@ -35,11 +36,10 @@ def ros_duration_from_nanoseconds(ns) -> Duration:
     return Duration(seconds=duration_s, nanoseconds=duration_ns_only)
 
 
-def get_bag_bounds(readers) -> Tuple[datetime, datetime]:
+def get_bag_bounds(metadatas: Sequence[BagMetadata]) -> Tuple[datetime, datetime]:
     total_start = datetime.max.replace(tzinfo=timezone.utc)
     total_end = datetime.min.replace(tzinfo=timezone.utc)
-    for reader in readers:
-        metadata = reader.get_metadata()
+    for metadata in metadatas:
         starting_time_utc = metadata.starting_time.astimezone(timezone.utc)
         end_time = starting_time_utc + metadata.duration
         if starting_time_utc < total_start:

@@ -15,6 +15,7 @@
 import os
 import numpy as np
 from rosbag2_py import (
+    Info,
     SequentialReader,
     StorageOptions,
     StorageFilter,
@@ -108,7 +109,8 @@ class SummaryVerb(VerbExtension):
             output_serialization_format=args.serialization_format)
         reader.open(in_storage_options, in_converter_options)
 
-        metadata = reader.get_metadata()
+        info = Info()
+        metadata = info.read_metadata(args.bag_file, args.storage)
         message_counts = {}
         for entry in metadata.topics_with_message_count:
             message_counts[entry.topic_metadata.name] = entry.message_count

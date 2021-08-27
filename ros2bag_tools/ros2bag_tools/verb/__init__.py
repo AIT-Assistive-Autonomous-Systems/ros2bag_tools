@@ -16,6 +16,7 @@ import argparse
 import os
 from datetime import datetime, timezone
 from rosbag2_py import (
+    Info,
     SequentialReader,
     SequentialWriter,
     StorageOptions,
@@ -42,8 +43,7 @@ class ProgressTracker:
         self._expected_topics = set()
         self._no_of_expected_messages = 0
 
-    def add_estimated_work(self, reader, storage_filter=None):
-        metadata = reader.get_metadata()
+    def add_estimated_work(self, metadata, storage_filter=None):
         start = metadata.starting_time.astimezone(timezone.utc)
         end = start + metadata.duration
         filter_start = start
@@ -165,7 +165,9 @@ class FilterVerb(VerbExtension):
             if storage_filter:
                 reader.set_filter(storage_filter)
             if args.progress:
-                progress.add_estimated_work(reader, storage_filter)
+                info = Info()
+                metadata = info.read_metadata(bag_file, in_storage_options.storage)
+                progress.add_estimated_work(metadata, storage_filter)
             readers.append(reader)
 
         writer = SequentialWriter()

@@ -14,7 +14,7 @@
 
 import argparse
 from datetime import datetime, time
-from rosbag2_py import StorageFilter
+from rosbag2_py import StorageFilter, Info
 from ros2bag_tools.filter import FilterExtension, FilterResult
 from ros2bag_tools.time import DurationOrDayTimeType, DurationType, get_bag_bounds, is_same_day,\
     datetime_to_ros_time, add_daytime
@@ -48,17 +48,6 @@ def compute_timespan(start, duration, end, bags_start_time: datetime, bags_end_t
     return (start_time, end_time)
 
 
-def open_reader(path):
-    from rosbag2_py import SequentialReader, StorageOptions, ConverterOptions
-    reader = SequentialReader()
-    storage_options = StorageOptions(uri=path, storage_id='sqlite3')
-    converter_options = ConverterOptions(
-        input_serialization_format='cdr',
-        output_serialization_format='cdr')
-    reader.open(storage_options, converter_options)
-    return reader
-
-
 class CutFilter(FilterExtension):
 
     def __init__(self):
@@ -80,8 +69,9 @@ class CutFilter(FilterExtension):
             type=DurationType)
 
     def set_args(self, in_files, _out_file, args):
-        readers = [open_reader(file_name) for file_name in in_files]
-        (bag_start, bag_end) = get_bag_bounds(readers)
+        info = Info()
+        metadatas = [info.read_metadata(file_name, '') for file_name in in_files]
+        (bag_start, bag_end) = get_bag_bounds(metadatas)
 
         if args.start is not None and args.end is not None and args.duration is not None:
             raise argparse.ArgumentError(
