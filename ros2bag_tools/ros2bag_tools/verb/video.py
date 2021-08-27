@@ -141,9 +141,7 @@ class VideoVerb(VerbExtension):
             output_serialization_format=args.serialization_format)
         reader.open(in_storage_options, in_converter_options)
 
-        filter = StorageFilter()
-        filter.topics = [args.topic]
-
+        filter = StorageFilter(topics=[args.topic])
         progress = ProgressTracker()
         if args.progress:
             progress.add_estimated_work(reader, filter)

@@ -13,11 +13,10 @@
 # limitations under the License.
 
 import argparse
-from datetime import datetime, time
-from rosbag2_py import StorageFilter
+from datetime import datetime, time, timezone
 from ros2bag_tools.filter import FilterExtension, FilterResult
 from ros2bag_tools.time import DurationOrDayTimeType, DurationType, get_bag_bounds, is_same_day,\
-    datetime_to_ros_time, add_daytime
+    datetime_to_ros_time, add_daytime, ros_to_datetime_utc
 
 
 def compute_timespan(start, duration, end, bags_start_time: datetime, bags_end_time: datetime):
@@ -114,22 +113,16 @@ class CutFilter(FilterExtension):
         self._start_time = datetime_to_ros_time(start)
         self._end_time = datetime_to_ros_time(end)
 
-    def get_storage_filter(self):
-        # check existing filter values, to ensure the filter is not changed to filter less than
-        # previously set
-        try:
-            storage_filter = StorageFilter()
-            if hasattr(storage_filter, 'start_time'):
-                if self._start_time.nanoseconds > storage_filter.start_time:
-                    storage_filter.start_time = self._start_time.nanoseconds
-            if hasattr(storage_filter, 'stop_time'):
-                if self._start_time.nanoseconds < storage_filter.stop_time:
-                    storage_filter.stop_time = self._end_time.nanoseconds
-            return storage_filter
-        except TypeError:
-            # If time storage filters are not supported by the installed rosbag2_py, return empty
-            # filter.
-            return None
+    def output_size_factor(self, metadata):
+        start = metadata.starting_time.astimezone(timezone.utc)
+        end = start + metadata.duration
+        filter_start = ros_to_datetime_utc(self._start_time)
+        filter_end = ros_to_datetime_utc(self._end_time)
+        if start < filter_start:
+            start = filter_start
+        if filter_end < end:
+            end = filter_end
+        return min(1, max(0, (end - start) / metadata.duration))
 
     def filter_msg(self, msg):
         (_, _, t) = msg

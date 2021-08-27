@@ -137,13 +137,11 @@ class SummaryVerb(VerbExtension):
                 'custom': default_summary_output(topic_metadata.type)
             }
 
-        filter = StorageFilter()
-        filter.topics = args.topic
-        reader.set_filter(filter)
+        reader.set_filter(StorageFilter(topics=args.topic))
 
         progress = ProgressTracker()
         if args.progress:
-            progress.add_estimated_work(reader, filter)
+            progress.add_estimated_work(metadata, 1.0)
 
         while reader.has_next():
             (topic, data, t) = reader.read_next()

@@ -62,9 +62,7 @@ class PlotVerb(VerbExtension):
 
         topics_with_field = [tuple(t.split('.', 1)) for t in args.topic]
 
-        filter = StorageFilter()
-        filter.topics = [twf[0] for twf in topics_with_field]
-
+        filter = StorageFilter(topics=[twf[0] for twf in topics_with_field])
         fields_by_topic = {}
         for topic, field in topics_with_field:
             if topic not in fields_by_topic:

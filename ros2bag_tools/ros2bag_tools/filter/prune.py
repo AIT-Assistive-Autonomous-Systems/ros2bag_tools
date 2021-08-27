@@ -13,7 +13,7 @@
 # limitations under the License.
 
 from rosbag2_py import TopicMetadata, StorageOptions, ConverterOptions
-from ros2bag_tools.filter import FilterExtension, FilterResult
+from ros2bag_tools.filter import FilterExtension
 
 
 def get_rosbag_options(path, serialization_format='cdr'):

@@ -16,7 +16,6 @@ import argparse
 from rclpy.serialization import serialize_message, deserialize_message
 from rosbag2_py import Info, TopicMetadata
 from ros2bag_tools.filter import FilterResult
-from ros2bag_tools.filter.composite import CompositeFilter
 from ros2bag_tools.filter.add import AddFilter
 from ros2bag_tools.filter.cut import CutFilter
 from ros2bag_tools.filter.extract import ExtractFilter
@@ -34,17 +33,6 @@ import pytest
 def read_metadata(path: str):
     info = Info()
     return info.read_metadata(path, '')
-
-
-def test_composite_filter():
-    filter = CompositeFilter()
-
-    parser = argparse.ArgumentParser('composite')
-    filter.add_arguments(parser)
-    args = parser.parse_args(['-c', 'test/composite.config'])
-
-    filter.set_args(None, args)
-    assert(filter.filter_msg(('/data', None, 0)) == FilterResult.DROP_MESSAGE)
 
 
 def test_add_filter():

@@ -105,8 +105,7 @@ class ExportVerb(VerbExtension):
 
         topics_with_field = [tuple(t.split('.', 1)) for t in args.topic]
 
-        filter = StorageFilter()
-        filter.topics = [twf[0] for twf in topics_with_field]
+        filter = StorageFilter(topics=[twf[0] for twf in topics_with_field])
         view = BagView(args.bag_file, filter)
 
         exporter = TUMTrajectoryExporter()

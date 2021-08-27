@@ -14,6 +14,7 @@
 
 import logging
 import argparse
+from rosbag2_py import BagMetadata, StorageFilter
 from ros2cli.plugin_system import PluginException
 from ros2cli.entry_points import load_entry_points
 from ros2bag_tools.filter import FilterResult
@@ -64,21 +65,27 @@ class CompositeFilter:
                 self._filters.append(filter)
         assert(len(self._filters) > 0)
 
+    def output_size_factor(self, metadata: BagMetadata):
+        total = 1.0
+        for filter in self._filters:
+            total *= filter.output_size_factor(metadata)
+        return total
+
     def get_storage_filter(self):
         """
-        Get the first storage filter returned by inner filters.
-
-        Fails if storage filters are emitted by multiple filters, as current sequential storage
-        filters can not be generally combined. For instance, combination of two time bounds
-        can be either the intersection or union.
+        Combine storage filter of inner filters by union.
         """
         composite_storage_filter = None
         for filter in self._filters:
             storage_filter = filter.get_storage_filter()
-            if not composite_storage_filter:
-                composite_storage_filter = storage_filter
-            elif storage_filter:
-                raise ValueError('cannot combine storage filters')
+            if storage_filter:
+                if not composite_storage_filter:
+                    composite_storage_filter = storage_filter
+                else:
+                    total_topics = set(composite_storage_filter.topics).union(
+                        storage_filter.topics)
+                    composite_storage_filter = StorageFilter(
+                        topics=total_topics)
         return composite_storage_filter
 
     def filter_topic(self, topic_metadata):

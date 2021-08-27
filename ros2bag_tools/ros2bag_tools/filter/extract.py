@@ -12,13 +12,14 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+from rosbag2_py import BagMetadata, StorageFilter
 from ros2bag_tools.filter import FilterExtension, FilterResult
 
 
 class ExtractFilter(FilterExtension):
 
     def __init__(self):
-        self._args = None
+        self._output_topics = set()
 
     def add_arguments(self, parser):
         parser.add_argument(
@@ -28,23 +29,36 @@ class ExtractFilter(FilterExtension):
             '-i', '--invert', default=False, action='store_true',
             help='invert the filter, i.e. specified topics are NOT copied to output bag')
 
-    def set_args(self, _metadata, args):
-        self._args = args
+    def set_args(self, metadatas, args):
+        if args.invert:
+            for metadata in metadatas:
+                for topic in metadata.topics_with_message_count:
+                    if topic not in args.topic:
+                        self._output_topics.add(topic.topic_metadata.name)
+        else:
+            self._output_topics = set(args.topic)
+
+    def output_size_factor(self, metadata: BagMetadata):
+        output_msg_count = 0
+        total_msg_count = 0
+        for topic in metadata.topics_with_message_count:
+            if topic.topic_metadata.name in self._output_topics:
+                output_msg_count += topic.message_count
+            total_msg_count += topic.message_count
+        # assume that messages are spread uniformly across filtered timespan
+        # this might not always apply, but gives a good enough estimation for progress feedback
+        return output_msg_count / total_msg_count
+
+    def get_storage_filter(self):
+        return StorageFilter(topics=list(self._output_topics))
 
     def filter_topic(self, topic_metadata):
-        topic = topic_metadata.name
-        if self._args.invert:
-            if topic in self._args.topic:
-                return None
-        elif topic not in self._args.topic:
+        if topic_metadata.name not in self._output_topics:
             return None
         return topic_metadata
 
     def filter_msg(self, msg):
         (topic, _, _) = msg
-        if self._args.invert:
-            if topic in self._args.topic:
-                return FilterResult.DROP_MESSAGE
-        elif topic not in self._args.topic:
+        if topic not in self._output_topics:
             return FilterResult.DROP_MESSAGE
         return msg

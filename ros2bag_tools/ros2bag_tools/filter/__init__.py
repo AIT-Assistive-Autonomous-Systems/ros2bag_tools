@@ -14,7 +14,7 @@
 from enum import Enum
 from typing import Tuple, Union, List, Sequence
 import argparse
-from rosbag2_py import TopicMetadata, BagMetadata
+from rosbag2_py import TopicMetadata, BagMetadata, StorageFilter
 from rclpy.exceptions import InvalidTopicNameException
 from rclpy.validate_topic_name import validate_topic_name
 from rclpy.serialization import deserialize_message, serialize_message
@@ -25,6 +25,9 @@ from ros2cli.plugin_system import PLUGIN_SYSTEM_VERSION, satisfies_version
 class FilterResult(Enum):
     DROP_MESSAGE = 1
     STOP_CURRENT_BAG = 2
+
+
+BagMessageTuple = Tuple[str, bytes, int]
 
 
 class FilterExtension:
@@ -38,6 +41,7 @@ class FilterExtension:
     * `add_arguments`
     * `set_args`
     * `get_storage_filter`
+    * `output_size_factor`
     * `filter_topic`
     * `filter_msg`
     """
@@ -54,13 +58,17 @@ class FilterExtension:
     def set_args(self, _metadata: Sequence[BagMetadata], _args):
         pass
 
-    def get_storage_filter(self):
+    def get_storage_filter(self) -> StorageFilter:
         return None
 
-    def filter_topic(self, topic) -> Union[TopicMetadata, List[TopicMetadata]]:
+    def output_size_factor(self, _metadata: BagMetadata):
+        """Estimate multiple of input messages this filter will output."""
+        return 1.0
+
+    def filter_topic(self, topic: TopicMetadata) -> Union[TopicMetadata, List[TopicMetadata]]:
         return topic
 
-    def filter_msg(self, msg) -> Union[FilterResult, Tuple[str, bytes, int], List]:
+    def filter_msg(self, msg: BagMessageTuple) -> Union[FilterResult, BagMessageTuple, List]:
         return msg
 
 

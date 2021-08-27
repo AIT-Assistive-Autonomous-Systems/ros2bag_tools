@@ -14,7 +14,7 @@
 
 import argparse
 import os
-from datetime import datetime, timezone
+from datetime import datetime
 from rosbag2_py import (
     Info,
     SequentialReader,
@@ -25,8 +25,6 @@ from rosbag2_py import (
 from ros2bag.api import print_error
 from ros2bag.verb import VerbExtension
 from ros2bag_tools.filter import FilterResult
-from ros2bag_tools.time import ros_time_from_nanoseconds, ros_to_datetime_utc
-
 
 def get_rosbag_options(path, serialization_format='cdr'):
     storage_options = StorageOptions(uri=path, storage_id='sqlite3')
@@ -43,33 +41,9 @@ class ProgressTracker:
         self._expected_topics = set()
         self._no_of_expected_messages = 0
 
-    def add_estimated_work(self, metadata, storage_filter=None):
-        start = metadata.starting_time.astimezone(timezone.utc)
-        end = start + metadata.duration
-        filter_start = start
-        filter_end = end
-        if storage_filter:
-            if hasattr(storage_filter, 'start_time'):
-                filter_start = ros_to_datetime_utc(
-                    ros_time_from_nanoseconds(storage_filter.start_time))
-            if hasattr(storage_filter, 'stop_time'):
-                filter_end = ros_to_datetime_utc(
-                    ros_time_from_nanoseconds(storage_filter.stop_time))
-        if start < filter_start:
-            start = filter_start
-        if filter_end < end:
-            end = filter_end
-        filter_factor = min(1, max(0, (end - start) / metadata.duration))
-        for topic in metadata.topics_with_message_count:
-            n = topic.message_count
-            topic_name = topic.topic_metadata.name
-            if not storage_filter or (not storage_filter.topics or topic_name in storage_filter.topics):
-                self._expected_topics.add(topic_name)
-
-                # assume that messages are spread uniformly across filtered timespan
-                # this might not be true, but gives a good enough estimation for a
-                # progress bar
-                self._no_of_expected_messages += int(n * filter_factor)
+    def add_estimated_work(self, metadata, factor):
+        n = sum(topic.message_count for topic in metadata.topics_with_message_count)
+        self._no_of_expected_messages += int(n * factor)
 
     @property
     def n_processed(self):
@@ -167,7 +141,7 @@ class FilterVerb(VerbExtension):
             if storage_filter:
                 reader.set_filter(storage_filter)
             if args.progress:
-                progress.add_estimated_work(metadata, storage_filter)
+                progress.add_estimated_work(metadata, self._filter.output_size_factor(metadata))
             readers.append(reader)
 
         writer = SequentialWriter()
