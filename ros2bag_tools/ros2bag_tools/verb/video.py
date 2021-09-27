@@ -14,12 +14,19 @@
 
 import os
 import cv2
+from argparse import ArgumentError
 from cv_bridge import CvBridge
-from rosbag2_py import Info
+from rosbag2_py import Info, SequentialReader, StorageOptions, ConverterOptions, StorageFilter
+from ros2bag_tools.filter import FilterResult
+from ros2bag_tools.filter.cut import CutFilter
 from ros2bag_tools.verb import ProgressTracker
 from rosbag2_tools.bag_view import BagView
 from ros2bag.api import print_error
 from ros2bag.verb import VerbExtension
+
+
+IMAGE_MESSAGE_TYPE_NAME = 'sensor_msgs/msg/Image'
+RESIZE_INTERPOLATION = cv2.INTER_AREA
 
 
 def get_screen_size():
@@ -75,7 +82,7 @@ class VideoDisplay:
                     int(self._target_size[0] / 2), int(self._target_size[1] / 2))
 
         image = cv2.resize(
-            image, (self._target_size[1], self._target_size[0]), interpolation=cv2.INTER_AREA)
+            image, (self._target_size[1], self._target_size[0]), interpolation=RESIZE_INTERPOLATION)
         cv2.imshow(self._window_name, image)
         key_pressed = cv2.waitKey(self._wait_ms) & 0xFF
         if key_pressed in [ord('q'), 27]:
@@ -94,8 +101,22 @@ def estimate_fps(bag_path: str, storage_id: str, topic_name):
             return entry.message_count / metadata.duration.total_seconds()
 
 
+def ensure_image(metadata, topic_name):
+    for entry in metadata.topics_with_message_count:
+        if entry.topic_metadata.name == topic_name:
+            if entry.topic_metadata.type != IMAGE_MESSAGE_TYPE_NAME:
+                raise ArgumentError(
+                    None, f'topic type is not {IMAGE_MESSAGE_TYPE_NAME}')
+            else:
+                return
+    raise ArgumentError(None, 'topic not in bag')
+
+
 class VideoVerb(VerbExtension):
     """Display or write a video of image data in a bag."""
+
+    def __init__(self):
+        self._cut = CutFilter()
 
     def add_arguments(self, parser, cli_name):  # noqa: D102
         parser.add_argument(
@@ -116,35 +137,36 @@ class VideoVerb(VerbExtension):
                             help='file path to video to write')
         parser.add_argument('-e', '--encoding', default='passthrough', type=str,
                             help='desired encoding for the output image')
+        parser.add_argument('--image-resize', type=float,
+                            help='image resize factor')
+        self._cut.add_arguments(parser)
 
     def main(self, *, args):  # noqa: D102
         if not os.path.exists(args.bag_file):
             return print_error("bag file '{}' does not exist!".format(args.bag_file))
 
-        # NOTE(hidmic): in merged install workspaces on Windows, Python entrypoint lookups
-        #               combined with constrained environments (as imposed by colcon test)
-        #               may result in DLL loading failures when attempting to import a C
-        #               extension. Therefore, do not import rosbag2_transport at the module
-        #               level but on demand, right before first use.
-        from rosbag2_py import (
-            SequentialReader,
-            StorageOptions,
-            ConverterOptions,
-            StorageFilter
-        )
+        info = Info()
+        metadata = info.read_metadata(args.bag_file, args.storage)
+        try:
+            ensure_image(metadata, args.topic)
+        except Exception as e:
+            return print_error("invalid topic: {}".format(e))
 
         reader = SequentialReader()
-        in_storage_options = StorageOptions(
+        storage_options = StorageOptions(
             uri=args.bag_file, storage_id=args.storage)
-        in_converter_options = ConverterOptions(
+        converter_options = ConverterOptions(
             input_serialization_format=args.serialization_format,
             output_serialization_format=args.serialization_format)
-        reader.open(in_storage_options, in_converter_options)
+        reader.open(storage_options, converter_options)
+
+        self._cut.set_args([metadata], args)
 
         filter = StorageFilter(topics=[args.topic])
         progress = ProgressTracker()
         if args.progress:
-            progress.add_estimated_work(reader, filter)
+            progress.add_estimated_work(
+                metadata, self._cut.output_size_factor(metadata))
 
         # TODO ensure the input topic is an image topic
         bag_view = BagView(reader, filter)
@@ -155,8 +177,18 @@ class VideoVerb(VerbExtension):
             processor = VideoDisplay(args.topic)
 
         image_bridge = CvBridge()
-        for _, image, _ in bag_view:
+        for tpc, image, t in bag_view:
+            cut_result = self._cut.filter_msg((tpc, image, t))
+            if cut_result == FilterResult.DROP_MESSAGE:
+                continue
+            if cut_result == FilterResult.STOP_CURRENT_BAG:
+                break
             cv_image = image_bridge.imgmsg_to_cv2(image, args.encoding)
+            width = int(cv_image.shape[1] * args.image_resize)
+            height = int(cv_image.shape[0] * args.image_resize)
+            dim = (width, height)
+            if args.image_resize:
+                cv_image = cv2.resize(cv_image, dim, interpolation=RESIZE_INTERPOLATION)
             processor.process(cv_image)
             if args.progress:
                 progress.print_update(progress.update(args.topic), every=10)
