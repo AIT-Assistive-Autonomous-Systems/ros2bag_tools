@@ -6,17 +6,17 @@ This package adds verb extensions to the ros2bag cli.
 
 | Verb    | Usage |
 | ------- |:------------------|
-| cut     | cut time slice from a bag and store in new output bag |
+| cut     | cut time slice by wall time or duration offset |
 | export  | export data to other formats |
-| extract | extract topics from a bag and store in new output bag |
+| extract | extract topics by name |
 | merge   | merge multiple bags into one |
 | plot    | plot message data to a new window |
 | reframe | change frame_id on messages with headers |
 | rename  | change name of a topic |
-| restamp | write header timestamps of all messages with headers as message timestamp in a new output bag |
-| replace | replace messages of a specific topic with message data specified in a yaml file, write all messages to new bag |
-| summary | print summary on data in a rosbag |
-| video | show or write video of image data in bag |
+| restamp | for all messages with headers, change the bag timestamp to their header stamp |
+| replace | replace messages of a specific topic with message data specified in a yaml file |
+| summary | print summary on data to stdout |
+| video | show or write video of image data |
 
 You can check detailed usage information with `ros2 bag $VERB --help`.
 
@@ -32,7 +32,7 @@ extract -t /image_rect
 restamp
 ```
 
-and run `ros2 bag process -c process.config in.bag -o out.bag` to cut off the first 10 seconds, extract messages of the /image_rect topic and restamp them in one go.
+and run `ros2 bag process -c process.config in.bag -o out.bag` to crop to the first 10 seconds, keep only the /image_rect topic and restamp the remaining messages in one go.
 
 ## Python API
 
@@ -48,7 +48,7 @@ converter_options = ConverterOptions(
     input_serialization_format='cdr',
     output_serialization_format='cdr')
 reader.open(storage_options, converter_options)
-for range_msg in BagView(reader):
+for _, range_msg, _ in BagView(reader):
     print('r', range_msg.range)
 ```
 
@@ -69,5 +69,4 @@ dfs['/range'].summary()
 ## Current limitations
 
 * Tools do not operate in-place, they all create new output bags, potentially doubling the required disk space
-* Time filters are only performed by the underlying storage implementation when using [this branch of rosbag2](https://github.com/Kettenhoax/rosbag2/tree/time_filter).
 * The time filters used in the `cut` verb truncate timestamps to the microsecond, due to the precision loss of the pybind11-conversion of C++ chrono time objects to python3 datetime objects. Thus, filters are not sufficiently precise to handle timestamp deltas below 1000ns.
