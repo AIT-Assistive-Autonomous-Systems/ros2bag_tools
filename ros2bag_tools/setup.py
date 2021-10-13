@@ -58,5 +58,9 @@ The package provides the additional commands for the ROS 2 bag command line tool
             'replace = ros2bag_tools.filter.replace:ReplaceFilter',
             'restamp = ros2bag_tools.filter.restamp:RestampFilter',
         ],
+        'ros2bag_tools.exporter': [
+            'tum_trajectory = ros2bag_tools.exporter.tum_trajectory:TUMTrajectoryExporter',
+            'image = ros2bag_tools.exporter.image:ImageExporter',
+        ],
     }
 )

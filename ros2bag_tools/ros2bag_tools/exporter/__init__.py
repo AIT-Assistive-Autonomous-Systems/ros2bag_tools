@@ -1,0 +1,3 @@
+
+class ExporterError(Exception):
+    pass
