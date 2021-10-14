@@ -1,3 +1,17 @@
+# Copyright 2021 AIT Austrian Institute of Technology GmbH
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
 from rclpy.time import Time
 from geometry_msgs.msg import Vector3, Quaternion
 from nav_msgs.msg import Odometry
@@ -33,7 +47,8 @@ class TUMTrajectoryExporter:
                     pos.z = utm_point.altitude
                     utm_lattice_coordinate = (utm_point.zone, utm_point.band)
                     if previous_utm_zone_band and previous_utm_zone_band != utm_lattice_coordinate:
-                        raise ExporterError(f'UTM (zone, band) changes between messages in topic {topic_name}')
+                        msg = f'UTM (zone, band) changes between messages in topic {topic_name}'
+                        raise ExporterError(msg)
                     previous_utm_zone_band = utm_lattice_coordinate
                     # orientation is unit for NavSatFix
                     ori = Quaternion()

@@ -26,6 +26,7 @@ from ros2bag.api import print_error
 from ros2bag.verb import VerbExtension
 from ros2bag_tools.filter import FilterResult
 
+
 def get_rosbag_options(path, serialization_format='cdr'):
     storage_options = StorageOptions(uri=path, storage_id='sqlite3')
     converter_options = ConverterOptions(

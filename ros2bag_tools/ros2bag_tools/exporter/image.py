@@ -1,3 +1,17 @@
+# Copyright 2021 AIT Austrian Institute of Technology GmbH
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
 from cv_bridge import CvBridge, CvBridgeError
 from cv_bridge.boost.cv_bridge_boost import cvtColor2
 from pathlib import Path
@@ -26,7 +40,11 @@ class ImageExporter:
     def add_arguments(parser):
         parser.add_argument('--dir', default='.', help='Output directory')
         parser.add_argument('--name', default='%t.png',
-                            help='Filename pattern of output images. Placeholders: %tpc for topic, %t for timestamp, %i for sequence index')
+                            help="""Filename pattern of output images.
+                            Placeholders:
+                                %tpc ... topic
+                                %t   ... timestamp
+                                %i   ... sequence index""")
         parser.add_argument('--encoding', default='passthrough',
                             help='Output image encoding')
         parser.add_argument('--demosaicing', choices=['linear', 'vng', 'ea'],

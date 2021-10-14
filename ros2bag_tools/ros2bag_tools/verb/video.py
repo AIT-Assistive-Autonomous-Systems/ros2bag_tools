@@ -82,7 +82,8 @@ class VideoDisplay:
                     int(self._target_size[0] / 2), int(self._target_size[1] / 2))
 
         image = cv2.resize(
-            image, (self._target_size[1], self._target_size[0]), interpolation=RESIZE_INTERPOLATION)
+            image, (self._target_size[1], self._target_size[0]),
+            interpolation=RESIZE_INTERPOLATION)
         cv2.imshow(self._window_name, image)
         key_pressed = cv2.waitKey(self._wait_ms) & 0xFF
         if key_pressed in [ord('q'), 27]:

@@ -72,9 +72,7 @@ class CompositeFilter:
         return total
 
     def get_storage_filter(self):
-        """
-        Combine storage filter of inner filters by union.
-        """
+        """Combine storage filter of inner filters by union."""
         composite_storage_filter = None
         for filter in self._filters:
             storage_filter = filter.get_storage_filter()
