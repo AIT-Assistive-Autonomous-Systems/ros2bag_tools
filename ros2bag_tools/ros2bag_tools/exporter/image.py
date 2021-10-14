@@ -25,6 +25,8 @@ class ImageExporter:
     @staticmethod
     def add_arguments(parser):
         parser.add_argument('--dir', default='.', help='Output directory')
+        parser.add_argument('--name', default='%t.png',
+                            help='Filename pattern of output images. Placeholders: %tpc for topic, %t for timestamp, %i for sequence index')
         parser.add_argument('--encoding', default='passthrough',
                             help='Output image encoding')
         parser.add_argument('--demosaicing', choices=['linear', 'vng', 'ea'],
@@ -33,8 +35,10 @@ class ImageExporter:
     def process(self, args, images):
         dir = Path(args.dir)
         image_bridge = CvBridge()
+        idx = 0
         for topic, img_msg, t in images:
-            sub_dir = dir / topic.lstrip('/').replace('/', '_')
+            tpc_path = topic.lstrip('/').replace('/', '_')
+            sub_dir = dir / tpc_path
             img = image_bridge.imgmsg_to_cv2(img_msg)
 
             if img_msg.encoding.startswith('bayer_') and args.demosaicing:
@@ -49,5 +53,9 @@ class ImageExporter:
                     raise CvBridgeError(e)
 
             sub_dir.mkdir(parents=True, exist_ok=True)
-            img_path = sub_dir / (str(t) + '.png')
+            filename = args.name.replace('%tpc', tpc_path)
+            filename = filename.replace('%t', str(t))
+            filename = filename.replace('%i', str(idx).zfill(8))
+            img_path = sub_dir / filename
             cv.imwrite(str(img_path), img)
+            idx += 1
