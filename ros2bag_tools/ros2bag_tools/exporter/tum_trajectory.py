@@ -21,6 +21,7 @@ from ros2bag_tools.exporter import ExporterError
 
 
 class TUMTrajectoryExporter:
+    """TUM pose trajectories"""
 
     @staticmethod
     def add_arguments(parser):

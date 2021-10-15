@@ -35,6 +35,7 @@ def conversion_code(bayer_encoding, desired_encoding, demosaicing):
 
 
 class ImageExporter:
+    """Image files per message"""
 
     @staticmethod
     def add_arguments(parser):
@@ -54,9 +55,9 @@ class ImageExporter:
         dir = Path(args.dir)
         image_bridge = CvBridge()
         idx = 0
+
+        dir.mkdir(parents=True, exist_ok=True)
         for topic, img_msg, t in images:
-            tpc_path = topic.lstrip('/').replace('/', '_')
-            sub_dir = dir / tpc_path
             img = image_bridge.imgmsg_to_cv2(img_msg)
 
             if img_msg.encoding.startswith('bayer_') and args.demosaicing:
@@ -70,10 +71,10 @@ class ImageExporter:
                 except RuntimeError as e:
                     raise CvBridgeError(e)
 
-            sub_dir.mkdir(parents=True, exist_ok=True)
+            tpc_path = topic.lstrip('/').replace('/', '_')
             filename = args.name.replace('%tpc', tpc_path)
             filename = filename.replace('%t', str(t))
             filename = filename.replace('%i', str(idx).zfill(8))
-            img_path = sub_dir / filename
+            img_path = dir / filename
             cv.imwrite(str(img_path), img)
             idx += 1
