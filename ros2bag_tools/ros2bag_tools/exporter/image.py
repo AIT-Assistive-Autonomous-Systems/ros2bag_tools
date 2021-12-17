@@ -59,17 +59,18 @@ class ImageExporter:
         dir.mkdir(parents=True, exist_ok=True)
         for topic, img_msg, t in images:
             img = image_bridge.imgmsg_to_cv2(img_msg)
-
-            if img_msg.encoding.startswith('bayer_') and args.demosaicing:
-                # use custom debayering
-                # cvtColor2 unfortunately doesn't expose a demosaicing algorithm parameter
-                conv_code = conversion_code(img_msg.encoding, args.encoding, args.demosaicing)
-                img = cv.cvtColor(img, conv_code)
-            else:
-                try:
-                    img = cvtColor2(img, img_msg.encoding, args.encoding)
-                except RuntimeError as e:
-                    raise CvBridgeError(e)
+            if args.encoding != 'passthrough':
+                if img_msg.encoding.startswith('bayer_') and args.demosaicing:
+                    # use custom debayering
+                    # cvtColor2 unfortunately doesn't expose a demosaicing algorithm parameter
+                    conv_code = conversion_code(
+                        img_msg.encoding, args.encoding, args.demosaicing)
+                    img = cv.cvtColor(img, conv_code)
+                else:
+                    try:
+                        img = cvtColor2(img, img_msg.encoding, args.encoding)
+                    except RuntimeError as e:
+                        raise CvBridgeError(e)
 
             tpc_path = topic.lstrip('/').replace('/', '_')
             filename = args.name.replace('%tpc', tpc_path)
