@@ -32,7 +32,7 @@ class ExportVerb(VerbExtension):
     def add_arguments(self, parser, cli_name):  # noqa: D102
         parser.add_argument('--in', '-i', required=True,
                             help='bag file to read data from', dest='bag_file')
-        parser.add_argument('-t', '--topic', nargs='+', type=str, help='topics to export')
+        parser.add_argument('-t', '--topic', type=str, help='topics to export')
 
         exporter_parsers = parser.add_subparsers(dest='exporter', help='choice of exporter')
         for exporter_name, exporter in self._exporters.items():
@@ -42,12 +42,12 @@ class ExportVerb(VerbExtension):
 
     def main(self, *, args):  # noqa: D102
         if not args.topic:
-            return print_error("topics to export are required")
+            return print_error("topic to export is required")
 
         if not os.path.exists(args.bag_file):
             return print_error("bag file '{}' does not exist!".format(args.bag_file))
 
-        filter = StorageFilter(topics=args.topic)
+        filter = StorageFilter(topics=[args.topic])
         view = BagView(args.bag_file, filter)
         exporter = self._exporters[args.exporter]()
         try:
