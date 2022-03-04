@@ -64,9 +64,8 @@ class VideoWriter:
 
 class VideoDisplay:
 
-    def __init__(self, _window_name):
-        frame_rate = 30
-        self._wait_ms = int(1000 / frame_rate)
+    def __init__(self, _window_name, fps):
+        self._wait_ms = int(1000 / fps)
         self._target_size = None
         self._window_name = _window_name
 
@@ -140,6 +139,7 @@ class VideoVerb(VerbExtension):
                             help='desired encoding for the output image')
         parser.add_argument('--image-resize', type=float,
                             help='image resize factor')
+        parser.add_argument('--fps', type=int, help='video fps')
         self._cut.add_arguments(parser)
 
     def main(self, *, args):  # noqa: D102
@@ -171,11 +171,13 @@ class VideoVerb(VerbExtension):
 
         # TODO ensure the input topic is an image topic
         bag_view = BagView(reader, filter)
+        fps = args.fps
+        if not fps:
+            fps = estimate_fps(args.bag_file, args.storage, args.topic)
         if args.output:
-            processor = VideoWriter(args.output, estimate_fps(
-                args.bag_file, args.storage, args.topic))
+            processor = VideoWriter(args.output, fps)
         else:
-            processor = VideoDisplay(args.topic)
+            processor = VideoDisplay(args.topic, fps)
 
         image_bridge = CvBridge()
         for tpc, image, t in bag_view:
