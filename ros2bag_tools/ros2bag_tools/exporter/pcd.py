@@ -49,23 +49,24 @@ def field_type_str(datatype):
 
 
 def pcd_type_to_np_type(datatype):
-    if datatype == UINT8:
-        return np.uint8
     if datatype == INT8:
         return np.int8
+    if datatype == UINT8:
+        return np.uint8
+    if datatype == INT16:
+        return np.int16
+    if datatype == UINT16:
+        return np.uint16
+    if datatype == INT32:
+        return np.int32
+    if datatype == UINT32:
+        return np.uint32
     elif datatype == FLOAT32:
         return np.float32
+    elif datatype == FLOAT64:
+        return np.float64
     else:
-        raise TypeError(f'pcd field type {datatype} cannot be converted to numpy dtype')    
-
-
-# def field_buffer(cloud, field):
-#     n_points = cloud.height * cloud.width
-#     return np.ndarray((n_points, field.count),
-#                       dtype=field_type_to_np(field.datatype),
-#                       buffer=cloud.data,
-#                       offset=field.offset,
-#                       strides=(1, cloud.point_step))
+        raise TypeError(f'pcd field type {datatype} cannot be converted to numpy dtype')
 
 
 class PcdExporter:
@@ -114,7 +115,6 @@ class PcdExporter:
                 f.write(f'POINTS {n_points}\n')
                 f.write('DATA ascii\n')
 
-                # field_buffers = [field_buffer(cloud, f) for f in cloud.fields]
                 for i in range(n_points):
                     offset = i * cloud.point_step
                     for field in cloud.fields:
@@ -123,16 +123,3 @@ class PcdExporter:
                         f.write(f'{val} ')
                     f.write('\n')
             idx += 1
-
-# .PCD v.7 - Point Cloud Data file format
-# VERSION .7
-# FIELDS x y z
-# SIZE 4 4 4 4
-# TYPE F F F F
-# COUNT 1 1 1 1
-# WIDTH 213
-# HEIGHT 1
-# VIEWPOINT 0 0 0 1 0 0 0
-# POINTS 213
-# DATA ascii
-# 0.93773 0.33763 0 4.2108e+06
