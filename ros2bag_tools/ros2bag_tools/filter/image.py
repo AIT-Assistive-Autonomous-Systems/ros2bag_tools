@@ -16,6 +16,7 @@ import argparse
 
 import cv2 as cv
 from cv_bridge import CvBridge
+from sensor_msgs.msg import Image, CameraInfo
 from ros2bag_tools.filter import TypeAwareTopicFilter
 
 
@@ -35,6 +36,42 @@ def ImageResizeArg(value):
         None, f'{value} must be floating point value, or image resolution in width x height form')
 
 
+def resize_image(cv_im, resize_arg):
+    if isinstance(resize_arg, float):
+        return cv.resize(cv_im, None, fx=resize_arg, fy=resize_arg, interpolation=cv.INTER_CUBIC)
+    else:
+        return cv.resize(cv_im, resize_arg, interpolation=cv.INTER_CUBIC)
+
+
+def resize_camera_info(msg: CameraInfo, resize_arg):
+    scale_y = 0.0
+    scale_x = 0.0
+    if isinstance(resize_arg, float):
+        scale_y = resize_arg
+        scale_x = resize_arg
+        msg.height = int(msg.height * scale_y)
+        msg.width = int(msg.width * scale_x)
+    else:
+        new_height = resize_arg[1]
+        new_width = resize_arg[0]
+        scale_y = new_height / float(msg.height)
+        scale_x = new_width / float(msg.width)
+        msg.height = new_height
+        msg.width = new_width
+
+    msg.k[0] = msg.k[0] * scale_x  # fx
+    msg.k[2] = msg.k[2] * scale_x  # cx
+    msg.k[4] = msg.k[4] * scale_y  # fy
+    msg.k[5] = msg.k[5] * scale_y  # cy
+
+    msg.p[0] = msg.p[0] * scale_x  # fx
+    msg.p[2] = msg.p[2] * scale_x  # cx
+    msg.p[3] = msg.p[3] * scale_x  # T
+    msg.p[5] = msg.p[5] * scale_y  # fy
+    msg.p[6] = msg.p[6] * scale_y  # cy
+    return msg
+
+
 class ImageFilter(TypeAwareTopicFilter):
 
     def __init__(self):
@@ -45,7 +82,7 @@ class ImageFilter(TypeAwareTopicFilter):
 
     def add_arguments(self, parser):
         super().add_arguments(parser)
-        parser.add_argument('--image-encoding', default='passthrough')
+        parser.add_argument('--image-encoding', type=str, default='passthrough')
         parser.add_argument('--image-size', type=ImageResizeArg,
                             help=ImageResizeArg.__doc__)
 
@@ -54,21 +91,26 @@ class ImageFilter(TypeAwareTopicFilter):
         self._image_encoding = args.image_encoding
         self._image_size = args.image_size
 
-    def filter_typed_msg(self, msg):
-        (topic, image, t) = msg
-        cv_image = self._cv_bridge.imgmsg_to_cv2(
-            image, self._image_encoding)
-        if self._image_size:
-            if isinstance(self._image_size, float):
-                cv_image = cv.resize(cv_image, None, fx=self._image_size, fy=self._image_size,
-                                     interpolation=cv.INTER_CUBIC)
+    def filter_typed_msg(self, item):
+        (topic, msg, t) = item
+        if isinstance(msg, Image):
+            # to cv, with optional conversion
+            cv_image = self._cv_bridge.imgmsg_to_cv2(msg, self._image_encoding)
+            if self._image_size:
+                cv_image = resize_image(cv_image, self._image_size)
+            result_msg = self._cv_bridge.cv2_to_imgmsg(cv_image)
+            if self._image_encoding != 'passthrough':
+                # set encoding explicitly, as it is ambiguous between choices such as 8UC3/BGR8,
+                # and the desired string is likely to be the exact argument
+                result_msg.encoding = self._image_encoding
+            result_msg.header = msg.header
+            msg = result_msg
+        elif isinstance(msg, CameraInfo):
+            # taken from https://index.ros.org/p/image_proc/ to match its implementation
+            if self._image_size:
+                msg = resize_camera_info(msg, self._image_size)
             else:
-                cv_image = cv.resize(cv_image, self._image_size, interpolation=cv.INTER_CUBIC)
-        result_msg = self._cv_bridge.cv2_to_imgmsg(cv_image)
-        if self._image_encoding != 'passthrough':
-            # set encoding explicitly, as it is ambiguous between choices such as 8UC3 and BGR8,
-            # and user most likely wants the encoding to be exactly the target encoding given to
-            # the filter
-            result_msg.encoding = self._image_encoding
-        result_msg.header = image.header
-        return (topic, result_msg, t)
+                raise ValueError('can only apply resize to CameraInfo')
+        else:
+            raise ValueError(f'cannot filter message of type {type(msg)} with ImageFilter')
+        return (topic, msg, t)
