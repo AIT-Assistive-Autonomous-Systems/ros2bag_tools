@@ -7,6 +7,7 @@ This package adds verb extensions to the ros2bag cli.
 | Verb    | Usage |
 | ------- |:------------------|
 | cut     | cut time slice by wall time or duration offset |
+| drop    | drop X out of every Y messages of a topic |
 | export  | export data to other formats |
 | extract | extract topics by name |
 | merge   | merge multiple bags into one |

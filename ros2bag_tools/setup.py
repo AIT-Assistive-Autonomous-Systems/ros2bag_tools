@@ -34,6 +34,7 @@ The package provides the additional commands for the ROS 2 bag command line tool
         'ros2bag.verb': [
             'convert = ros2bag_tools.verb.convert:ConvertVerb',
             'cut = ros2bag_tools.verb.cut:CutVerb',
+            'drop = ros2bag_tools.verb.drop:DropVerb',
             'export = ros2bag_tools.verb.export:ExportVerb',
             'extract = ros2bag_tools.verb.extract:ExtractVerb',
             'merge = ros2bag_tools.verb.merge:MergeVerb',
@@ -50,6 +51,7 @@ The package provides the additional commands for the ROS 2 bag command line tool
         'ros2bag_tools.filter': [
             'add = ros2bag_tools.filter.add:AddFilter',
             'cut = ros2bag_tools.filter.cut:CutFilter',
+            'drop = ros2bag_tools.filter.drop:DropFilter',
             'extract = ros2bag_tools.filter.extract:ExtractFilter',
             'image = ros2bag_tools.filter.image:ImageFilter',
             'prune = ros2bag_tools.filter.prune:PruneFilter',
