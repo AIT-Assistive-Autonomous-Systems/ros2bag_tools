@@ -16,14 +16,6 @@ from rosbag2_py import TopicMetadata, StorageOptions, ConverterOptions
 from ros2bag_tools.filter import FilterExtension
 
 
-def get_rosbag_options(path, serialization_format='cdr'):
-    storage_options = StorageOptions(uri=path, storage_id='sqlite3')
-    converter_options = ConverterOptions(
-        input_serialization_format=serialization_format,
-        output_serialization_format=serialization_format)
-    return storage_options, converter_options
-
-
 class PruneFilter(FilterExtension):
     """Remove empty topics."""
 
