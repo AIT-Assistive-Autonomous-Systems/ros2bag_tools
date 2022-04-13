@@ -13,6 +13,7 @@
 # limitations under the License.
 
 import os
+from array import array
 import numpy as np
 from rosbag2_py import (
     Info,
@@ -29,6 +30,16 @@ from rclpy.serialization import deserialize_message
 from rosidl_runtime_py.utilities import get_message
 
 
+def generic_equals(ref_val, val):
+    """Equals which handles the case of array values, which all have to match"""
+    if ref_val is None:
+        return True
+    cmp = ref_val == val
+    if isinstance(cmp, np.ndarray) or isinstance(cmp, array):
+        return cmp.all()
+    return cmp
+
+
 class ConstantFieldSummaryOutput:
     """Get constant value of a specific field and add to summary."""
 
@@ -39,7 +50,8 @@ class ConstantFieldSummaryOutput:
     def update(self, message):
         assert(hasattr(message, self._field_name))
         value = getattr(message, self._field_name)
-        assert(not self._value or value == self._value)
+        # ensure the value is actually constant across the bag
+        assert generic_equals(self._value, value)
         self._value = value
 
     def write(self):
@@ -69,7 +81,8 @@ def default_summary_output(message_type):
     if message_type == 'sensor_msgs/msg/Image':
         return [ConstantFieldSummaryOutput(field) for field in ['width', 'height', 'encoding']]
     if message_type == 'sensor_msgs/msg/CameraInfo':
-        return [ConstantFieldSummaryOutput('distortion_model')]
+        return [ConstantFieldSummaryOutput(field) for field
+                in ['distortion_model', 'roi', 'width', 'height', 'd', 'k', 'r', 'p']]
     if message_type == 'sensor_msgs/msg/NavSatFix':
         return [ValueRangeSummaryOutput(field) for field in ['latitude', 'longitude', 'altitude']]
     return []
