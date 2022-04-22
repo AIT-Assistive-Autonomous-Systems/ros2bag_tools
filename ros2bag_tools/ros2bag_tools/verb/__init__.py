@@ -137,7 +137,7 @@ class FilterVerb(VerbExtension):
             in_storage_options, in_converter_options = get_rosbag_options(
                 bag_file)
             if args.in_storage:
-                in_storage_options.storage = args.in_storage
+                in_storage_options.storage_id = args.in_storage
             reader.open(in_storage_options, in_converter_options)
             if storage_filter:
                 reader.set_filter(storage_filter)
