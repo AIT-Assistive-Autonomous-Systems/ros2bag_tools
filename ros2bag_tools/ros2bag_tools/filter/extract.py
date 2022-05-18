@@ -33,8 +33,9 @@ class ExtractFilter(FilterExtension):
         if args.invert:
             for metadata in metadatas:
                 for topic in metadata.topics_with_message_count:
-                    if topic not in args.topic:
-                        self._output_topics.add(topic.topic_metadata.name)
+                    topic_name = topic.topic_metadata.name
+                    if topic_name not in args.topic:
+                        self._output_topics.add(topic_name)
         else:
             self._output_topics = set(args.topic)
 
