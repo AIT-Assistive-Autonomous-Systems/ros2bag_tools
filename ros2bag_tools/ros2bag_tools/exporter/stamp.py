@@ -16,7 +16,7 @@ from rclpy.time import Time
 
 
 class StampExporter:
-    """Timestamps by message index"""
+    """Timestamps by message index."""
 
     @staticmethod
     def add_arguments(parser):

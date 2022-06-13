@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from rosbag2_py import TopicMetadata, StorageOptions, ConverterOptions
+from rosbag2_py import TopicMetadata
 from ros2bag_tools.filter import FilterExtension
 
 

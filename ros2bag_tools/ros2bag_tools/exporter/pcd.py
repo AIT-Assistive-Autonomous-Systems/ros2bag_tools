@@ -70,7 +70,7 @@ def pcd_type_to_np_type(datatype):
 
 
 class PcdExporter:
-    """ASCII PCD file per point cloud message"""
+    """ASCII PCD file per point cloud message."""
 
     @staticmethod
     def add_arguments(parser):
