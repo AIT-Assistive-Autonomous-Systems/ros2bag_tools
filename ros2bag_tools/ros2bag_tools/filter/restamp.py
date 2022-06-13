@@ -16,7 +16,7 @@ from rclpy.time import Time
 from rclpy.serialization import deserialize_message
 from rosidl_runtime_py.utilities import get_message
 from ros2bag_tools.filter import FilterExtension
-
+import re
 
 class RestampFilter(FilterExtension):
 
@@ -24,6 +24,23 @@ class RestampFilter(FilterExtension):
         self._args = None
         self._topic_type_map = {}
         self._type_map = {}
+
+    def add_arguments(self, parser):
+        parser.add_argument(
+            '-u', '--offset-topic', nargs='+',
+            help='topics to restamp with offset as regex string')
+        parser.add_argument(
+            '-c', '--offset', default=0, type=int,
+            help='constant offset value in seconds applied to offset topics')
+
+    def set_args(self, metadatas, args):
+        self._offset_topics = set()
+        for metadata in metadatas:
+            for topic in metadata.topics_with_message_count:
+                topic_name = topic.topic_metadata.name
+                if any([re.match(r, topic_name) for r in args.offset_topic]):
+                    self._offset_topics.add(topic_name)
+        self._offset = args.offset * (10 ** 9)
 
     def filter_topic(self, topic_metadata):
         topic_type = topic_metadata.type
@@ -40,4 +57,6 @@ class RestampFilter(FilterExtension):
         msg = deserialize_message(data, self._topic_type_map[topic])
         if hasattr(msg, 'header'):
             t = Time.from_msg(msg.header.stamp).nanoseconds
+        if topic in self._offset_topics:
+            t = t + self._offset
         return (topic, data, t)
