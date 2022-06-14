@@ -71,3 +71,6 @@ dfs['/range'].summary()
 
 * Tools do not operate in-place, they all create new output bags, potentially doubling the required disk space
 * The time filters used in the `cut` verb truncate timestamps to the microsecond, due to the precision loss of the pybind11-conversion of C++ chrono time objects to python3 datetime objects. Thus, filters are not sufficiently precise to handle timestamp deltas below 1000ns.
+* Export of images: `cv.imencode` is being used to recompress the image. So the same input format implications apply. This also means implies that color images (RGB) when not input as BGR you will experience a color swap
+in the output. Force an output encoding if this is not desired.
+* Export of CompressedImage images: If the format is encoded like in image_transport_plugins or as cv_bridge encodes it and the desired output format is the same the image will not be recompressed when `passthrough` is selected as the desired output encoding or the stored encoding matches, in this case the data content is just written to the output file. But decoding is done using `cv_bridge` if necessary thus the same restrictions apply.

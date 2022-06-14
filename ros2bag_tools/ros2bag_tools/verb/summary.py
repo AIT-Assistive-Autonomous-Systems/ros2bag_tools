@@ -31,7 +31,7 @@ from rosidl_runtime_py.utilities import get_message
 
 
 def generic_equals(ref_val, val):
-    """Equals which handles the case of array values, which all have to match"""
+    """Equals which handles the case of array values, which all have to match."""
     if ref_val is None:
         return True
     cmp = ref_val == val

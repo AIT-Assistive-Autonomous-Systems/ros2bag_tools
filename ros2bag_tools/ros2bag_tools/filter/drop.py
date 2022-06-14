@@ -27,7 +27,12 @@ class DropFilter(FilterExtension):
 
     def add_arguments(self, parser):
         parser.add_argument('-t', '--topic', help='topic to drop messages from')
-        parser.add_argument('-x', type=int, required=True, help='count of messages out of y to drop')
+        parser.add_argument(
+            '-x',
+            type=int,
+            required=True,
+            help='count of messages out of ytodrop'
+        )
         parser.add_argument('-y', type=int, required=True, help='module of the message counter')
 
     def set_args(self, _metadata, args):

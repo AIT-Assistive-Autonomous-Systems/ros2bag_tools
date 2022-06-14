@@ -70,7 +70,7 @@ def pcd_type_to_np_type(datatype):
 
 
 class PcdExporter:
-    """ASCII PCD file per point cloud message"""
+    """ASCII PCD file per point cloud message."""
 
     @staticmethod
     def add_arguments(parser):
@@ -78,9 +78,9 @@ class PcdExporter:
         parser.add_argument('--name', default='%t.pcd',
                             help="""Filename pattern of output pcd files.
                             Placeholders:
-                                %tpc ... topic
-                                %t   ... timestamp
-                                %i   ... sequence index""")
+                                %%tpc ... topic
+                                %%t   ... timestamp
+                                %%i   ... sequence index""")
 
     def process(self, args, clouds):
         dir = Path(args.dir)
