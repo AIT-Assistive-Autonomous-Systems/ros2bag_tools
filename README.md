@@ -43,28 +43,25 @@ You can iterate message data using BagView.
 
 ```python
 from rosbag2_tools.bag_view import BagView
-reader = SequentialReader()
-storage_options = StorageOptions(uri='test/range.bag', storage_id='sqlite3')
-converter_options = ConverterOptions(
-    input_serialization_format='cdr',
-    output_serialization_format='cdr')
-reader.open(storage_options, converter_options)
-for _, range_msg, _ in BagView(reader):
-    print('r', range_msg.range)
+for _, range_msg, _ in BagView('rosbag2_tools/test/range.bag'):
+    print(range_msg.range)
+# =>
+# 10.0
+# 20.0
 ```
 
 Or read topics as pandas data frames.
 
 ```python
+from rosbag2_tools.bag_view import BagView
 from rosbag2_tools.data_frame import read_data_frames
-reader = SequentialReader()
-storage_options = StorageOptions(uri='test/range.bag', storage_id='sqlite3')
-converter_options = ConverterOptions(
-    input_serialization_format='cdr',
-    output_serialization_format='cdr')
-reader.open(storage_options, converter_options)
-dfs = read_data_frames(BagView(reader))
-dfs['/range'].summary()
+bag_view = BagView('rosbag2_tools/test/range.bag')
+dfs = read_data_frames(bag_view, {'/range': ['range']})
+dfs['/range']
+# =>
+#    range                  header.stamp
+# 0   10.0 1970-01-01 00:00:00.000000090
+# 1   20.0 1970-01-01 00:00:00.000000190
 ```
 
 ## Current limitations
