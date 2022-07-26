@@ -1,4 +1,4 @@
-# Copyright 2021 AIT Austrian Institute of Technology GmbH
+# Copyright 2022 AIT Austrian Institute of Technology GmbH
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -12,17 +12,17 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import argparse
 from rclpy.time import Time, Duration
 from rclpy.serialization import deserialize_message, serialize_message
 from rosidl_runtime_py.utilities import get_message
 from ros2bag_tools.filter import FilterExtension
 import re
 
+
 def nanoseconds_duration(data: str):
     try:
         val = int(data)
-    except:
+    except ValueError:
         val = int(float(data) * 10**9)
     return Duration(nanoseconds=val)
 
@@ -40,7 +40,8 @@ class RestampFilter(FilterExtension):
             help='topics to restamp with offset as regex string')
         parser.add_argument(
             '-c', '--offset', default='0', type=nanoseconds_duration,
-            help='constant offset value in seconds (float) or nanoseconds (int) applied to offset topics')
+            help='constant offset value in seconds (float) or nanoseconds (int) applied to offset'
+                 ' topics')
         parser.add_argument(
             '-m', '--modify-msg-header', action='store_true',
             help='apply offset to header if offset is enabled')

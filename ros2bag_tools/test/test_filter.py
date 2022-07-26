@@ -161,11 +161,11 @@ def test_reframe_filter():
 
     parser = argparse.ArgumentParser('reframe')
     filter.add_arguments(parser)
-    args = parser.parse_args(['-t', '/data', '--frame', 'frame1'])
+    args = parser.parse_args(['-t', '/diagnostics', '--frame', 'frame1'])
     filter.set_args(None, args)
 
     topic_metadata = TopicMetadata(
-        '/data', 'diagnostic_msgs/msg/DiagnosticArray', 'cdr')
+        '/diagnostics', 'diagnostic_msgs/msg/DiagnosticArray', 'cdr')
     assert(filter.filter_topic(topic_metadata) == topic_metadata)
 
     msg = DiagnosticArray()
@@ -174,7 +174,7 @@ def test_reframe_filter():
     msg.header.stamp.nanosec = 1
 
     # timestamp within the bag and cut duration
-    bag_msg = ('/data', serialize_message(msg), 1)
+    bag_msg = ('/diagnostics', serialize_message(msg), 1)
     (_, data, _) = filter.filter_msg(bag_msg)
     new_msg = deserialize_message(data, DiagnosticArray)
     assert(new_msg.header.frame_id == 'frame1')
@@ -207,10 +207,10 @@ def test_restamp_filter():
     parser = argparse.ArgumentParser('restamp')
     filter.add_arguments(parser)
     args = parser.parse_args([])
-    filter.set_args(None, args)
+    filter.set_args([read_metadata('test/diagnostics.bag')], args)
 
     topic_metadata = TopicMetadata(
-        '/data', 'diagnostic_msgs/msg/DiagnosticArray', 'cdr')
+        '/diagnostics', 'diagnostic_msgs/msg/DiagnosticArray', 'cdr')
     assert(filter.filter_topic(topic_metadata) == topic_metadata)
 
     ns_stamp = 500 * 1000 * 1000 - 100
@@ -219,6 +219,6 @@ def test_restamp_filter():
     msg.header.stamp.nanosec = ns_stamp
 
     # timestamp within the bag and cut duration
-    bag_msg = ('/data', serialize_message(msg), 500 * 1000 * 1000)
+    bag_msg = ('/diagnostics', serialize_message(msg), 500 * 1000 * 1000)
     (_, _, t) = filter.filter_msg(bag_msg)
     assert(t == ns_stamp)

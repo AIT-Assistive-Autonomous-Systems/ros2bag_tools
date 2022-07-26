@@ -1,4 +1,4 @@
-# Copyright 2021 AIT Austrian Institute of Technology GmbH
+# Copyright 2022 AIT Austrian Institute of Technology GmbH
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -78,6 +78,7 @@ class ImageMsgWriterBase(metaclass=ABCMeta):
         Write encoded image to buffer.
 
         Args:
+        ----
             img_msg:        Input message to be extracted/recoded.
             out_enc:        Desired output encoding or None/Empty.
             in_enc:         Override image encoding derived from message (or None/Empty).
@@ -92,7 +93,9 @@ class ImageMsgWriterBase(metaclass=ABCMeta):
                             requested format no decoding or recoding will be performed.
 
         Return:
+        ------
             A str/byte like object suitable for writing to a binary file.
+
         """
 
 
@@ -179,8 +182,10 @@ class CompressedImageMsgWriter(ImageMsgWriterBase):
         While old descriptors only contains <format>.
 
         Return:
+        ------
             A tuple containing the normalized format and the original encoding and stored
             encoding (or None/Empty str).
+
         """
         descs = desc.lower().split(';')
         if len(descs) > 2:
