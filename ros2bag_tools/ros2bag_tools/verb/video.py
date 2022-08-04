@@ -169,7 +169,6 @@ class VideoVerb(VerbExtension):
             progress.add_estimated_work(
                 metadata, self._cut.output_size_factor(metadata))
 
-        # TODO ensure the input topic is an image topic
         bag_view = BagView(reader, filter)
         fps = args.fps
         if not fps:
@@ -193,6 +192,18 @@ class VideoVerb(VerbExtension):
                 dim = (width, height)
                 cv_image = cv2.resize(
                     cv_image, dim, interpolation=RESIZE_INTERPOLATION)
+
+            encoding = image.encoding if args.encoding == 'passthrough' else args.encoding
+            if encoding == '32FC1':
+                # loosely based on https://stackoverflow.com/a/59958304
+                cv_image = cv2.normalize(
+                    cv_image, None, alpha=0.0, beta=1.0, norm_type=cv2.NORM_MINMAX)
+                import matplotlib.pyplot as plt
+                import numpy as np
+                colormap = plt.get_cmap()
+                pseudo_image = (colormap(cv_image) * 2**8).astype(np.uint8)
+                cv_image = cv2.cvtColor(pseudo_image, cv2.COLOR_RGB2BGR)
+
             processor.process(cv_image)
             if args.progress:
                 progress.print_update(progress.update(args.topic), every=10)
