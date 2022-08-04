@@ -187,11 +187,12 @@ class VideoVerb(VerbExtension):
             if cut_result == FilterResult.STOP_CURRENT_BAG:
                 break
             cv_image = image_bridge.imgmsg_to_cv2(image, args.encoding)
-            width = int(cv_image.shape[1] * args.image_resize)
-            height = int(cv_image.shape[0] * args.image_resize)
-            dim = (width, height)
             if args.image_resize:
-                cv_image = cv2.resize(cv_image, dim, interpolation=RESIZE_INTERPOLATION)
+                width = int(cv_image.shape[1] * args.image_resize)
+                height = int(cv_image.shape[0] * args.image_resize)
+                dim = (width, height)
+                cv_image = cv2.resize(
+                    cv_image, dim, interpolation=RESIZE_INTERPOLATION)
             processor.process(cv_image)
             if args.progress:
                 progress.print_update(progress.update(args.topic), every=10)
