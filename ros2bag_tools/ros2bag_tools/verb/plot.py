@@ -33,7 +33,7 @@ class PlotVerb(VerbExtension):
             '-f', '--serialization-format', default='',
             help='rmw serialization format in which the messages are read, defaults to the'
                  ' rmw currently in use')
-        parser.add_argument('-t', '--topic', nargs='+', type=str,
+        parser.add_argument('-t', '--topic', nargs='+', required=True,
                             help='topics with field name to visualize')
 
     def main(self, *, args):  # noqa: D102
