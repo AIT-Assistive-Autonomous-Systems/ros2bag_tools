@@ -57,8 +57,7 @@ class BagView:
                 self._topic_type_map[topic_metadata.name] = type_map[topic_type]
 
     def topics(self):
-        for (topic, msg_type) in self._topic_type_map.items():
-            yield topic, msg_type
+        return iter(self._topic_type_map.items())
 
     def __iter__(self):
         return self
