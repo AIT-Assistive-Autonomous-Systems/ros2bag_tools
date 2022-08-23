@@ -108,7 +108,7 @@ class CutFilter(FilterExtension):
             raise argparse.ArgumentError(
                 None,
                 f'time bounds ({start}, {end}) are outside the '
-                + 'duration of the input bags ({bag_start}, {bag_end})')
+                + f'duration of the input bags ({bag_start}, {bag_end})')
 
         self._start_time = datetime_to_ros_time(start)
         self._end_time = datetime_to_ros_time(end)
