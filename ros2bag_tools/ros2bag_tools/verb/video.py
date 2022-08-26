@@ -153,8 +153,9 @@ class VideoVerb(VerbExtension):
                                    help='minimum value to map for display')
         display_group.add_argument('--max-image-value', type=float,
                                    help='maximum value to map for display')
-        display_group.add_argument('--colormap', type=int, default=-1,
-                                   help='colormap to use for color conversion')
+        # requires https://github.com/ros-perception/vision_opencv/pull/452 to be merged
+        # display_group.add_argument('--colormap', type=int, default=-1,
+        #                            help='colormap to use for color conversion')
 
         self._cut.add_arguments(parser)
 
@@ -214,7 +215,8 @@ class VideoVerb(VerbExtension):
                 do_dynamic_scaling=args.do_dynamic_scaling,
                 min_image_value=args.min_image_value or 0.0,
                 max_image_value=args.max_image_value or 0.0,
-                colormap=args.colormap)
+                # colormap=args.colormap
+            )
 
             processor.process(cv_image)
             if args.progress:
