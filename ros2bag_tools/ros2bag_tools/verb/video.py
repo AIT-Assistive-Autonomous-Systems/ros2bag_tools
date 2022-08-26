@@ -15,7 +15,7 @@
 import os
 import cv2
 from argparse import ArgumentError
-from cv_bridge import CvBridge
+from cv_bridge import CvBridge, cvtColorForDisplay
 from rosbag2_py import Info, SequentialReader, StorageOptions, ConverterOptions, StorageFilter
 from ros2bag_tools.filter import FilterResult
 from ros2bag_tools.filter.cut import CutFilter
@@ -44,6 +44,9 @@ class VideoWriter:
     def __init__(self, file_path, fps):
         self._writer = cv2.VideoWriter()
         self._file_path = file_path
+        self._fourcc = cv2.VideoWriter_fourcc('m', 'p', '4', 'v')
+        if '.webm' == self._file_path[-5:]:
+            self._fourcc = cv2.VideoWriter_fourcc('v', 'p', '0', '9')
         self._fps = fps
         self._initialized = False
 
@@ -52,10 +55,9 @@ class VideoWriter:
 
     def process(self, image):
         if not self._initialized:
-            fourcc = cv2.VideoWriter_fourcc('m', 'p', '4', 'v')
             video_size = (image.shape[1], image.shape[0])
             has_color = len(image.shape) >= 3 and image.shape[2] != 1
-            self._writer.open(self._file_path, fourcc,
+            self._writer.open(self._file_path, self._fourcc,
                               self._fps, video_size, has_color)
             assert(self._writer.isOpened())
             self._initialized = True
@@ -135,11 +137,25 @@ class VideoVerb(VerbExtension):
                             help='image topic to read')
         parser.add_argument('-o', '--output', type=str,
                             help='file path to video to write')
-        parser.add_argument('-e', '--encoding', default='passthrough', type=str,
-                            help='desired encoding for the output image')
         parser.add_argument('--image-resize', type=float,
                             help='image resize factor')
-        parser.add_argument('--fps', type=int, help='video fps')
+        parser.add_argument('--fps', type=int,
+                            help='video fps, default: estimated from message count')
+
+        display_group = parser.add_argument_group(
+            'display options',
+            'Options to control the color conversions performed on the input images')
+        display_group.add_argument('-e', '--encoding', default='', type=str,
+                                   help='desired encoding for the output image')
+        display_group.add_argument('--do-dynamic-scaling', action='store_true', default=False,
+                                   help='perform dynamic scaling when converting for display')
+        display_group.add_argument('--min-image-value', type=float,
+                                   help='minimum value to map for display')
+        display_group.add_argument('--max-image-value', type=float,
+                                   help='maximum value to map for display')
+        display_group.add_argument('--colormap', type=int, default=-1,
+                                   help='colormap to use for color conversion')
+
         self._cut.add_arguments(parser)
 
     def main(self, *, args):  # noqa: D102
@@ -193,16 +209,12 @@ class VideoVerb(VerbExtension):
                 cv_image = cv2.resize(
                     cv_image, dim, interpolation=RESIZE_INTERPOLATION)
 
-            encoding = image.encoding if args.encoding == 'passthrough' else args.encoding
-            if encoding == '32FC1':
-                # loosely based on https://stackoverflow.com/a/59958304
-                cv_image = cv2.normalize(
-                    cv_image, None, alpha=0.0, beta=1.0, norm_type=cv2.NORM_MINMAX)
-                import matplotlib.pyplot as plt
-                import numpy as np
-                colormap = plt.get_cmap()
-                pseudo_image = (colormap(cv_image) * 2**8).astype(np.uint8)
-                cv_image = cv2.cvtColor(pseudo_image, cv2.COLOR_RGB2BGR)
+            cv_image = cvtColorForDisplay(
+                cv_image, image.encoding, args.encoding,
+                do_dynamic_scaling=args.do_dynamic_scaling,
+                min_image_value=args.min_image_value or 0.0,
+                max_image_value=args.max_image_value or 0.0,
+                colormap=args.colormap)
 
             processor.process(cv_image)
             if args.progress:
