@@ -64,6 +64,7 @@ def read_data_frames(bag_view: BagView, field_dict: Dict[str, List[str]], auto_s
             value = _rgetattr(msg, field)
             if field_type == 'builtin_interfaces/Time':
                 ns = Time.from_msg(value).nanoseconds
-                value = pd.to_datetime(ns, origin='unix', unit='ns')
+                # interpret the timestamps as utc nanosecond since epoch
+                value = pd.to_datetime(ns, origin='unix', unit='ns', utc=True)
             data[topic][field].append(value)
     return {topic: pd.DataFrame(data_dict) for topic, data_dict in data.items()}
