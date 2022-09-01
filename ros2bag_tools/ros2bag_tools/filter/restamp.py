@@ -16,6 +16,7 @@ from rclpy.time import Time, Duration
 from rclpy.serialization import deserialize_message, serialize_message
 from rosidl_runtime_py.utilities import get_message
 from ros2bag_tools.filter import FilterExtension
+from tf2_msgs.msg import TFMessage
 import re
 
 
@@ -72,10 +73,21 @@ class RestampFilter(FilterExtension):
         if hasattr(msg, 'header'):
             header_time = Time.from_msg(msg.header.stamp)
             t = header_time.nanoseconds
+        elif isinstance(msg, TFMessage):
+            times = [Time.from_msg(transform.header.stamp).nanoseconds for transform in msg.transforms if hasattr(transform, 'header')]
+            if len(times) > 0:
+                t = min(times)
         if topic in self._offset_topics:
             t = t + self._offset.nanoseconds
             if hasattr(msg, 'header') and self._modify_header:
                 header_time += self._offset
                 msg.header.stamp = header_time.to_msg()
                 data = serialize_message(msg)
+            elif isinstance(msg, TFMessage) and self._modify_header:
+                for transform in msg.transforms:
+                    if hasattr(transform, 'header'):
+                        header_time = Time.from_msg(transform.header.stamp)
+                        header_time += self._offset
+                        transform.header.stamp = header_time.to_msg()
+                        data = serialize_message(msg)
         return (topic, data, t)
