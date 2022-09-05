@@ -74,7 +74,7 @@ class RestampFilter(FilterExtension):
             header_time = Time.from_msg(msg.header.stamp)
             t = header_time.nanoseconds
         elif isinstance(msg, TFMessage):
-            times = [Time.from_msg(transform.header.stamp).nanoseconds for transform in msg.transforms if hasattr(transform, 'header')]
+            times = [Time.from_msg(transform.header.stamp).nanoseconds for transform in msg.transforms]
             if len(times) > 0:
                 t = min(times)
         if topic in self._offset_topics:
@@ -85,9 +85,8 @@ class RestampFilter(FilterExtension):
                 data = serialize_message(msg)
             elif isinstance(msg, TFMessage) and self._modify_header:
                 for transform in msg.transforms:
-                    if hasattr(transform, 'header'):
-                        header_time = Time.from_msg(transform.header.stamp)
-                        header_time += self._offset
-                        transform.header.stamp = header_time.to_msg()
-                        data = serialize_message(msg)
+                    header_time = Time.from_msg(transform.header.stamp)
+                    header_time += self._offset
+                    transform.header.stamp = header_time.to_msg()
+                data = serialize_message(msg)
         return (topic, data, t)
