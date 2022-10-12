@@ -9,7 +9,6 @@ ros2bag_tools adds verb extensions to the ros2bag cli.
 | **drop** | drop X out of every Y messages of a topic |
 | export  | export data to other formats, see [export](#export) |
 | **extract** | extract topics by name |
-| merge   | merge multiple bags into one |
 | plot    | plot message data to a new window, see [plot](#plot) |
 | process | chain multiple filters, see [chaining](#chaining) |
 | **prune** | remove topics without messages |

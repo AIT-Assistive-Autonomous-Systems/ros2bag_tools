@@ -32,12 +32,10 @@ The package provides the additional commands for the ROS 2 bag command line tool
     tests_require=['pytest'],
     entry_points={
         'ros2bag.verb': [
-            'convert = ros2bag_tools.verb.convert:ConvertVerb',
             'cut = ros2bag_tools.verb.cut:CutVerb',
             'drop = ros2bag_tools.verb.drop:DropVerb',
             'export = ros2bag_tools.verb.export:ExportVerb',
             'extract = ros2bag_tools.verb.extract:ExtractVerb',
-            'merge = ros2bag_tools.verb.merge:MergeVerb',
             'plot = ros2bag_tools.verb.plot:PlotVerb',
             'prune = ros2bag_tools.verb.prune:PruneVerb',
             'reframe = ros2bag_tools.verb.reframe:ReframeVerb',
