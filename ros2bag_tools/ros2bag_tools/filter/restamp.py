@@ -74,7 +74,8 @@ class RestampFilter(FilterExtension):
             header_time = Time.from_msg(msg.header.stamp)
             t = header_time.nanoseconds
         elif isinstance(msg, TFMessage):
-            times = [Time.from_msg(transform.header.stamp).nanoseconds for transform in msg.transforms]
+            times = [Time.from_msg(
+                transform.header.stamp).nanoseconds for transform in msg.transforms]
             if len(times) > 0:
                 t = min(times)
         if topic in self._offset_topics:
