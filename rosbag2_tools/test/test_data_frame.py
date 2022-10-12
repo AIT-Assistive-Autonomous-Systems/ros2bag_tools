@@ -27,8 +27,8 @@ def test_data_frame_range():
     dfs = read_data_frames(BagView(reader), {'/range': ['range']})
     assert('/range' in dfs)
     df = dfs['/range']
-    stamp0 = pd.Timestamp(90, unit='ns')
-    stamp1 = pd.Timestamp(190, unit='ns')
+    stamp0 = pd.Timestamp(90, unit='ns', tz='UTC')
+    stamp1 = pd.Timestamp(190, unit='ns', tz='UTC')
     assert(df['header.stamp'][0] == stamp0)
     assert(df['header.stamp'][1] == stamp1)
     assert(df['range'][0] == 10.0)
@@ -50,7 +50,7 @@ def test_data_frame_multi_topic():
     assert('/diagnostics' in dfs)
 
     df = dfs['/range']
-    stamp0 = pd.Timestamp(90, unit='ns')
+    stamp0 = pd.Timestamp(90, unit='ns', tz='UTC')
     assert(df['header.stamp'][0] == stamp0)
     assert(df['range'][0] == 10.0)
 
