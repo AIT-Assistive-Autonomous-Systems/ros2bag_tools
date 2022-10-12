@@ -1,25 +1,29 @@
 # ROS2 bag tools
 
-This package is built and tested with **ROS2 galactic**.
-
-This package adds verb extensions to the ros2bag cli.
+ros2bag_tools adds verb extensions to the ros2bag cli.
 
 | Verb    | Usage |
 | ------- |:------------------|
-| cut     | cut time slice by wall time or duration offset |
-| drop    | drop X out of every Y messages of a topic |
-| export  | export data to other formats |
-| extract | extract topics by name |
+| **add** | add new topic, with messages aligned to existing topic |
+| **cut** | cut time slice by wall time or duration offset |
+| **drop** | drop X out of every Y messages of a topic |
+| export  | export data to other formats, see [export](#export) |
+| **extract** | extract topics by name |
 | merge   | merge multiple bags into one |
-| plot    | plot message data to a new window |
-| reframe | change frame_id on messages with headers |
-| rename  | change name of a topic |
-| restamp | for all messages with headers, change the bag timestamp to their header stamp |
-| replace | replace messages of a specific topic with message data specified in a yaml file |
+| plot    | plot message data to a new window, see [plot](#plot) |
+| process | chain multiple filters, see [chaining](#chaining) |
+| **prune** | remove topics without messages |
+| **reframe** | change frame_id on messages with headers |
+| **rename**  | change name of a topic |
+| **replace** | replace messages of a specific topic with message data specified in a yaml file |
+| **restamp** | for all messages with headers, change the bag timestamp to their header stamp |
 | summary | print summary on data to stdout |
 | video | show or write video of image data |
 
 You can check detailed usage information with `ros2 bag $VERB --help`.
+Bold verbs support chaining as described in [chaining](#chaining).
+
+## chaining
 
 Each command writes a new output bag on disk.
 If you need to chain multiple commands together, you can use `ros2 bag process` to process all messages in-memory and write only one output bag.
@@ -33,13 +37,36 @@ extract -t /image_rect
 restamp
 ```
 
-and run `ros2 bag process -c process.config in.bag -o out.bag` to crop to the first 10 seconds, keep only the /image_rect topic and restamp the remaining messages in one go.
+and run `ros2 bag process -c process.config in.bag -o out.bag` to use only the first 10 seconds, keep only the /image_rect topic and restamp the remaining messages in one go.
 
-## Python API
+## export
 
-The verbs are built on top of utilities in `rosbag2_tools`.
+Exporting is currently possible for:
 
-You can iterate message data using BagView.
+* `pcd`: `sensor_msgs/msg/PointCloud2` -> ASCII PCD files
+* `image`: `sensor_msgs/msg/[Compressed]Image` -> jpg or png
+* `stamp`: `std_msgs/msg/Header` (any message with header) -> stamp file
+* `tum_trajectory`: `nav_msgs/msg/Odometry` -> [TUM trajectory file](https://vision.in.tum.de/data/datasets/rgbd-dataset/file_formats#ground-truth_trajectories)
+
+Run `ros2 bag export --in $BAG_PATH -t $TOPIC_NAME $EXPORTER` to see available options.
+
+## plot
+
+Quickly plot timeseries from message data using matplotlib.
+You can specify one topic + field per time series.
+
+Example:
+
+```bash
+# plot header stamps on x axis, range value on y
+ros2 bag plot rosbag2_tools/test/range.bag -t /range.range
+```
+
+## rosbag2_tools
+
+This packages provides python utilities to implement the verbs, but can be used independently.
+
+Iterate message data using BagView.
 
 ```python
 from rosbag2_tools.bag_view import BagView
@@ -50,7 +77,7 @@ for _, range_msg, _ in BagView('rosbag2_tools/test/range.bag'):
 # 20.0
 ```
 
-Or read topics as pandas data frames.
+Read topics as pandas data frames.
 
 ```python
 from rosbag2_tools.bag_view import BagView
