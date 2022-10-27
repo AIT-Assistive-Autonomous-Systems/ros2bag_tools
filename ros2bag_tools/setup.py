@@ -32,6 +32,7 @@ The package provides the additional commands for the ROS 2 bag command line tool
     tests_require=['pytest'],
     entry_points={
         'ros2bag.verb': [
+            'add = ros2bag_tools.verb.add:AddVerb',
             'cut = ros2bag_tools.verb.cut:CutVerb',
             'drop = ros2bag_tools.verb.drop:DropVerb',
             'export = ros2bag_tools.verb.export:ExportVerb',
