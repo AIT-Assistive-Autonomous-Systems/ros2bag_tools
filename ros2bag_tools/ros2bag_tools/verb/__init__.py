@@ -27,11 +27,12 @@ from ros2bag.verb import VerbExtension
 from ros2bag_tools.filter import FilterResult
 
 
-def get_rosbag_options(path, serialization_format='cdr'):
-    storage_options = StorageOptions(uri=path, storage_id='sqlite3')
+def get_rosbag_options(args):
+    """Get rosbag options from args matching the ros2bag.api.add_standard_reader_args names"""
+    storage_options = StorageOptions(uri=args.bag_path, storage_id=args.storage)
     converter_options = ConverterOptions(
-        input_serialization_format=serialization_format,
-        output_serialization_format=serialization_format)
+        input_serialization_format='cdr',
+        output_serialization_format='cdr')
     return storage_options, converter_options
 
 

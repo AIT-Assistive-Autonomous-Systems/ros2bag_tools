@@ -35,6 +35,7 @@ The package provides the additional commands for the ROS 2 bag command line tool
             'add = ros2bag_tools.verb.add:AddVerb',
             'cut = ros2bag_tools.verb.cut:CutVerb',
             'drop = ros2bag_tools.verb.drop:DropVerb',
+            'echo = ros2bag_tools.verb.echo:EchoVerb',
             'export = ros2bag_tools.verb.export:ExportVerb',
             'extract = ros2bag_tools.verb.extract:ExtractVerb',
             'plot = ros2bag_tools.verb.plot:PlotVerb',
