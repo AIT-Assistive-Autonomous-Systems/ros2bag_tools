@@ -13,8 +13,8 @@
 # limitations under the License.
 
 from rclpy.time import Time, Duration
-from rclpy.serialization import deserialize_message, serialize_message
-from rosidl_runtime_py.utilities import get_message
+from rclpy.serialization import serialize_message
+from ros2bag_tools.reader import TopicDeserializer
 from ros2bag_tools.filter import FilterExtension
 from tf2_msgs.msg import TFMessage
 import re
@@ -32,8 +32,7 @@ class RestampFilter(FilterExtension):
 
     def __init__(self):
         self._args = None
-        self._topic_type_map = {}
-        self._type_map = {}
+        self._deserializer = TopicDeserializer()
 
     def add_arguments(self, parser):
         parser.add_argument(
@@ -58,18 +57,12 @@ class RestampFilter(FilterExtension):
         self._modify_header = args.modify_msg_header
 
     def filter_topic(self, topic_metadata):
-        topic_type = topic_metadata.type
-        if topic_type not in self._type_map:
-            try:
-                self._type_map[topic_type] = get_message(topic_type)
-            except (AttributeError, ModuleNotFoundError, ValueError):
-                raise RuntimeError(f"Cannot load message type '{topic_type}'")
-        self._topic_type_map[topic_metadata.name] = self._type_map[topic_type]
+        self._deserializer.add_topic(topic_metadata)
         return topic_metadata
 
     def filter_msg(self, serialized_msg):
         (topic, data, t) = serialized_msg
-        msg = deserialize_message(data, self._topic_type_map[topic])
+        msg = self._deserializer.deserialize(topic, data)
         if hasattr(msg, 'header'):
             header_time = Time.from_msg(msg.header.stamp)
             t = header_time.nanoseconds
