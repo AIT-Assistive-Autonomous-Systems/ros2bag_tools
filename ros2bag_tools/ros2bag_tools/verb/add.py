@@ -1,4 +1,4 @@
-# Copyright 2021 AIT Austrian Institute of Technology GmbH
+# Copyright 2022 AIT Austrian Institute of Technology GmbH
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -17,7 +17,7 @@ from ros2bag_tools.filter.add import AddFilter
 
 
 class AddVerb(FilterVerb):
-    """Add new topic, with messages aligned to existing topic"""
+    """Add new topic, with messages aligned to existing topic."""
 
     def __init__(self):
         FilterVerb.__init__(self, AddFilter())
