@@ -13,17 +13,15 @@
 # limitations under the License.
 
 from typing import Union
-from rosbag2_py import SequentialReader, StorageOptions, ConverterOptions
+from rosbag2_tools import default_rosbag_options
+from rosbag2_py import SequentialReader
 from rclpy.serialization import deserialize_message
 from rosidl_runtime_py.utilities import get_message
 
 
-def open_reader(bag_file_path: str):
+def open_reader(bag_path: str):
     reader = SequentialReader()
-    storage_options = StorageOptions(uri=bag_file_path, storage_id='sqlite3')
-    converter_options = ConverterOptions(
-        input_serialization_format='cdr',
-        output_serialization_format='cdr')
+    storage_options, converter_options = default_rosbag_options(bag_path)
     reader.open(storage_options, converter_options)
     return reader
 

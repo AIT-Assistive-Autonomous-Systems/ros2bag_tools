@@ -16,22 +16,15 @@
 import sys
 from rclpy.time import CONVERSION_CONSTANT
 from rclpy.serialization import serialize_message
-from rosbag2_py import SequentialWriter, StorageOptions, ConverterOptions, TopicMetadata
+from rosbag2_tools import default_rosbag_options
+from rosbag2_py import SequentialWriter, TopicMetadata
 from example_interfaces.msg import String
 from diagnostic_msgs.msg import DiagnosticArray
 
 
-def get_rosbag_options(path, serialization_format='cdr'):
-    storage_options = StorageOptions(uri=path, storage_id='sqlite3')
-    converter_options = ConverterOptions(
-        input_serialization_format=serialization_format,
-        output_serialization_format=serialization_format)
-    return storage_options, converter_options
-
-
 def create_test_bag(path):
     writer = SequentialWriter()
-    storage_options, converter_options = get_rosbag_options(path)
+    storage_options, converter_options = default_rosbag_options(path)
     writer.open(storage_options, converter_options)
 
     topic = TopicMetadata('/data', 'example_interfaces/msg/String', 'cdr')
@@ -46,7 +39,7 @@ def create_test_bag(path):
 
 def create_diagnostics_bag(path):
     writer = SequentialWriter()
-    storage_options, converter_options = get_rosbag_options(path)
+    storage_options, converter_options = default_rosbag_options(path)
     writer.open(storage_options, converter_options)
 
     topic = TopicMetadata('/diagnostics', 'diagnostic_msgs/msg/DiagnosticArray', 'cdr')
@@ -58,7 +51,7 @@ def create_diagnostics_bag(path):
 
 def create_day_time_bag(path):
     writer = SequentialWriter()
-    storage_options, converter_options = get_rosbag_options(path)
+    storage_options, converter_options = default_rosbag_options(path)
     writer.open(storage_options, converter_options)
 
     topic = TopicMetadata('/data', 'example_interfaces/msg/String', 'cdr')

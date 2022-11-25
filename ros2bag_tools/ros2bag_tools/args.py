@@ -12,12 +12,16 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from rosbag2_py import StorageOptions, ConverterOptions
+import rosbag2_py
+from ros2bag.api import check_path_exists
 
 
-def default_rosbag_options(bag_path, storage_id=''):
-    storage_options = StorageOptions(uri=bag_path, storage_id=storage_id)
-    converter_options = ConverterOptions(
-        input_serialization_format='cdr',
-        output_serialization_format='cdr')
-    return storage_options, converter_options
+# copied from ros2bag.api until 0.15.3 is released to humble
+def add_standard_reader_args(parser) -> None:
+    parser.add_argument(
+        'bag_path', type=check_path_exists, help='Bag to open')
+    reader_choices = rosbag2_py.get_registered_readers()
+    parser.add_argument(
+        '-s', '--storage', default='', choices=reader_choices,
+        help='Storage implementation of bag. '
+             'By default attempts to detect automatically - use this argument to override.')
