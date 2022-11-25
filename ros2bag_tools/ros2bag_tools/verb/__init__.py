@@ -21,15 +21,29 @@ from rosbag2_py import (
     SequentialWriter,
     StorageOptions,
     ConverterOptions,
+    get_registered_readers,
+    get_registered_writers
 )
 from ros2bag_tools.progress import ProgressTracker
 from ros2bag.api import print_error
 from ros2bag.verb import VerbExtension
 from ros2bag_tools.filter import FilterResult
 
-
 def get_rosbag_options(args):
-    return default_rosbag_options(args.bag_path, args.storage)
+    """Get rosbag options from args matching the ros2bag.api.add_standard_reader_args names"""
+    storage_id = args.storage if hasattr(args,'storage') else 'sqlite3'
+    serialization_format = (
+        args.serialization_format if hasattr(args,'serialization_format') else 'cdr'
+    )
+    max_bagfile_size = args.max_bag_size if hasattr(args, 'max_bag_size') else 0
+    storage_options = StorageOptions(
+        uri=args.bag_path,
+        storage_id=storage_id,
+        max_bagfile_size=max_bagfile_size)
+    converter_options = ConverterOptions(
+        input_serialization_format=serialization_format,
+        output_serialization_format=serialization_format)
+    return storage_options, converter_options
 
 
 class FilterVerb(VerbExtension):
@@ -46,8 +60,9 @@ class FilterVerb(VerbExtension):
             help='destination of the bagfile to create, \
             defaults to a timestamped folder in the current directory')
         parser.add_argument(
-            '-s', '--in-storage', default='',
-            help='storage identifier to be used for the input bag')
+            '-s', '--in-storage', default='sqlite3',
+            choices = get_registered_readers(),
+            help='storage identifier to be used for the input bag, defaults to "sqlite3"')
         parser.add_argument(
             '-b', '--max-bag-size', type=int, default=0,
             help='maximum size in bytes before the bagfile will be split. '
@@ -56,9 +71,10 @@ class FilterVerb(VerbExtension):
         )
         parser.add_argument(
             '--out-storage', default='sqlite3',
+            choices = get_registered_writers(),
             help='storage identifier to be used for the output bag, defaults to "sqlite3"')
         parser.add_argument(
-            '-f', '--serialization-format', default='',
+            '-f', '--serialization-format', default='cdr',
             help='rmw serialization format in which the messages are saved, defaults to the'
                  ' rmw currently in use')
         parser.add_argument(
@@ -85,14 +101,21 @@ class FilterVerb(VerbExtension):
 
         storage_filter = self._filter.get_storage_filter()
 
+        args_in_bag = vars(args).copy()
+        args_in_bag.pop('bag_files')
+        args_out_bag = args_in_bag.copy()
+        args_in_bag['storage'] = args.in_storage
+        args_in_bag['max_bag_size'] = 0
+        args_out_bag['storage'] = args.out_storage
+        args_out_bag['bag_path'] = uri
+
         progress = ProgressTracker()
         readers = []
         for bag_file, metadata in zip(args.bag_files, metadatas):
             reader = SequentialReader()
+            args_in_bag['bag_path'] = bag_file
             in_storage_options, in_converter_options = get_rosbag_options(
-                bag_file)
-            if args.in_storage:
-                in_storage_options.storage_id = args.in_storage
+                argparse.Namespace(**args_in_bag))
             reader.open(in_storage_options, in_converter_options)
             if storage_filter:
                 reader.set_filter(storage_filter)
@@ -101,11 +124,8 @@ class FilterVerb(VerbExtension):
             readers.append(reader)
 
         writer = SequentialWriter()
-        out_storage_options = StorageOptions(
-            uri=uri, storage_id=args.out_storage, max_bagfile_size=args.max_bag_size)
-        out_converter_options = ConverterOptions(
-            input_serialization_format=args.serialization_format,
-            output_serialization_format=args.serialization_format)
+        out_storage_options, out_converter_options = get_rosbag_options(
+            argparse.Namespace(**args_out_bag))
         writer.open(out_storage_options, out_converter_options)
 
         for reader in readers:
