@@ -57,7 +57,6 @@ class TestExport(unittest.TestCase):
                 assert ['00000000,0'] == [l.strip() for l in f.readlines()]
 
     def test_export_multiple(self, launch_service, proc_info, proc_output):
-        import sys
         with tempfile.TemporaryDirectory(suffix='images') as td \
              , tempfile.NamedTemporaryFile('w', suffix='filter') as tmp_f \
              , tempfile.NamedTemporaryFile('w', suffix='stamps') as tmp_stamps \
