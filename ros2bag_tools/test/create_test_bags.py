@@ -20,6 +20,7 @@ from rosbag2_tools import default_rosbag_options
 from rosbag2_py import SequentialWriter, TopicMetadata
 from example_interfaces.msg import String
 from diagnostic_msgs.msg import DiagnosticArray
+from sensor_msgs.msg import Image
 
 
 def create_test_bag(path):
@@ -70,4 +71,24 @@ def create_day_time_bag(path):
     writer.write('/data', serialize_message(msg), 14 * HOUR_TO_NS + 1000)
 
 
-create_day_time_bag(sys.argv[1])
+def create_images_bag(path):
+    writer = SequentialWriter()
+    storage_options, converter_options = default_rosbag_options(path)
+    writer.open(storage_options, converter_options)
+
+    topic = TopicMetadata('/image', 'sensor_msgs/msg/Image', 'cdr')
+    writer.create_topic(topic)
+    for i in range(3):
+        msg = Image()
+        t = 1000 * 1000 * 1000 * i
+        msg.header.frame_id = 'camera_optical_frame'
+        msg.header.stamp.nanosec = t
+        msg.width = 2
+        msg.height = 2
+        msg.step = 2
+        msg.encoding = 'mono8'
+        msg.data = [0, 128, 128, 255]
+        writer.write('/image', serialize_message(msg), t)
+
+
+create_images_bag(sys.argv[1])

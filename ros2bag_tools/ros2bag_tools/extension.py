@@ -45,11 +45,11 @@ class ExtensionLoader:
             self._logger.warning(
                 f"Failed to instantiate {self._extension_point} extension "
                 f"'{name}': {e}")
-            raise argparse.ArgumentError(None, 'invalid extension')
+            raise argparse.ArgumentError(None, f'invalid extension {name}')
         except Exception as e:  # noqa: F841
             self._logger.error(
                 f"Failed to instantiate {self._extension_point} extension "
                 f"'{name}': {e}")
-            raise argparse.ArgumentError(None, 'invalid extension')
+            raise argparse.ArgumentError(None, f'invalid extension {name}')
         extension.add_arguments(parser)
         return extension, parser.parse_args(arg_arr)

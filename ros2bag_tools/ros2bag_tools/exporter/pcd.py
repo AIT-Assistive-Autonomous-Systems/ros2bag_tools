@@ -14,6 +14,7 @@
 
 import numpy as np
 from pathlib import Path
+from ros2bag_tools.exporter import Exporter
 
 
 INT8 = 1
@@ -66,11 +67,17 @@ def pcd_type_to_np_type(datatype):
     elif datatype == FLOAT64:
         return np.float64
     else:
-        raise TypeError(f'pcd field type {datatype} cannot be converted to numpy dtype')
+        raise TypeError(
+            f'pcd field type {datatype} cannot be converted to numpy dtype')
 
 
-class PcdExporter:
+class PcdExporter(Exporter):
     """ASCII PCD file per point cloud message."""
+
+    def __init__(self):
+        self._dir = None
+        self._name = None
+        self._i = 0
 
     @staticmethod
     def add_arguments(parser):
@@ -82,44 +89,46 @@ class PcdExporter:
                                 %%t   ... timestamp
                                 %%i   ... sequence index""")
 
-    def process(self, args, clouds):
-        dir = Path(args.dir)
-        idx = 0
-        for topic, cloud, t in clouds:
-            tpc_path = topic.lstrip('/').replace('/', '_')
-            filename = args.name.replace('%tpc', tpc_path)
-            filename = filename.replace('%t', str(t))
-            filename = filename.replace('%i', str(idx).zfill(8))
-            cloud_path = dir / filename
+    def open(self, args):
+        self._dir = Path(args.dir)
+        self._name = args.name
+        self._i = 0
 
-            with open(str(cloud_path), 'w') as f:
-                field_names = [f.name for f in cloud.fields]
-                field_sizes = [str(field_size(f.datatype)) for f in cloud.fields]
-                field_types = [field_type_str(f.datatype) for f in cloud.fields]
-                field_counts = [str(f.count) for f in cloud.fields]
+    def write(self, topic, cloud, t):
+        tpc_path = topic.lstrip('/').replace('/', '_')
+        filename = self._name.replace('%tpc', tpc_path)
+        filename = filename.replace('%t', str(t))
+        filename = filename.replace('%i', str(self._i).zfill(8))
+        cloud_path = self._dir / filename
 
-                field_names = ' '.join(field_names)
-                field_sizes = ' '.join(field_sizes)
-                field_types = ' '.join(field_types)
-                field_counts = ' '.join(field_counts)
+        with open(str(cloud_path), 'w') as f:
+            field_names = [f.name for f in cloud.fields]
+            field_sizes = [str(field_size(f.datatype)) for f in cloud.fields]
+            field_types = [field_type_str(f.datatype) for f in cloud.fields]
+            field_counts = [str(f.count) for f in cloud.fields]
 
-                f.write('VERSION .7\n')
-                f.write(f'FIELDS {field_names}\n')
-                f.write(f'SIZE {field_sizes}\n')
-                f.write(f'TYPE {field_types}\n')
-                f.write(f'COUNT {field_counts}\n')
-                f.write(f'WIDTH {cloud.width}\n')
-                f.write(f'HEIGHT {cloud.height}\n')
-                f.write('VIEWPOINT 0 0 0 1 0 0 0\n')
-                n_points = cloud.width * cloud.height
-                f.write(f'POINTS {n_points}\n')
-                f.write('DATA ascii\n')
+            field_names = ' '.join(field_names)
+            field_sizes = ' '.join(field_sizes)
+            field_types = ' '.join(field_types)
+            field_counts = ' '.join(field_counts)
 
-                for i in range(n_points):
-                    offset = i * cloud.point_step
-                    for field in cloud.fields:
-                        val = np.frombuffer(cloud.data, count=1, offset=offset + field.offset,
-                                            dtype=pcd_type_to_np_type(field.datatype))[0]
-                        f.write(f'{val} ')
-                    f.write('\n')
-            idx += 1
+            f.write('VERSION .7\n')
+            f.write(f'FIELDS {field_names}\n')
+            f.write(f'SIZE {field_sizes}\n')
+            f.write(f'TYPE {field_types}\n')
+            f.write(f'COUNT {field_counts}\n')
+            f.write(f'WIDTH {cloud.width}\n')
+            f.write(f'HEIGHT {cloud.height}\n')
+            f.write('VIEWPOINT 0 0 0 1 0 0 0\n')
+            n_points = cloud.width * cloud.height
+            f.write(f'POINTS {n_points}\n')
+            f.write('DATA ascii\n')
+
+            for i in range(n_points):
+                offset = i * cloud.point_step
+                for field in cloud.fields:
+                    val = np.frombuffer(cloud.data, count=1, offset=offset + field.offset,
+                                        dtype=pcd_type_to_np_type(field.datatype))[0]
+                    f.write(f'{val} ')
+                f.write('\n')
+        self._i += 1

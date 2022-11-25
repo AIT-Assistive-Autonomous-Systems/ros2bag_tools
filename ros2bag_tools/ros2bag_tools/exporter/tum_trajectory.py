@@ -1,4 +1,4 @@
-# Copyright 2021 AIT Austrian Institute of Technology GmbH
+# Copyright 2022 AIT Austrian Institute of Technology GmbH
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -23,57 +23,63 @@ from ros2bag_tools.exporter import ExporterError
 class TUMTrajectoryExporter:
     """TUM pose trajectories."""
 
+    def __init__(self):
+        self._args = None
+        self._f = None
+
     @staticmethod
     def add_arguments(parser):
         parser.add_argument('--precision', default=4, type=int)
         parser.add_argument('--out', '-o', required=True, type=str, help='Path to output file')
 
-    def process(self, args, odometry_iter):
-        with open(args.out, 'w') as f:
-            fmt = '{0:.' + str(args.precision) + 'f}'
+    def open(self, args):
+        self._args = args
+        self._f = open(self._args.out, 'w')
 
-            # if the input is a geo pose it is UTM-projected, and we need to detect
-            # (zone, band) changes from message to message
-            previous_utm_zone_band = None
+    def write(self, topic, msg, t):
+        fmt = '{0:.' + str(self._args.precision) + 'f}'
 
-            for topic_name, msg, _ in odometry_iter:
-                if isinstance(msg, Odometry):
-                    pos = msg.pose.pose.position
-                    ori = msg.pose.pose.orientation
-                elif isinstance(msg, NavSatFix):
-                    utm_point = fromLatLong(msg.latitude, msg.longitude, msg.altitude)
-                    pos = Vector3()
-                    pos.x = utm_point.easting
-                    pos.y = utm_point.northing
-                    pos.z = utm_point.altitude
-                    utm_lattice_coordinate = (utm_point.zone, utm_point.band)
-                    if previous_utm_zone_band and previous_utm_zone_band != utm_lattice_coordinate:
-                        msg = f'UTM (zone, band) changes between messages in topic {topic_name}'
-                        raise ExporterError(msg)
-                    previous_utm_zone_band = utm_lattice_coordinate
-                    # orientation is unit for NavSatFix
-                    ori = Quaternion()
-                else:
-                    exp_clz = self.__class__.__name__
-                    msg_clz = msg.__class__.__name__
-                    raise TypeError(f'{exp_clz} can not export messages of type {msg_clz}')
+        # if the input is a geo pose it is UTM-projected, and we need to detect
+        # (zone, band) changes from message to message
+        previous_utm_zone_band = None
 
-                t_ros = Time.from_msg(msg.header.stamp)
-                t_sec = t_ros.nanoseconds / 1e9
+        if isinstance(msg, Odometry):
+            pos = msg.pose.pose.position
+            ori = msg.pose.pose.orientation
+        elif isinstance(msg, NavSatFix):
+            utm_point = fromLatLong(msg.latitude, msg.longitude, msg.altitude)
+            pos = Vector3()
+            pos.x = utm_point.easting
+            pos.y = utm_point.northing
+            pos.z = utm_point.altitude
+            utm_lattice_coordinate = (utm_point.zone, utm_point.band)
+            if previous_utm_zone_band and previous_utm_zone_band != utm_lattice_coordinate:
+                msg = f'UTM (zone, band) changes between messages in topic {topic}'
+                raise ExporterError(msg)
+            previous_utm_zone_band = utm_lattice_coordinate
+            # orientation is unit for NavSatFix
+            ori = Quaternion()
+        else:
+            exp_clz = self.__class__.__name__
+            msg_clz = msg.__class__.__name__
+            raise TypeError(f'{exp_clz} can not export messages of type {msg_clz}')
 
-                f.write(str(t_sec))
-                f.write(' ')
-                f.write(fmt.format(pos.x))
-                f.write(' ')
-                f.write(fmt.format(pos.y))
-                f.write(' ')
-                f.write(fmt.format(pos.z))
-                f.write(' ')
-                f.write(fmt.format(ori.x))
-                f.write(' ')
-                f.write(fmt.format(ori.y))
-                f.write(' ')
-                f.write(fmt.format(ori.z))
-                f.write(' ')
-                f.write(fmt.format(ori.w))
-                f.write('\n')
+        t_ros = Time.from_msg(msg.header.stamp)
+        t_sec = t_ros.nanoseconds / 1e9
+
+        self._f.write(str(t_sec))
+        self._f.write(' ')
+        self._f.write(fmt.format(pos.x))
+        self._f.write(' ')
+        self._f.write(fmt.format(pos.y))
+        self._f.write(' ')
+        self._f.write(fmt.format(pos.z))
+        self._f.write(' ')
+        self._f.write(fmt.format(ori.x))
+        self._f.write(' ')
+        self._f.write(fmt.format(ori.y))
+        self._f.write(' ')
+        self._f.write(fmt.format(ori.z))
+        self._f.write(' ')
+        self._f.write(fmt.format(ori.w))
+        self._f.write('\n')

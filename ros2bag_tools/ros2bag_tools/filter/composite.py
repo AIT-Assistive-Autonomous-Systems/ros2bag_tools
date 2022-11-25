@@ -23,14 +23,13 @@ logger = logging.getLogger(__name__)
 class CompositeFilter(FilterExtension):
 
     def __init__(self):
-        self._loader = None
+        self._loader = ExtensionLoader('ros2bag_tools.filter', logger)
         self._filters = []
 
     def add_arguments(self, parser):
         parser.add_argument(
             '-c', '--config', required=True,
             help='Path to configuration file of filters')
-        self._loader = ExtensionLoader('ros2bag_tools.filter', logger)
 
     def set_args(self, metadatas, args):
         with open(args.config, 'r') as f:
