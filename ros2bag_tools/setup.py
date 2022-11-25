@@ -44,6 +44,7 @@ The package provides the additional commands for the ROS 2 bag command line tool
             'rename = ros2bag_tools.verb.rename:RenameVerb',
             'replace = ros2bag_tools.verb.replace:ReplaceVerb',
             'restamp = ros2bag_tools.verb.restamp:RestampVerb',
+            'sync = ros2bag_tools.verb.sync:SyncVerb',
             'summary = ros2bag_tools.verb.summary:SummaryVerb',
             'process = ros2bag_tools.verb.process:ProcessVerb',
             'video = ros2bag_tools.verb.video:VideoVerb',
@@ -59,6 +60,7 @@ The package provides the additional commands for the ROS 2 bag command line tool
             'rename = ros2bag_tools.filter.rename:RenameFilter',
             'replace = ros2bag_tools.filter.replace:ReplaceFilter',
             'restamp = ros2bag_tools.filter.restamp:RestampFilter',
+            'sync = ros2bag_tools.filter.sync:SyncFilter',
         ],
         'ros2bag_tools.exporter': [
             'tum_trajectory = ros2bag_tools.exporter.tum_trajectory:TUMTrajectoryExporter',

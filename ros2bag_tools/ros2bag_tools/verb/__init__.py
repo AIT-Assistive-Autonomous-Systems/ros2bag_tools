@@ -25,6 +25,18 @@ from rosbag2_py import (
     get_registered_writers
 )
 from ros2bag_tools.progress import ProgressTracker
+
+ReadOrder = None
+ReadOrderSortBy = None
+
+try:
+    from rosbag2_py import (
+        ReadOrder,
+        ReadOrderSortBy
+    )
+except:
+    pass
+
 from ros2bag.api import print_error
 from ros2bag.verb import VerbExtension
 from ros2bag_tools.filter import FilterResult
@@ -114,6 +126,8 @@ class FilterVerb(VerbExtension):
         for bag_file, metadata in zip(args.bag_files, metadatas):
             reader = SequentialReader()
             args_in_bag['bag_path'] = bag_file
+            if ReadOrder:
+                reader.set_read_order(ReadOrder(ReadOrderSortBy.ReceivedTimestamp))
             in_storage_options, in_converter_options = get_rosbag_options(
                 argparse.Namespace(**args_in_bag))
             reader.open(in_storage_options, in_converter_options)
