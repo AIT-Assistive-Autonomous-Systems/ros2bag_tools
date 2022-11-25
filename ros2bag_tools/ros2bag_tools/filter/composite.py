@@ -13,55 +13,33 @@
 # limitations under the License.
 
 import logging
-import argparse
 from rosbag2_py import BagMetadata, StorageFilter
-from ros2cli.plugin_system import PluginException
-from ros2cli.entry_points import load_entry_points
-from ros2bag_tools.filter import FilterResult
+from ros2bag_tools.filter import FilterExtension, FilterResult
+from ros2bag_tools.extension import ExtensionLoader, readargs
 
 logger = logging.getLogger(__name__)
 
 
-class CompositeFilter:
+class CompositeFilter(FilterExtension):
 
     def __init__(self):
-        self._filter_extensions = {}
+        self._loader = None
         self._filters = []
 
     def add_arguments(self, parser):
         parser.add_argument(
             '-c', '--config', required=True,
             help='Path to configuration file of filters')
-        self._filter_extensions = load_entry_points('ros2bag_tools.filter')
+        self._loader = ExtensionLoader('ros2bag_tools.filter', logger)
 
-    def set_args(self, metadata, args):
+    def set_args(self, metadatas, args):
         with open(args.config, 'r') as f:
-            for line in f.readlines():
-                line = line.strip()
-                if not line:
-                    # empty lines in config file are acceptable
-                    continue
-                if line.startswith('#'):
-                    # allow comment lines
-                    continue
-                args_line = [word.strip() for word in line.split()]
-                filter_name = args_line[0]
-                parser = argparse.ArgumentParser(filter_name)
-                try:
-                    filter = self._filter_extensions[filter_name]()
-                except PluginException as e:  # noqa: F841
-                    logger.warning(
-                        f"Failed to instantiate ros2bag_tools.filter extension "
-                        f"'{filter_name}': {e}")
-                    raise argparse.ArgumentError(None, 'invalid filter')
-                except Exception as e:  # noqa: F841
-                    logger.error(
-                        f"Failed to instantiate ros2bag_tools.filter extension "
-                        f"'{filter_name}': {e}")
-                    raise argparse.ArgumentError(None, 'invalid filter')
-                filter.add_arguments(parser)
-                filter_args = parser.parse_args(args_line[1:])
-                filter.set_args(metadata, filter_args)
+            for argv in readargs(f):
+                assert(len(argv) >= 1)
+                filter_name = argv[0]
+                arg_arr = argv[1:]
+                filter, filter_args = self._loader.load(filter_name, arg_arr)
+                filter.set_args(metadatas, filter_args)
                 self._filters.append(filter)
         assert(len(self._filters) > 0)
 
