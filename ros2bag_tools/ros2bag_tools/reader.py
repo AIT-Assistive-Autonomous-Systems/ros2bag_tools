@@ -14,9 +14,7 @@
 
 from rosidl_runtime_py.utilities import get_message
 from rclpy.serialization import deserialize_message
-from rosbag2_py import SequentialReader, StorageFilter, TopicMetadata
-from rosbag2_tools import default_rosbag_options
-from ros2bag_tools.filter import FilterExtension, FilterResult
+from rosbag2_py import TopicMetadata
 
 
 class TopicDeserializer:
