@@ -19,7 +19,7 @@ from cv_bridge import CvBridge, cvtColorForDisplay
 from rosbag2_py import Info, SequentialReader, StorageOptions, ConverterOptions, StorageFilter
 from ros2bag_tools.filter import FilterResult
 from ros2bag_tools.filter.cut import CutFilter
-from ros2bag_tools.verb import ProgressTracker
+from ros2bag_tools.progress import ProgressTracker
 from rosbag2_tools.bag_view import BagView
 from ros2bag.api import print_error
 from ros2bag.verb import VerbExtension

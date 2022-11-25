@@ -22,7 +22,7 @@ from rosbag2_py import (
     StorageFilter,
     ConverterOptions,
 )
-from ros2bag_tools.verb import ProgressTracker
+from ros2bag_tools.progress import ProgressTracker
 from rclpy.time import Time
 from ros2bag.api import print_error
 from ros2bag.verb import VerbExtension
