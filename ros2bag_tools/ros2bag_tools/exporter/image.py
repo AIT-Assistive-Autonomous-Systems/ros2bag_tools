@@ -20,6 +20,7 @@ from abc import ABCMeta, abstractmethod
 from typing import Any, AnyStr, Optional, Union, Tuple
 import cv2 as cv
 import numpy as np
+from ros2bag_tools.exporter import Exporter
 
 
 def check_override_encoding(
@@ -139,9 +140,11 @@ class ImageMsgWriter(ImageMsgWriterBase):
         in_enc: Optional[str] = None
     ) -> AnyStr:
         img = self.image_bridge.imgmsg_to_cv2(img_msg)
-        in_enc = check_override_encoding(img_msg.encoding, in_enc, self.image_bridge)
+        in_enc = check_override_encoding(
+            img_msg.encoding, in_enc, self.image_bridge)
         if out_enc and in_enc != out_enc:
-            img = ImageMsgWriter.convert_encoding(img, in_enc, out_enc, demosaicing)
+            img = ImageMsgWriter.convert_encoding(
+                img, in_enc, out_enc, demosaicing)
         reval, buf = cv.imencode(ext, img)
 
         if not reval:
@@ -189,11 +192,13 @@ class CompressedImageMsgWriter(ImageMsgWriterBase):
         """
         descs = desc.lower().split(';')
         if len(descs) > 2:
-            raise ValueError(f'CompressedImage format descriptor not supported: {desc}')
+            raise ValueError(
+                f'CompressedImage format descriptor not supported: {desc}')
         enc, fmt = (None, descs[0]) if len(descs) < 2 else descs
         fmt = fmt.split('compressed')
         if len(fmt) > 2:
-            raise ValueError(f'CompressedImage format descriptor not supported: {desc}')
+            raise ValueError(
+                f'CompressedImage format descriptor not supported: {desc}')
         fmt, compr_enc = (fmt[0], None) if len(fmt) < 2 else fmt
         fmt = fmt.strip(' ')
 
@@ -215,7 +220,8 @@ class CompressedImageMsgWriter(ImageMsgWriterBase):
         elif cvim.shape[2] == 4:
             encoding = 'bgra'
         else:
-            raise RuntimeError(f'Cannot guess encoding from data shape: {cvim.shape}')
+            raise RuntimeError(
+                f'Cannot guess encoding from data shape: {cvim.shape}')
         return f'{encoding}{cvim.itemsize*8}'
 
     def process(
@@ -240,7 +246,8 @@ class CompressedImageMsgWriter(ImageMsgWriterBase):
             if not in_enc:
                 in_enc = CompressedImageMsgWriter.cv2_to_enc(img)
             if in_enc != out_enc:
-                img = ImageMsgWriter.convert_encoding(img, in_enc, out_enc, demosaicing)
+                img = ImageMsgWriter.convert_encoding(
+                    img, in_enc, out_enc, demosaicing)
         if img is not None:
             reval, buf = cv.imencode(ext, img)
         else:
@@ -259,8 +266,20 @@ def image_msg_writer_factory(msg):
     return msg_to_writer[type(msg)]()
 
 
-class ImageExporter:
+def none_if(val, none_val):
+    if val == none_val:
+        return None
+    return val
+
+
+class ImageExporter(Exporter):
     """Image files per message."""
+
+    def __init__(self):
+        self._idx = 0
+        self._writers = {}
+        self._args = None
+        self._dir = None
 
     @staticmethod
     def add_arguments(parser):
@@ -278,40 +297,41 @@ class ImageExporter:
         parser.add_argument('--input-encoding', default='passthrough',
                             help='Override input encoding, (e.g. if input is gray but bayer)')
 
-    def process(self, args, images):
-        dir = Path(args.dir)
-        idx = 0
-
-        input_encoding = args.input_encoding if args.input_encoding != 'passthrough' else None
-        output_encoding = args.output_encoding if args.output_encoding != 'passthrough' else None
+    def open(self, args):
+        self._idx = 0
+        self._dir = Path(args.dir)
 
         if not Path(args.name).suffix:
-            raise ValueError(f'Extension/Suffix of name {args.name} must not be empty')
+            raise ValueError(
+                f'Extension/Suffix of name {args.name} must not be empty')
 
-        dir.mkdir(parents=True, exist_ok=True)
-        writers = {}
+        self._dir.mkdir(parents=True, exist_ok=True)
 
-        for topic, img_msg, t in images:
-            writer = writers.get(type(img_msg), None)
-            if not writer:
-                writer = image_msg_writer_factory(img_msg)
-                writers[type(img_msg)] = writer
+        self._input_encoding = none_if(args.input_encoding, 'passthrough')
+        self._output_encoding = none_if(args.output_encoding, 'passthrough')
+        self._args = args
 
-            tpc_path = topic.lstrip('/').replace('/', '_')
-            filename = args.name.replace('%tpc', tpc_path)
-            filename = filename.replace('%t', str(t))
-            filename = filename.replace('%i', str(idx).zfill(8))
-            img_path = dir / filename
-            ext = img_path.suffix
+    def write(self, topic, img_msg, t):
+        writer = self._writers.get(type(img_msg), None)
+        if not writer:
+            writer = image_msg_writer_factory(img_msg)
+            self._writers[type(img_msg)] = writer
 
-            buf = writer.process(
-                img_msg,
-                output_encoding,
-                args.demosaicing,
-                ext,
-                input_encoding
-            )
+        tpc_path = topic.lstrip('/').replace('/', '_')
+        filename = self._args.name.replace('%tpc', tpc_path)
+        filename = filename.replace('%t', str(t))
+        filename = filename.replace('%i', str(self._idx).zfill(8))
+        img_path = self._dir / filename
+        ext = img_path.suffix
 
-            with img_path.open('wb') as f:
-                f.write(buf)
-            idx += 1
+        buf = writer.process(
+            img_msg,
+            self._output_encoding,
+            self._args.demosaicing,
+            ext,
+            self._input_encoding
+        )
+
+        with img_path.open('wb') as f:
+            f.write(buf)
+        self._idx += 1

@@ -13,10 +13,16 @@
 # limitations under the License.
 
 from rclpy.time import Time
+from ros2bag_tools.exporter import Exporter
 
 
-class StampExporter:
+class StampExporter(Exporter):
     """Timestamps by message index."""
+
+    def __init__(self):
+        self._args = None
+        self._f = None
+        self._i = 0
 
     @staticmethod
     def add_arguments(parser):
@@ -25,11 +31,16 @@ class StampExporter:
         parser.add_argument('--header', action='store_true',
                             help='Use header stamp rather than bag time')
 
-    def process(self, args, msgs):
-        idx = 0
-        with open(args.out, 'w') as f:
-            for _, img_msg, stamp in msgs:
-                if args.header:
-                    stamp = Time.from_msg(img_msg.header.stamp).nanoseconds
-                f.write(f'{str(idx).zfill(8)},{stamp}\n')
-                idx += 1
+    def open(self, args):
+        self._args = args
+        self._f = open(self._args.out, 'w')
+        self._i = 0
+
+    def write(self, topic, msg, t):
+        if self._args.header:
+            t = Time.from_msg(msg.header.stamp).nanoseconds
+        self._f.write(f'{str(self._i).zfill(8)},{t}\n')
+        self._i += 1
+
+    def close(self):
+        self._f.close()

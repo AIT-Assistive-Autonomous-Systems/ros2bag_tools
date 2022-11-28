@@ -1,4 +1,4 @@
-# Copyright 2021 AIT Austrian Institute of Technology
+# Copyright 2022 AIT Austrian Institute of Technology
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -40,13 +40,11 @@ def generate_test_description():
 
 def read_all_messages_of_topic(bag_path, topic, type):
     """Read all messages of given topic and type from a rosbag into a list."""
-    from rosbag2_py import StorageOptions, ConverterOptions, SequentialReader
+    from rosbag2_py import SequentialReader
     from rclpy.serialization import deserialize_message
+    from rosbag2_tools import default_rosbag_options
 
-    storage_options = StorageOptions(uri=bag_path, storage_id='sqlite3')
-    converter_options = ConverterOptions(
-        input_serialization_format='cdr',
-        output_serialization_format='cdr')
+    storage_options, converter_options = default_rosbag_options(bag_path)
 
     reader = SequentialReader()
     reader.open(storage_options, converter_options)
@@ -61,13 +59,10 @@ def read_all_messages_of_topic(bag_path, topic, type):
 
 def count_messages(bag_path):
     """Count messages in a bag."""
-    from rosbag2_py import StorageOptions, ConverterOptions, SequentialReader
+    from rosbag2_py import SequentialReader
+    from rosbag2_tools import default_rosbag_options
 
-    storage_options = StorageOptions(uri=bag_path, storage_id='sqlite3')
-    converter_options = ConverterOptions(
-        input_serialization_format='cdr',
-        output_serialization_format='cdr')
-
+    storage_options, converter_options = default_rosbag_options(bag_path)
     reader = SequentialReader()
     reader.open(storage_options, converter_options)
     count = 0
@@ -77,7 +72,7 @@ def count_messages(bag_path):
     return count
 
 
-class TestCli(unittest.TestCase):
+class TestFilterCli(unittest.TestCase):
 
     def test_cut(self, launch_service, proc_info, proc_output):
         from example_interfaces.msg import String

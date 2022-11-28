@@ -13,23 +13,11 @@
 # limitations under the License.
 
 from rosidl_runtime_py import message_to_yaml
-from ros2bag.api import check_path_exists
 from ros2bag.verb import VerbExtension
-import rosbag2_py
-from rosbag2_py import SequentialReader, StorageFilter, Info
+from rosbag2_py import SequentialReader, StorageFilter
+from ros2bag_tools.args import add_standard_reader_args
 from ros2bag_tools.verb import get_rosbag_options
 from rosbag2_tools.bag_view import BagView
-
-
-# copied from ros2bag.api until 0.15.3 is released
-def add_standard_reader_args(parser) -> None:
-    reader_choices = rosbag2_py.get_registered_readers()
-    parser.add_argument(
-        'bag_path', type=check_path_exists, help='Bag to open')
-    parser.add_argument(
-        '-s', '--storage', default='', choices=reader_choices,
-        help='Storage implementation of bag. '
-             'By default attempts to detect automatically - use this argument to override.')
 
 
 class EchoVerb(VerbExtension):
