@@ -17,6 +17,7 @@ ros2bag_tools adds verb extensions to the ros2bag cli.
 | **replace** | replace messages of a specific topic with message data specified in a yaml file |
 | **restamp** | for all messages with headers, change the bag timestamp to their header stamp |
 | summary | print summary on data to stdout |
+| **sync** | output synchronized bundles of messages using the ApproximateTimeSynchronizer |
 | video | show or write video of image data |
 
 You can check detailed usage information with `ros2 bag $VERB --help`.
