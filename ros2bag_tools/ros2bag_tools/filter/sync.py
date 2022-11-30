@@ -45,7 +45,7 @@ class BagWrappedMessage:
 
 
 class SyncSimpleFilter(SimpleFilter):
-    """Simple filter to pass bag messages to"""
+    """Simple filter to pass bag messages to."""
 
     def __init__(self, topic):
         super().__init__()
@@ -77,8 +77,11 @@ def positive(numeric):
 
 class SyncFilter(FilterExtension):
     """
-    Synchronize topics using ApproximateTimeSynchronizer and only
-    output synchronized tuples of messages.
+    Synchronize topics using ApproximateTimeSynchronizer.
+
+    Filter specified topics as synchronous bundle of message without modifying them using the
+    ApproximateTimeSynchronizer dropping any unsynchronized messages. Any other topics are passed
+    through unaffected.
     """
 
     def __init__(self):
