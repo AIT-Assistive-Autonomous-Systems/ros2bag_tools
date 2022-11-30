@@ -247,7 +247,7 @@ def test_sync_filter(dummy_synced_bag):
     reader = FilteredReader(bag_paths=[bag_path], filter=test_filter)
     parser = argparse.ArgumentParser('sync')
     test_filter.add_arguments(parser)
-    args = parser.parse_args(["-t", *synced_topics, "--slop", "0.01"])
+    args = parser.parse_args(['-t', *synced_topics, '--slop', '0.01'])
     test_filter.set_args([read_metadata(bag_path)], args)
 
     for meta in topics:
