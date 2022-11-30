@@ -54,25 +54,24 @@ class TestExport(unittest.TestCase):
                 assert cmd.exit_code == EXIT_OK
 
             with open(tmp.name, 'r') as f:
-                assert ['00000000,0'] == [l.strip() for l in f.readlines()]
+                assert ['00000000,0'] == [li.strip() for li in f.readlines()]
 
     def test_export_multiple(self, launch_service, proc_info, proc_output):
-        with tempfile.TemporaryDirectory(suffix='images') as td \
-             , tempfile.NamedTemporaryFile('w', suffix='filter') as tmp_f \
-             , tempfile.NamedTemporaryFile('w', suffix='stamps') as tmp_stamps \
-             , tempfile.NamedTemporaryFile('w', suffix='config') as tmp_c:
+        with tempfile.TemporaryDirectory(suffix='images') as td, \
+             tempfile.NamedTemporaryFile('w', suffix='filter') as tmp_f, \
+             tempfile.NamedTemporaryFile('w', suffix='stamps') as tmp_stamps, \
+             tempfile.NamedTemporaryFile('w', suffix='config') as tmp_c:
 
             tmp_f.write(' '.join(['cut', '--duration', '1.0', '\n']))
             tmp_f.flush()
             tmp_c.write(
                 ' '.join(['/image', 'image', '--dir', td, '--name', 'im_%i.png']) + '\n' +
-                ' '.join(['/image', 'stamp', '-o',
-                            tmp_stamps.name, '--header'])
+                ' '.join(['/image', 'stamp', '-o', tmp_stamps.name, '--header'])
             )
             tmp_c.flush()
 
             cmd = ['ros2', 'bag', 'export', '-i', 'test/images.bag',
-                    '-c', tmp_c.name, '-f', tmp_f.name]
+                   '-c', tmp_c.name, '-f', tmp_f.name]
             cmd_action = ExecuteProcess(
                 cmd=cmd,
                 name='ros2bag_tools-cli',
@@ -86,7 +85,7 @@ class TestExport(unittest.TestCase):
                 assert cmd.exit_code == EXIT_OK
 
             with open(tmp_stamps.name, 'r') as f:
-                stamp_lines = [l.strip() for l in f.readlines()]
+                stamp_lines = [li.strip() for li in f.readlines()]
                 assert '00000000,0' == stamp_lines[0]
                 assert '00000001,1000000000' == stamp_lines[1]
 

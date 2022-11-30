@@ -28,11 +28,10 @@ from ros2bag_tools.filter.sync import SyncFilter
 from ros2bag_tools.reader import FilteredReader
 from example_interfaces.msg import String
 from diagnostic_msgs.msg import DiagnosticArray
+from .create_test_bags import create_synced_bag
 
 import pytest
 
-
-from .create_test_bags import create_synced_bag
 
 @pytest.fixture(scope="session")
 def dummy_synced_bag(tmp_path_factory) -> Tuple[
@@ -42,7 +41,7 @@ def dummy_synced_bag(tmp_path_factory) -> Tuple[
     synced_bag = str(bag_path / 'synced_bag')
 
     topics, synced_topics, synced_msgs = create_synced_bag(synced_bag)
-    
+
     return synced_bag, synced_topics, topics, synced_msgs
 
 
@@ -238,6 +237,7 @@ def test_restamp_filter():
     bag_msg = ('/diagnostics', serialize_message(msg), 500 * 1000 * 1000)
     (_, _, t) = filter.filter_msg(bag_msg)
     assert(t == ns_stamp)
+
 
 def test_sync_filter(dummy_synced_bag):
     bag_path, synced_topics, topics, synced_msgs = dummy_synced_bag

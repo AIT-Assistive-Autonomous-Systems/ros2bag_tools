@@ -13,7 +13,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 """Create the test.bag file."""
-import sys
 from typing import Tuple, Sequence
 from random import Random
 from rclpy.time import CONVERSION_CONSTANT, Time
@@ -93,15 +92,16 @@ def create_images_bag(path):
         msg.data = [0, 128, 128, 255]
         writer.write('/image', serialize_message(msg), t)
 
+
 def create_synced_bag(path) -> Tuple[TopicMetadata, Sequence[BagMessageTuple]]:
     writer = SequentialWriter()
     storage_options, converter_options = default_rosbag_options(path)
     writer.open(storage_options, converter_options)
 
     topics = [TopicMetadata('/sync1', 'sensor_msgs/msg/Image', 'cdr'),
-        TopicMetadata('/sync2', 'sensor_msgs/msg/Image', 'cdr'),
-        TopicMetadata('/sync3', 'sensor_msgs/msg/Image', 'cdr'),
-        TopicMetadata('/offsync1', 'sensor_msgs/msg/Image', 'cdr')]
+              TopicMetadata('/sync2', 'sensor_msgs/msg/Image', 'cdr'),
+              TopicMetadata('/sync3', 'sensor_msgs/msg/Image', 'cdr'),
+              TopicMetadata('/offsync1', 'sensor_msgs/msg/Image', 'cdr')]
 
     synced_topics = [topic.name for topic in topics[0:3]]
 
@@ -119,7 +119,7 @@ def create_synced_bag(path) -> Tuple[TopicMetadata, Sequence[BagMessageTuple]]:
             msg = Image()
 
             stamp = (Time(seconds=j+1, nanoseconds=0).nanoseconds +
-                gen.randint(-slop_ns//2, slop_ns//2)) + t_offsets_ns[i]
+                     gen.randint(-slop_ns//2, slop_ns//2)) + t_offsets_ns[i]
             stamp = Time(nanoseconds=stamp)
             t = Time(seconds=j+1, nanoseconds=gen.randint(int(0), int(100*1e6)))
             msg.header.frame_id = f'camera{i}_optical_frame'
@@ -131,7 +131,7 @@ def create_synced_bag(path) -> Tuple[TopicMetadata, Sequence[BagMessageTuple]]:
             msg.data = [i, j]
 
             bag_tuple = (topic.name, msg, t.nanoseconds)
-            if i==1 and j in [1, 3]:
+            if i == 1 and j in [1, 3]:
                 dropped.append(bag_tuple)
                 continue
             elif j != 1 or i == 3:
@@ -145,6 +145,3 @@ def create_synced_bag(path) -> Tuple[TopicMetadata, Sequence[BagMessageTuple]]:
     bag_tuple = (dropped[1][0], serialize_message(dropped[1][1]), dropped[1][2] + int(400e9))
     writer.write(*bag_tuple)
     return topics, synced_topics, msgs
-        
-
-#create_images_bag(sys.argv[1])
