@@ -14,6 +14,7 @@
   <depend>rosbag2_tools</depend>
   <depend>rosidl_runtime_py</depend>
   <depend>python3-yaml</depend>
+  <depend>message_filters</depend>
   <depend>cv_bridge</depend>
   <depend>python3-opencv</depend>
 
