@@ -69,6 +69,7 @@ def positive(numeric):
         arg = numeric(arg)
         if arg < 0:
             raise RuntimeError("Must be >= 0")
+        return arg
     return check_value
 
 class SyncFilter(FilterExtension):
