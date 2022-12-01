@@ -23,6 +23,7 @@ from example_interfaces.msg import String
 from diagnostic_msgs.msg import DiagnosticArray
 from sensor_msgs.msg import Image
 from ros2bag_tools.filter import BagMessageTuple
+from ros2bag_tools.time import ros_time_from_nanoseconds
 
 
 def create_test_bag(path):
@@ -120,7 +121,7 @@ def create_synced_bag(path) -> Tuple[TopicMetadata, Sequence[BagMessageTuple]]:
 
             stamp = (Time(seconds=j+1, nanoseconds=0).nanoseconds +
                      gen.randint(-slop_ns//2, slop_ns//2)) + t_offsets_ns[i]
-            stamp = Time(nanoseconds=stamp)
+            stamp = ros_time_from_nanoseconds(stamp)
             t = Time(seconds=j+1, nanoseconds=gen.randint(int(0), int(100*1e6)))
             msg.header.frame_id = f'camera{i}_optical_frame'
             msg.header.stamp = stamp.to_msg()
