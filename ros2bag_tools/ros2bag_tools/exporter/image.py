@@ -203,7 +203,7 @@ class CompressedImageMsgWriter(ImageMsgWriterBase):
         fmt = fmt.strip(' ')
 
         if compr_enc:
-            compr_enc = enc.strip(' ')
+            compr_enc = compr_enc.strip(' ')
         if enc:
             enc = enc.strip(' ')
         if fmt in ['jpeg', 'jpg']:

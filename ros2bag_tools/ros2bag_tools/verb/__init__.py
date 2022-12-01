@@ -31,7 +31,7 @@ from ros2bag.verb import VerbExtension
 
 
 def get_rosbag_options(args):
-    """Get rosbag options from args matching the ros2bag.api.add_standard_reader_args names"""
+    """Get rosbag options from args matching the ros2bag.api.add_standard_reader_args names."""
     storage_id = args.storage if hasattr(args, 'storage') else 'sqlite3'
     serialization_format = (
         args.serialization_format if hasattr(

@@ -13,9 +13,10 @@
 # limitations under the License.
 
 import argparse
+from typing import Sequence, Tuple
 from rclpy.serialization import serialize_message, deserialize_message
 from rosbag2_py import Info, TopicMetadata
-from ros2bag_tools.filter import FilterResult
+from ros2bag_tools.filter import FilterResult, BagMessageTuple
 from ros2bag_tools.filter.add import AddFilter
 from ros2bag_tools.filter.cut import CutFilter
 from ros2bag_tools.filter.extract import ExtractFilter
@@ -23,11 +24,25 @@ from ros2bag_tools.filter.reframe import ReframeFilter
 from ros2bag_tools.filter.rename import RenameFilter
 from ros2bag_tools.filter.replace import ReplaceFilter
 from ros2bag_tools.filter.restamp import RestampFilter
+from ros2bag_tools.filter.sync import SyncFilter
+from ros2bag_tools.reader import FilteredReader
 from example_interfaces.msg import String
 from diagnostic_msgs.msg import DiagnosticArray
-
+from .create_test_bags import create_synced_bag
 
 import pytest
+
+
+@pytest.fixture(scope="session")
+def dummy_synced_bag(tmp_path_factory) -> Tuple[
+        str, Sequence[TopicMetadata], Sequence[BagMessageTuple]]:
+    bag_path = tmp_path_factory.mktemp('bags')
+
+    synced_bag = str(bag_path / 'synced_bag')
+
+    topics, synced_topics, synced_msgs = create_synced_bag(synced_bag)
+
+    return synced_bag, synced_topics, topics, synced_msgs
 
 
 def read_metadata(path: str):
@@ -222,3 +237,28 @@ def test_restamp_filter():
     bag_msg = ('/diagnostics', serialize_message(msg), 500 * 1000 * 1000)
     (_, _, t) = filter.filter_msg(bag_msg)
     assert(t == ns_stamp)
+
+
+def test_sync_filter(dummy_synced_bag):
+    bag_path, synced_topics, topics, synced_msgs = dummy_synced_bag
+    assert(len(synced_msgs) > 0)
+
+    test_filter = SyncFilter()
+    reader = FilteredReader(bag_paths=[bag_path], filter=test_filter)
+    parser = argparse.ArgumentParser('sync')
+    test_filter.add_arguments(parser)
+    args = parser.parse_args(['-t', *synced_topics, '--slop', '0.01'])
+    test_filter.set_args([read_metadata(bag_path)], args)
+
+    for meta in topics:
+        assert(test_filter.filter_topic(meta) == meta)
+
+    msg_type = type(synced_msgs[0][1])
+    for msg in reader:
+        # serializing the same message and comparing it returns False
+        # thus compare deserialized message
+        topic, msg, t = msg
+        msg = (topic, deserialize_message(msg, msg_type), t)
+        assert(msg in synced_msgs)
+        synced_msgs.remove(msg)
+    assert(len(synced_msgs) == 0)

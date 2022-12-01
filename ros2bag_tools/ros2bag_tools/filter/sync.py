@@ -19,6 +19,7 @@ from typing import Iterable, Sequence
 
 from . import FilterExtension, BagMessageTuple
 
+
 class BagWrappedMessage:
     def __init__(self, t, topic, msg):
         self._topic = topic
@@ -44,7 +45,7 @@ class BagWrappedMessage:
 
 
 class SyncSimpleFilter(SimpleFilter):
-    """Simple filter to pass bag messages to"""
+    """Simple filter to pass bag messages to."""
 
     def __init__(self, topic):
         super().__init__()
@@ -64,17 +65,23 @@ def at_least_two(i):
         raise RuntimeError("Must be at least 2")
     return int(i)
 
+
 def positive(numeric):
     def check_value(arg):
         arg = numeric(arg)
         if arg < 0:
             raise RuntimeError("Must be >= 0")
+        return arg
     return check_value
+
 
 class SyncFilter(FilterExtension):
     """
-    Synchronize topics using ApproximateTimeSynchronizer and only
-    output synchronized tuples of messages.
+    Synchronize topics using ApproximateTimeSynchronizer.
+
+    Filter specified topics as synchronous bundle of message without modifying them using the
+    ApproximateTimeSynchronizer dropping any unsynchronized messages. Any other topics are passed
+    through unaffected.
     """
 
     def __init__(self):
@@ -150,5 +157,5 @@ class SyncFilter(FilterExtension):
         self._msgs = []
         # TODO(hofstaetterm): Produce result per filter to total num syncs.
         #
-        # If no message drops occurred then num syncs and num signaled are identical. 
+        # If no message drops occurred then num syncs and num signaled are identical.
         return result

@@ -1,4 +1,4 @@
-# Copyright 2021 AIT Austrian Institute of Technology GmbH
+# Copyright 2022 AIT Austrian Institute of Technology GmbH
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -17,10 +17,7 @@ from ros2bag_tools.filter.sync import SyncFilter
 
 
 class SyncVerb(FilterVerb):
-    """
-    Synchronize topics using ApproximateTimeSynchronizer and only
-    output synchronized tuples of messages.
-    """
+    """Synchronize topics dropping unsynchronized messages."""
 
     def __init__(self):
         super().__init__(SyncFilter())

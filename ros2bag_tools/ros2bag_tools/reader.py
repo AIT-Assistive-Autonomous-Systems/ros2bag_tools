@@ -26,7 +26,7 @@ try:
         ReadOrder,
         ReadOrderSortBy
     )
-except:
+except(ImportError):
     pass
 
 
