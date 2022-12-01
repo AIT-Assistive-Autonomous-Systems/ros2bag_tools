@@ -50,6 +50,32 @@ Exporting is currently possible for:
 
 Run `ros2 bag export --in $BAG_PATH -t $TOPIC_NAME $EXPORTER` to see available options.
 
+### synchronized export
+
+`ros2 bag export` supports preprocessing of messages before exporting, using the filters described above.
+In addition, a list of exporters can be passed, to export messages from multiple topics simultaneously while reading the data only once.
+
+For instance, this can be used to export synchronized images in the presence of frame drops:
+
+```
+# filters.config
+# same syntax as described in chaining
+sync -t /left/image_rect /right/image_rect
+```
+
+```
+# export.config
+# syntax: TOPIC EXPORTER_NAME EXPORTER_ARGS..
+/left/image_rect image --dir cam_left
+/right/image_rect image --dir cam_right
+```
+
+```bash
+# write only those images in /left/image_rect and /right/image_rect with header.stamp synchronized
+# by the default tolerance to the cam_left and cam_right directories respectively
+ros2 bag export -f filters.config -c export.config
+```
+
 ## plot
 
 Quickly plot timeseries from message data using matplotlib.
