@@ -16,6 +16,7 @@ import logging
 from rosbag2_py import BagMetadata, StorageFilter
 from ros2bag_tools.filter import FilterExtension, FilterResult
 from ros2bag_tools.extension import ExtensionLoader, readargs
+from operator import itemgetter
 
 logger = logging.getLogger(__name__)
 
@@ -90,5 +91,5 @@ class CompositeFilter(FilterExtension):
                     new_msgs.extend(result)
                 else:
                     new_msgs.append(result)
-            current_msgs = new_msgs
+            current_msgs = sorted(new_msgs, key=itemgetter(2))
         return current_msgs
