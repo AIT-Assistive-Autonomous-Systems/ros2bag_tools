@@ -83,7 +83,7 @@ class CompositeFilter(FilterExtension):
             for item in current_msgs:
                 result = f.filter_msg(item)
                 if result == FilterResult.DROP_MESSAGE:
-                    return FilterResult.DROP_MESSAGE
+                    continue
                 elif result == FilterResult.STOP_CURRENT_BAG:
                     return FilterResult.STOP_CURRENT_BAG
                 elif isinstance(result, list):
