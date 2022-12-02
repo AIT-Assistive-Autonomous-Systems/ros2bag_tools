@@ -85,6 +85,7 @@ class SyncFilter(FilterExtension):
     """
 
     def __init__(self):
+        super().__init__()
         self._sync_filters = {}
         self._topic_type_map = {}
         self._type_map = {}
