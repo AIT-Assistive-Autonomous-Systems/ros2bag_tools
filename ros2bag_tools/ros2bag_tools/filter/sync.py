@@ -160,3 +160,11 @@ class SyncFilter(FilterExtension):
         #
         # If no message drops occurred then num syncs and num signaled are identical.
         return result
+
+    def flush(self):
+        self._logger.info(f"total #synced-bundles: {self._num_syncs}")
+        for topic, filter in self._sync_filters.items():
+            num_drops = filter.num_signaled - self._num_syncs
+            if num_drops > 0:
+                self._logger.warning(f"total #off-sync msgs on '{topic}': {num_drops}")
+        return []

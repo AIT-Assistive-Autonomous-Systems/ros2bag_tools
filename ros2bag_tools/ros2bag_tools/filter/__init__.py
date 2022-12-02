@@ -20,6 +20,7 @@ from rclpy.validate_topic_name import validate_topic_name
 from rclpy.serialization import deserialize_message, serialize_message
 from rosidl_runtime_py.utilities import get_message
 from ros2cli.plugin_system import PLUGIN_SYSTEM_VERSION, satisfies_version
+from logging import Logger, getLogger
 
 
 class FilterResult(Enum):
@@ -48,9 +49,21 @@ class FilterExtension:
 
     EXTENSION_POINT_VERSION = '0.1'
 
-    def __init__(self):
+    def __init__(self, logger: Union[Logger, str, None] = None):
         super(FilterExtension, self).__init__()
         satisfies_version(PLUGIN_SYSTEM_VERSION, '^0.1')
+
+        if isinstance(logger, str):
+            self._logger = getLogger(logger)
+        elif logger is None:
+            self._logger = getLogger(__name__)
+        else:
+            self._logger = logger
+
+    def set_logger(self, logger: Logger):
+        if logger is None:
+            raise ValueError("Setting a {logger} is not permitted")
+        self._logger = logger
 
     def add_arguments(self, _args):
         pass
@@ -71,6 +84,18 @@ class FilterExtension:
     def filter_msg(self, msg: BagMessageTuple) -> Union[FilterResult, BagMessageTuple, List]:
         return msg
 
+    def flush(self) -> Union[FilterResult, BagMessageTuple, List]:
+        """
+        Flush remaining contents or logs.
+
+        Output any remaining messages or logs. filter_msg may still be called
+        as other filters in the front of the chain may have produced some messages to filter.
+
+        For single filters it makes no sense to return a FilterResult here.
+        This will only we be valid for filters like the CompositeFilters.
+        """
+        return []
+
 
 def TopicNameArg(value):
     try:
@@ -82,8 +107,8 @@ def TopicNameArg(value):
 
 class TypeAwareTopicFilter(FilterExtension):
 
-    def __init__(self):
-        super(TypeAwareTopicFilter, self).__init__()
+    def __init__(self, *args, **kwargs):
+        super(TypeAwareTopicFilter, self).__init__(*args, **kwargs)
         self._message_type = None
         self._topic = None
 

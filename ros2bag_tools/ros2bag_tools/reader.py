@@ -75,6 +75,7 @@ class FilteredReader:
             self._readers.append(reader)
         self._filter = filter
         self._queue = []
+        self._flushed = False
 
     def get_all_topics_and_types(self):
         for reader in self._readers:
@@ -93,15 +94,16 @@ class FilteredReader:
     def __next__(self):
         if len(self._queue) > 0:
             return self._queue.pop(0)
-        while True:
-            if len(self._readers) == 0:
-                raise StopIteration()
-            if not self._readers[0].has_next():
+        while not self._flushed:
+            if self._readers and not self._readers[0].has_next():
                 self._readers.pop(0)
                 continue  # check reader again
-
-            msg = self._readers[0].read_next()
-            result = self._filter.filter_msg(msg)
+            if self._readers:
+                msg = self._readers[0].read_next()
+                result = self._filter.filter_msg(msg)
+            else:
+                result = self._filter.flush()
+                self._flushed = True
             if result == FilterResult.STOP_CURRENT_BAG:
                 raise StopIteration()
             elif result == FilterResult.DROP_MESSAGE:
@@ -113,8 +115,7 @@ class FilteredReader:
                     continue
                 self._queue = result[1:]
                 return result[0]
-            elif isinstance(result, tuple):
-                return result
             else:
                 raise ValueError(
                     "Filter returned invalid result: '{}'.".format(result))
+        raise StopIteration()
