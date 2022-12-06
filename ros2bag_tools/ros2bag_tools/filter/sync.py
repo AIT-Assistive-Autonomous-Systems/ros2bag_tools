@@ -130,22 +130,23 @@ class SyncFilter(FilterExtension):
     def filter_topic(self, topic_metadata: TopicMetadata):
         topic_type = topic_metadata.type
         topic = topic_metadata.name
-        if topic_type not in self._type_map and topic in self._sync_filters:
-            try:
-                message = get_message(topic_type)
-                self._type_map[topic_type] = message
-                fields = message.get_fields_and_field_types()
-                if 'header' not in fields or fields['header'] != 'std_msgs/Header':
-                    raise AttributeError(
-                        f"Message {topic_type} has no header field.")
-            except (AttributeError, ModuleNotFoundError, ValueError):
-                raise RuntimeError(f"Cannot load message type '{topic_type}'")
-        self._topic_type_map[topic] = self._type_map[topic_type]
+        if topic in topic in self._sync_filters:
+            if topic_type not in self._type_map:
+                try:
+                    message = get_message(topic_type)
+                    self._type_map[topic_type] = message
+                    fields = message.get_fields_and_field_types()
+                    if 'header' not in fields or fields['header'] != 'std_msgs/Header':
+                        raise AttributeError(
+                            f"Message {topic_type} has no header field.")
+                except (AttributeError, ModuleNotFoundError, ValueError):
+                    raise RuntimeError(f"Cannot load message type '{topic_type}'")
+            self._topic_type_map[topic] = self._type_map[topic_type]
         return topic_metadata
 
     def sync_callback(self, *msgs: Iterable[BagWrappedMessage]):
-        self._msgs = [(msg.topic, serialize_message(msg.msg), msg.t)
-                      for msg in msgs]
+        self._msgs.extend([(msg.topic, serialize_message(msg.msg), msg.t)
+                      for msg in msgs])
         self._num_syncs += 1
 
     def filter_msg(self, msg: BagMessageTuple):
