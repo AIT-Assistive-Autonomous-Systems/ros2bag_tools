@@ -25,8 +25,6 @@ from sensor_msgs.msg import Image
 from ros2bag_tools.filter import BagMessageTuple
 from ros2bag_tools.time import ros_time_from_nanoseconds
 
-import pytest
-
 
 def create_test_bag(path):
     writer = SequentialWriter()

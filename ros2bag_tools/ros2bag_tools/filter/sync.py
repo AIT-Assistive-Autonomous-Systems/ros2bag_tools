@@ -146,7 +146,7 @@ class SyncFilter(FilterExtension):
 
     def sync_callback(self, *msgs: Iterable[BagWrappedMessage]):
         self._msgs.extend([(msg.topic, serialize_message(msg.msg), msg.t)
-                      for msg in msgs])
+                           for msg in msgs])
         self._num_syncs += 1
 
     def filter_msg(self, msg: BagMessageTuple):

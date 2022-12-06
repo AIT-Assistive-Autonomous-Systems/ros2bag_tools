@@ -26,7 +26,7 @@ from rosbag2_py import (
 from ros2bag_tools.progress import ProgressTracker
 
 from ros2bag_tools.reader import FilteredReader
-from ros2bag_tools.logging import RclpyAdapter
+from ros2bag_tools.logging import getLogger
 from ros2bag.api import print_error
 from ros2bag.verb import VerbExtension
 
@@ -57,7 +57,7 @@ class FilterVerb(VerbExtension):
         self._filter = filter
 
     def add_arguments(self, parser, cli_name):  # noqa: D102
-        self._logger = RclpyAdapter(cli_name)
+        self._logger = getLogger(cli_name)
         parser.add_argument(
             'bag_files', nargs='+', help='input bag files')
         parser.add_argument(

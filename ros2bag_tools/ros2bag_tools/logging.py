@@ -14,16 +14,34 @@
 
 from rclpy.logging import get_logger as rclpy_get_logger
 from rclpy.impl.rcutils_logger import RcutilsLogger
-from logging import Logger
+import logging
 
 from typing import Union
 
 
+root: logging.Logger = None
+
+
+def getLogger(logger: Union[str, logging.Logger, RcutilsLogger, None] = None) -> logging.Logger:
+    result = root
+    if root is None:
+        if logger:
+            if isinstance(logger, str):
+                result = RclpyAdapter(rclpy_get_logger(logger))
+            elif isinstance(logger, RcutilsLogger):
+                result = RclpyAdapter(logger)
+            else:
+                result = logger
+        else:
+            result = logging.getLogger()
+    elif logger:
+        result = root.getChild(logger)
+    return result
+
+
 class RclpyAdapter:
 
-    def __init__(self, logger: Union[Logger, RcutilsLogger, str]):
-        if isinstance(logger, str):
-            logger = rclpy_get_logger(logger)
+    def __init__(self, logger: RcutilsLogger):
         self.logger = logger
 
     def getChild(self, name: str):

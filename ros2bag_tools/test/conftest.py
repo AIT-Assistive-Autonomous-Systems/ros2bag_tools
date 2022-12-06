@@ -30,3 +30,23 @@ def dummy_synced_bag(tmp_path_factory: pytest.TempPathFactory) -> Tuple[
     topics, synced_topics, synced_msgs = create_synced_bag(synced_bag)
 
     return synced_bag, synced_topics, topics, synced_msgs
+
+
+@pytest.fixture(scope="session")
+def dummy_synced_export_conf(tmp_path_factory: pytest.TempPathFactory) -> Tuple[str, str]:
+    conf_path = tmp_path_factory.mktemp('conf')
+    result_path = tmp_path_factory.mktemp('result')
+
+    filter_conf = conf_path / 'sync_filter.conf'
+    export_conf = conf_path / 'sync_export.conf'
+
+    with filter_conf.open("w") as f:
+        f.writelines([
+           'sync -t /sync1 /sync2 /sync3'
+        ])
+    with export_conf.open("w") as f:
+        f.writelines([
+            f'/sync1 stamp -o {str(result_path)}/synced_stamps.txt'
+        ])
+
+    return str(filter_conf), str(export_conf), str(result_path)
