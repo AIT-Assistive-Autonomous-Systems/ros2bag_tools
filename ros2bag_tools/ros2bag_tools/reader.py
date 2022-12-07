@@ -16,7 +16,6 @@ from rosidl_runtime_py.utilities import get_message
 from rclpy.serialization import deserialize_message
 from rosbag2_tools import default_rosbag_options
 from ros2bag_tools.filter import FilterExtension, FilterResult
-from ros2bag_tools.utils import is_sequence
 from rosbag2_py import TopicMetadata, StorageFilter, SequentialReader
 
 ReadOrder = None
@@ -108,13 +107,13 @@ class FilteredReader:
                 raise StopIteration()
             elif result == FilterResult.DROP_MESSAGE:
                 continue
-            elif isinstance(result, tuple):
-                return result
-            elif is_sequence(result):
+            elif isinstance(result, list):
                 if len(result) == 0:
                     continue
                 self._queue = result[1:]
                 return result[0]
+            elif isinstance(result, tuple):
+                return result
             else:
                 raise ValueError(
                     "Filter returned invalid result: '{}'.".format(result))

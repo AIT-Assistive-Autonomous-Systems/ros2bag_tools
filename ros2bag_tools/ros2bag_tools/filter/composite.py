@@ -16,7 +16,6 @@ import logging
 from rosbag2_py import BagMetadata, StorageFilter
 from ros2bag_tools.filter import FilterExtension, FilterResult
 from ros2bag_tools.extension import ExtensionLoader, readargs
-from ros2bag_tools.utils import is_sequence
 from operator import itemgetter
 
 logger = logging.getLogger(__name__)
@@ -91,7 +90,7 @@ class CompositeFilter(FilterExtension):
                     continue
                 elif result == FilterResult.STOP_CURRENT_BAG:
                     return FilterResult.STOP_CURRENT_BAG
-                elif is_sequence(result, no_tuple=True):
+                elif isinstance(result, list):
                     new_msgs.extend(result)
                 else:
                     new_msgs.append(result)
@@ -101,7 +100,7 @@ class CompositeFilter(FilterExtension):
                     return FilterResult.STOP_CURRENT_BAG
                 elif isinstance(result, FilterResult):
                     continue
-                elif is_sequence(result, no_tuple=True):
+                elif isinstance(result, list):
                     new_msgs.extend(result)
                 else:
                     new_msgs.append(result)
