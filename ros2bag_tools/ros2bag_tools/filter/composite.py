@@ -84,22 +84,17 @@ class CompositeFilter(FilterExtension):
         current_msgs = [msg] if not flush else []
         for f in self._filters:
             new_msgs = []
-            for item in current_msgs:
-                result = f.filter_msg(item)
+            flushed = False
+            while current_msgs or (flush and not flushed):
+                if current_msgs:
+                    result = f.filter_msg(current_msgs.pop(0))
+                else:
+                    result = f.flush()
+                    flushed = True
                 if result == FilterResult.DROP_MESSAGE:
                     continue
                 elif result == FilterResult.STOP_CURRENT_BAG:
                     return FilterResult.STOP_CURRENT_BAG
-                elif isinstance(result, list):
-                    new_msgs.extend(result)
-                else:
-                    new_msgs.append(result)
-            if flush:
-                result = f.flush()
-                if result == FilterResult.STOP_CURRENT_BAG:
-                    return FilterResult.STOP_CURRENT_BAG
-                elif isinstance(result, FilterResult):
-                    continue
                 elif isinstance(result, list):
                     new_msgs.extend(result)
                 else:
