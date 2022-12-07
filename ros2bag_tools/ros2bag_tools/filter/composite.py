@@ -79,18 +79,17 @@ class CompositeFilter(FilterExtension):
             current_tm = new_tm
         return current_tm
 
-    def filter_msg(self, msg):
-        flush = msg is None
+    def _filter_msg(self, msg, flush):
         current_msgs = [msg] if not flush else []
         for f in self._filters:
             new_msgs = []
-            flushed = False
-            while current_msgs or (flush and not flushed):
+            do_flush = flush
+            while current_msgs or do_flush:
                 if current_msgs:
                     result = f.filter_msg(current_msgs.pop(0))
                 else:
                     result = f.flush()
-                    flushed = True
+                    do_flush = False
                 if result == FilterResult.DROP_MESSAGE:
                     continue
                 elif result == FilterResult.STOP_CURRENT_BAG:
@@ -102,5 +101,8 @@ class CompositeFilter(FilterExtension):
             current_msgs = sorted(new_msgs, key=itemgetter(2))
         return current_msgs
 
+    def filter_msg(self, msg):
+        return self._filter_msg(msg, False)
+
     def flush(self):
-        return self.filter_msg(None)
+        return self._filter_msg(None, True)
