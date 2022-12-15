@@ -14,7 +14,7 @@
 from message_filters import ApproximateTimeSynchronizer, SimpleFilter
 from rclpy.serialization import deserialize_message, serialize_message
 from rosidl_runtime_py.utilities import get_message
-from rosbag2_py import TopicMetadata, BagMetadata
+from rosbag2_py import TopicMetadata, BagMetadata, StorageFilter
 from typing import Iterable, Sequence
 
 from . import FilterExtension, BagMessageTuple
@@ -85,6 +85,7 @@ class SyncFilter(FilterExtension):
     """
 
     def __init__(self):
+        super().__init__()
         self._sync_filters = {}
         self._topic_type_map = {}
         self._type_map = {}
@@ -123,25 +124,29 @@ class SyncFilter(FilterExtension):
             self._sync_filters.values(), args.queue_size, args.slop)
         self._synchronizer.registerCallback(self.sync_callback)
 
+    def get_storage_filter(self):
+        return StorageFilter(topics=list(self._sync_filters.keys()))
+
     def filter_topic(self, topic_metadata: TopicMetadata):
         topic_type = topic_metadata.type
         topic = topic_metadata.name
-        if topic_type not in self._type_map and topic in self._sync_filters:
-            try:
-                message = get_message(topic_type)
-                self._type_map[topic_type] = message
-                fields = message.get_fields_and_field_types()
-                if 'header' not in fields or fields['header'] != 'std_msgs/Header':
-                    raise AttributeError(
-                        f"Message {topic_type} has no header field.")
-            except (AttributeError, ModuleNotFoundError, ValueError):
-                raise RuntimeError(f"Cannot load message type '{topic_type}'")
-        self._topic_type_map[topic] = self._type_map[topic_type]
+        if topic in topic in self._sync_filters:
+            if topic_type not in self._type_map:
+                try:
+                    message = get_message(topic_type)
+                    self._type_map[topic_type] = message
+                    fields = message.get_fields_and_field_types()
+                    if 'header' not in fields or fields['header'] != 'std_msgs/Header':
+                        raise AttributeError(
+                            f"Message {topic_type} has no header field.")
+                except (AttributeError, ModuleNotFoundError, ValueError):
+                    raise RuntimeError(f"Cannot load message type '{topic_type}'")
+            self._topic_type_map[topic] = self._type_map[topic_type]
         return topic_metadata
 
     def sync_callback(self, *msgs: Iterable[BagWrappedMessage]):
-        self._msgs = [(msg.topic, serialize_message(msg.msg), msg.t)
-                      for msg in msgs]
+        self._msgs.extend([(msg.topic, serialize_message(msg.msg), msg.t)
+                           for msg in msgs])
         self._num_syncs += 1
 
     def filter_msg(self, msg: BagMessageTuple):
@@ -159,3 +164,11 @@ class SyncFilter(FilterExtension):
         #
         # If no message drops occurred then num syncs and num signaled are identical.
         return result
+
+    def flush(self):
+        self._logger.info(f"total #synced-bundles: {self._num_syncs}")
+        for topic, filter in self._sync_filters.items():
+            num_drops = filter.num_signaled - self._num_syncs
+            if num_drops > 0:
+                self._logger.warning(f"total #off-sync msgs on '{topic}': {num_drops}")
+        return []

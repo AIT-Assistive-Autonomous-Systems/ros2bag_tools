@@ -13,7 +13,6 @@
 # limitations under the License.
 
 import argparse
-from ros2bag_tools.filter import FilterResult
 from ros2bag_tools.filter.composite import CompositeFilter
 
 
@@ -25,4 +24,4 @@ def test_composite_filter():
     args = parser.parse_args(['-c', 'test/composite.config'])
 
     filter.set_args([], args)
-    assert(filter.filter_msg(('/data', None, 0)) == FilterResult.DROP_MESSAGE)
+    assert(len(filter.filter_msg(('/data', None, 0))) == 0)

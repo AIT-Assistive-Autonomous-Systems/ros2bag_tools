@@ -26,6 +26,7 @@ from ros2bag_tools.filter.composite import CompositeFilter
 from ros2bag_tools.verb import FilteredReader
 from ros2cli.entry_points import load_entry_points
 from ros2bag_tools.extension import ExtensionLoader, readargs
+from ros2bag_tools.logging import getLogger
 
 
 logger = logging.getLogger(__name__)
@@ -45,6 +46,7 @@ class ExportVerb(VerbExtension):
         self._filter = FilterExtension()
 
     def add_arguments(self, parser, cli_name):  # noqa: D102
+        self._logger = getLogger(cli_name)
         parser.add_argument('--in', '-i', required=True,
                             help='bag to export', dest='bag_path', type=check_path_exists)
         reader_choices = rosbag2_py.get_registered_readers()
@@ -93,7 +95,7 @@ class ExportVerb(VerbExtension):
         info = Info()
         metadatas = [info.read_metadata(args.bag_path, args.storage)]
         if args.filter:
-            self._filter = CompositeFilter()
+            self._filter = CompositeFilter(logger=self._logger)
             self._filter.set_args(metadatas, CompositeFilterArgs(args.filter))
 
         exported_topics = list(map(operator.itemgetter(0), exporters))

@@ -13,10 +13,10 @@
 # limitations under the License.
 
 import argparse
-from typing import Sequence, Tuple
+import logging
 from rclpy.serialization import serialize_message, deserialize_message
 from rosbag2_py import Info, TopicMetadata
-from ros2bag_tools.filter import FilterResult, BagMessageTuple
+from ros2bag_tools.filter import FilterResult
 from ros2bag_tools.filter.add import AddFilter
 from ros2bag_tools.filter.cut import CutFilter
 from ros2bag_tools.filter.extract import ExtractFilter
@@ -28,21 +28,12 @@ from ros2bag_tools.filter.sync import SyncFilter
 from ros2bag_tools.reader import FilteredReader
 from example_interfaces.msg import String
 from diagnostic_msgs.msg import DiagnosticArray
-from .create_test_bags import create_synced_bag
+
+from ros2bag_tools.verb.export import ExportVerb
+
+from .logutils import capture_at_level
 
 import pytest
-
-
-@pytest.fixture(scope="session")
-def dummy_synced_bag(tmp_path_factory) -> Tuple[
-        str, Sequence[TopicMetadata], Sequence[BagMessageTuple]]:
-    bag_path = tmp_path_factory.mktemp('bags')
-
-    synced_bag = str(bag_path / 'synced_bag')
-
-    topics, synced_topics, synced_msgs = create_synced_bag(synced_bag)
-
-    return synced_bag, synced_topics, topics, synced_msgs
 
 
 def read_metadata(path: str):
@@ -262,3 +253,27 @@ def test_sync_filter(dummy_synced_bag):
         assert(msg in synced_msgs)
         synced_msgs.remove(msg)
     assert(len(synced_msgs) == 0)
+
+
+def test_export_sync_selected(caplog: pytest.LogCaptureFixture,
+                              dummy_synced_bag,
+                              dummy_synced_export_conf):
+    filter_conf_path, export_conf_path, result_path = dummy_synced_export_conf
+    synced_bag, synced_topics, _, synced_msgs = dummy_synced_bag
+
+    parser = argparse.ArgumentParser('export')
+    verb = ExportVerb()
+
+    msg_counts = {topic: 0 for topic in synced_topics}
+    for topic, _, _ in synced_msgs:
+        if topic in msg_counts:
+            msg_counts[topic] += 1
+
+    with capture_at_level(caplog, logging.INFO, 'pytest.export.sync(0)'):
+        verb.add_arguments(parser, 'pytest.export')
+        args = parser.parse_args(['-f', filter_conf_path, '-c', export_conf_path,
+                                  '-i', synced_bag])
+        verb.main(args=args)
+    assert "total #synced-bundles: 4" in caplog.messages
+    assert "total #off-sync msgs on '/sync3': 1" in caplog.messages
+    assert "total #off-sync msgs on '/sync1': 1" in caplog.messages

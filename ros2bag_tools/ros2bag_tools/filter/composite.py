@@ -16,13 +16,15 @@ import logging
 from rosbag2_py import BagMetadata, StorageFilter
 from ros2bag_tools.filter import FilterExtension, FilterResult
 from ros2bag_tools.extension import ExtensionLoader, readargs
+from operator import itemgetter
 
 logger = logging.getLogger(__name__)
 
 
 class CompositeFilter(FilterExtension):
 
-    def __init__(self):
+    def __init__(self, logger=logger):
+        super().__init__(logger=logger)
         self._loader = ExtensionLoader('ros2bag_tools.filter', logger)
         self._filters = []
 
@@ -33,11 +35,12 @@ class CompositeFilter(FilterExtension):
 
     def set_args(self, metadatas, args):
         with open(args.config, 'r') as f:
-            for argv in readargs(f):
+            for i, argv in enumerate(readargs(f)):
                 assert(len(argv) >= 1)
                 filter_name = argv[0]
                 arg_arr = argv[1:]
                 filter, filter_args = self._loader.load(filter_name, arg_arr)
+                filter.set_logger(self._logger.getChild(f'{filter_name}({i})'))
                 filter.set_args(metadatas, filter_args)
                 self._filters.append(filter)
         assert(len(self._filters) > 0)
@@ -76,19 +79,30 @@ class CompositeFilter(FilterExtension):
             current_tm = new_tm
         return current_tm
 
-    def filter_msg(self, msg):
-        current_msgs = [msg]
+    def _filter_msg(self, msg, flush):
+        current_msgs = [msg] if not flush else []
         for f in self._filters:
             new_msgs = []
-            for item in current_msgs:
-                result = f.filter_msg(item)
+            do_flush = flush
+            while current_msgs or do_flush:
+                if current_msgs:
+                    result = f.filter_msg(current_msgs.pop(0))
+                else:
+                    result = f.flush()
+                    do_flush = False
                 if result == FilterResult.DROP_MESSAGE:
-                    return FilterResult.DROP_MESSAGE
+                    continue
                 elif result == FilterResult.STOP_CURRENT_BAG:
                     return FilterResult.STOP_CURRENT_BAG
                 elif isinstance(result, list):
                     new_msgs.extend(result)
                 else:
                     new_msgs.append(result)
-            current_msgs = new_msgs
+            current_msgs = sorted(new_msgs, key=itemgetter(2))
         return current_msgs
+
+    def filter_msg(self, msg):
+        return self._filter_msg(msg, False)
+
+    def flush(self):
+        return self._filter_msg(None, True)
