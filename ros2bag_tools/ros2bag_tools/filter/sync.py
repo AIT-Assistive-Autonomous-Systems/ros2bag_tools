@@ -16,7 +16,7 @@ from message_filters import ApproximateTimeSynchronizer, SimpleFilter
 from rclpy.serialization import deserialize_message, serialize_message
 from rosidl_runtime_py.utilities import get_message
 from rosbag2_py import TopicMetadata, BagMetadata, StorageFilter
-from typing import Iterable, Sequence
+from typing import Sequence
 
 from . import FilterExtension, BagMessageTuple
 
@@ -110,12 +110,18 @@ class SyncFilter(FilterExtension):
             default=3,
             help='Queue size of synchronizer queues'
         )
+        parser.add_argument(
+            '--timestamp-filter',
+            choices=['none', 'first_topic'],
+            default='none',
+            help='Filter output timestamp e.g., on first input topic name'
+        )
 
     def set_args(self, metadatas: Sequence[BagMetadata], args):
-        sync_topics = {topic.topic_metadata.name
+        sync_topics = [topic.topic_metadata.name
                        for meta in metadatas
                        for topic in meta.topics_with_message_count
-                       if topic.topic_metadata.name in args.topic}
+                       if topic.topic_metadata.name in args.topic]
         for topic in args.topic:
             if topic not in sync_topics:
                 raise argparse.ArgumentError(
@@ -148,8 +154,11 @@ class SyncFilter(FilterExtension):
             self._topic_type_map[topic] = self._type_map[topic_type]
         return topic_metadata
 
-    def sync_callback(self, *msgs: Iterable[BagWrappedMessage]):
-        self._msgs.extend([(msg.topic, serialize_message(msg.msg), msg.t)
+    def sync_callback(self, *msgs: BagWrappedMessage):
+        if self._unify_first_topic:
+            unified_t = msgs[0].t
+        self._msgs.extend([(msg.topic, serialize_message(msg.msg),
+                           unified_t if self._unify_first_topic else msg.t)
                            for msg in msgs])
         self._num_syncs += 1
 
