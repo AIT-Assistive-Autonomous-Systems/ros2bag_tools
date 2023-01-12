@@ -63,7 +63,7 @@ class CompositeFilter(FilterExtension):
                     total_topics = set(composite_storage_filter.topics).union(
                         storage_filter.topics)
                     composite_storage_filter = StorageFilter(
-                        topics=total_topics)
+                        topics=list(total_topics))
         return composite_storage_filter
 
     def filter_topic(self, topic_metadata):
