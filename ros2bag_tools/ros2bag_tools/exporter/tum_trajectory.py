@@ -17,10 +17,10 @@ from geometry_msgs.msg import Vector3, Quaternion
 from nav_msgs.msg import Odometry
 from sensor_msgs.msg import NavSatFix
 from geodesy.utm import fromLatLong
-from ros2bag_tools.exporter import ExporterError
+from ros2bag_tools.exporter import Exporter, ExporterError
 
 
-class TUMTrajectoryExporter:
+class TUMTrajectoryExporter(Exporter):
     """TUM pose trajectories."""
 
     def __init__(self):
@@ -83,3 +83,6 @@ class TUMTrajectoryExporter:
         self._f.write(' ')
         self._f.write(fmt.format(ori.w))
         self._f.write('\n')
+
+    def close(self):
+        self._f.close()
