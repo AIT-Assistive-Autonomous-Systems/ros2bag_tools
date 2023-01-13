@@ -28,13 +28,37 @@ def nanoseconds_duration(data: str):
     return Duration(nanoseconds=val)
 
 
+def set_header_stamp(msg, t: int):
+    t_ros = Time(nanoseconds=t)
+    if hasattr(msg, 'header'):
+        msg.header.stamp = t_ros.to_msg()
+    elif isinstance(msg, TFMessage):
+        for transform in msg.transforms:
+            transform.header.stamp = t_ros.to_msg()
+    return msg
+
+
+def t_from_header(msg):
+    if hasattr(msg, 'header'):
+        header_time = Time.from_msg(msg.header.stamp)
+        return header_time.nanoseconds
+    elif isinstance(msg, TFMessage):
+        times = [Time.from_msg(
+            transform.header.stamp).nanoseconds for transform in msg.transforms]
+        if len(times) > 0:
+            return min(times)
+    return None
+
+
 class RestampFilter(FilterExtension):
 
     def __init__(self):
-        self._args = None
         self._deserializer = TopicDeserializer()
 
     def add_arguments(self, parser):
+        parser.add_argument(
+            '-i', '--invert', action='store_true',
+            help='apply filter in reverse by setting header stamps to bag message timestamps')
         parser.add_argument(
             '-u', '--offset-topic', nargs='+', default=[],
             help='topics to restamp with offset as regex string')
@@ -43,10 +67,11 @@ class RestampFilter(FilterExtension):
             help='constant offset value in seconds (float) or nanoseconds (int) applied to offset'
                  ' topics')
         parser.add_argument(
-            '-m', '--modify-msg-header', action='store_true',
+            '--offset-header', action='store_true',
             help='apply offset to header if offset is enabled')
 
     def set_args(self, metadatas, args):
+        self._invert = args.invert
         self._offset_topics = set()
         for metadata in metadatas:
             for topic in metadata.topics_with_message_count:
@@ -54,33 +79,38 @@ class RestampFilter(FilterExtension):
                 if any([re.match(r, topic_name) for r in args.offset_topic]):
                     self._offset_topics.add(topic_name)
         self._offset = args.offset
-        self._modify_header = args.modify_msg_header
+        self._offset_header = args.offset_header
 
     def filter_topic(self, topic_metadata):
         self._deserializer.add_topic(topic_metadata)
         return topic_metadata
 
+    def _add_header_offset(self, msg):
+        if hasattr(msg, 'header'):
+            t_header = Time.from_msg(msg.header.stamp)
+            t_header += self._offset
+            msg.header.stamp = t_header.to_msg()
+        elif isinstance(msg, TFMessage):
+            for transform in msg.transforms:
+                t_header = Time.from_msg(transform.header.stamp)
+                t_header += self._offset
+                transform.header.stamp = t_header.to_msg()
+        return msg
+
     def filter_msg(self, serialized_msg):
         (topic, data, t) = serialized_msg
         msg = self._deserializer.deserialize(topic, data)
-        if hasattr(msg, 'header'):
-            header_time = Time.from_msg(msg.header.stamp)
-            t = header_time.nanoseconds
-        elif isinstance(msg, TFMessage):
-            times = [Time.from_msg(
-                transform.header.stamp).nanoseconds for transform in msg.transforms]
-            if len(times) > 0:
-                t = min(times)
+
+        if self._invert:
+            msg = set_header_stamp(msg, t)
+        else:
+            t = t_from_header(msg)
+
         if topic in self._offset_topics:
-            t = t + self._offset.nanoseconds
-            if hasattr(msg, 'header') and self._modify_header:
-                header_time += self._offset
-                msg.header.stamp = header_time.to_msg()
-                data = serialize_message(msg)
-            elif isinstance(msg, TFMessage) and self._modify_header:
-                for transform in msg.transforms:
-                    header_time = Time.from_msg(transform.header.stamp)
-                    header_time += self._offset
-                    transform.header.stamp = header_time.to_msg()
-                data = serialize_message(msg)
+            t += self._offset.nanoseconds
+
+        if self._offset_header and topic in self._offset_topics:
+            msg = self._add_header_offset(msg)
+
+        data = serialize_message(msg)
         return (topic, data, t)
