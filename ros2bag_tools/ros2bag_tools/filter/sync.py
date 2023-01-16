@@ -11,6 +11,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+import argparse
 from message_filters import ApproximateTimeSynchronizer, SimpleFilter
 from rclpy.serialization import deserialize_message, serialize_message
 from rosidl_runtime_py.utilities import get_message
@@ -111,13 +112,15 @@ class SyncFilter(FilterExtension):
         )
 
     def set_args(self, metadatas: Sequence[BagMetadata], args):
-        sync_topics = [topic.topic_metadata.name
+        sync_topics = {topic.topic_metadata.name
                        for meta in metadatas
                        for topic in meta.topics_with_message_count
-                       if topic.topic_metadata.name in args.topic]
-        if len(sync_topics) != len(args.topic):
-            raise RuntimeError(
-                f"Not all requested sync topics were found: {sync_topics}")
+                       if topic.topic_metadata.name in args.topic}
+        for topic in args.topic:
+            if topic not in sync_topics:
+                raise argparse.ArgumentError(
+                    None, f'could not find topic {topic} in bags')
+
         self._sync_filters = {topic: SyncSimpleFilter(
             topic) for topic in sync_topics}
         self._synchronizer = ApproximateTimeSynchronizer(
@@ -140,7 +143,8 @@ class SyncFilter(FilterExtension):
                         raise AttributeError(
                             f"Message {topic_type} has no header field.")
                 except (AttributeError, ModuleNotFoundError, ValueError):
-                    raise RuntimeError(f"Cannot load message type '{topic_type}'")
+                    raise RuntimeError(
+                        f"Cannot load message type '{topic_type}'")
             self._topic_type_map[topic] = self._type_map[topic_type]
         return topic_metadata
 
@@ -170,5 +174,6 @@ class SyncFilter(FilterExtension):
         for topic, filter in self._sync_filters.items():
             num_drops = filter.num_signaled - self._num_syncs
             if num_drops > 0:
-                self._logger.warning(f"total #off-sync msgs on '{topic}': {num_drops}")
+                self._logger.warning(
+                    f"total #off-sync msgs on '{topic}': {num_drops}")
         return []
