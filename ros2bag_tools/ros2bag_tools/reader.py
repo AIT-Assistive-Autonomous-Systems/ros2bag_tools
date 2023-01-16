@@ -66,19 +66,29 @@ class FilteredReader:
         for bag_path in bag_paths:
             reader = SequentialReader()
             if ReadOrder:
-                reader.set_read_order(ReadOrder(ReadOrderSortBy.ReceivedTimestamp))
+                reader.set_read_order(
+                    ReadOrder(ReadOrderSortBy.ReceivedTimestamp))
             in_s_opts, in_c_opts = default_rosbag_options(bag_path, in_storage)
             reader.open(in_s_opts, in_c_opts)
             if storage_filter:
                 reader.set_filter(storage_filter)
             self._readers.append(reader)
         self._filter = filter
+        self._storage_filter_topics = storage_filter.topics if storage_filter else []
         self._queue = []
         self._flushed = False
 
     def get_all_topics_and_types(self):
         for reader in self._readers:
             for topic_metadata in reader.get_all_topics_and_types():
+                if self._storage_filter_topics and \
+                        topic_metadata.name not in self._storage_filter_topics:
+                    # if some of the topics will be filtered during reading, consider them
+                    # excluded from the filtered reader
+                    # this helps users of the filtered reader to avoid operations on topics and
+                    # messages of topics that will not be part of the output, e.g. unnecessarily
+                    # loading message types for unused topics
+                    continue
                 result = self._filter.filter_topic(topic_metadata)
                 if result:
                     if isinstance(result, list):
