@@ -209,25 +209,47 @@ def test_rename_filter():
 
 def test_restamp_filter():
     filter = RestampFilter()
-
+    info = Info()
     parser = argparse.ArgumentParser('restamp')
     filter.add_arguments(parser)
     args = parser.parse_args([])
-    filter.set_args([read_metadata('test/diagnostics.bag')], args)
+    filter.set_args([info.read_metadata('test/diagnostics.bag', '')], args)
 
     topic_metadata = TopicMetadata(
         '/diagnostics', 'diagnostic_msgs/msg/DiagnosticArray', 'cdr')
     assert(filter.filter_topic(topic_metadata) == topic_metadata)
 
-    ns_stamp = 500 * 1000 * 1000 - 100
     msg = DiagnosticArray()
     msg.header.stamp.sec = 0
-    msg.header.stamp.nanosec = ns_stamp
+    msg.header.stamp.nanosec = 0
 
-    # timestamp within the bag and cut duration
-    bag_msg = ('/diagnostics', serialize_message(msg), 500 * 1000 * 1000)
-    (_, _, t) = filter.filter_msg(bag_msg)
-    assert(t == ns_stamp)
+    bag_msg = ('/diagnostics', serialize_message(msg), 1)
+    (_, data, t) = filter.filter_msg(bag_msg)
+    msg_filtered = deserialize_message(data, DiagnosticArray)
+    assert(t == 0)
+    assert(msg_filtered.header.stamp.nanosec == 0)
+
+    args = parser.parse_args(['--invert'])
+    filter.set_args([info.read_metadata('test/diagnostics.bag', '')], args)
+    (_, data, _) = filter.filter_msg(bag_msg)
+    msg_filtered = deserialize_message(data, DiagnosticArray)
+    assert(msg_filtered.header.stamp.nanosec == 1)
+
+    args = parser.parse_args(
+        ['--offset', '2', '--offset-topic', '/diagnostics'])
+    filter.set_args([info.read_metadata('test/diagnostics.bag', '')], args)
+    (_, data, t) = filter.filter_msg(bag_msg)
+    msg_filtered = deserialize_message(data, DiagnosticArray)
+    assert(t == 2)
+    assert(msg_filtered.header.stamp.nanosec == 0)
+
+    args = parser.parse_args(
+        ['--offset-header', '--offset', '1', '--offset-topic', '/diagnostics'])
+    filter.set_args([info.read_metadata('test/diagnostics.bag', '')], args)
+    (_, data, t) = filter.filter_msg(bag_msg)
+    msg_filtered = deserialize_message(data, DiagnosticArray)
+    assert(t == 1)
+    assert(msg_filtered.header.stamp.nanosec == 1)
 
 
 def test_sync_filter(dummy_synced_bag):
