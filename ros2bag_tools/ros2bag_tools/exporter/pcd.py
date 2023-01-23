@@ -91,6 +91,7 @@ class PcdExporter(Exporter):
 
     def open(self, args):
         self._dir = Path(args.dir)
+        self._dir.mkdir(parents=True, exist_ok=True)
         self._name = args.name
         self._i = 0
 
