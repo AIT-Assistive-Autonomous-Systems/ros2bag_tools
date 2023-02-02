@@ -118,19 +118,22 @@ class SyncFilter(FilterExtension):
         )
 
     def set_args(self, metadatas: Sequence[BagMetadata], args):
-        sync_topics = [topic.topic_metadata.name
+        sync_topics = {topic.topic_metadata.name
                        for meta in metadatas
                        for topic in meta.topics_with_message_count
-                       if topic.topic_metadata.name in args.topic]
+                       if topic.topic_metadata.name in args.topic}
         for topic in args.topic:
             if topic not in sync_topics:
                 raise argparse.ArgumentError(
                     None, f'could not find topic {topic} in bags')
-
-        self._sync_filters = {topic: SyncSimpleFilter(
-            topic) for topic in sync_topics}
+        # sync topics are checked to be in bag -> now use args.topic to keep order
+        sync_topics = args.topic
+        self._unify_first_topic = args.timestamp_filter == 'first_topic'
+        sync_filters = [SyncSimpleFilter(
+            topic) for topic in sync_topics]
         self._synchronizer = ApproximateTimeSynchronizer(
-            self._sync_filters.values(), args.queue_size, args.slop)
+            sync_filters, args.queue_size, args.slop)
+        self._sync_filters = {topic: filter for topic, filter in zip(sync_topics, sync_filters)}
         self._synchronizer.registerCallback(self.sync_callback)
 
     def get_storage_filter(self):
@@ -139,7 +142,7 @@ class SyncFilter(FilterExtension):
     def filter_topic(self, topic_metadata: TopicMetadata):
         topic_type = topic_metadata.type
         topic = topic_metadata.name
-        if topic in topic in self._sync_filters:
+        if topic in self._sync_filters:
             if topic_type not in self._type_map:
                 try:
                     message = get_message(topic_type)
