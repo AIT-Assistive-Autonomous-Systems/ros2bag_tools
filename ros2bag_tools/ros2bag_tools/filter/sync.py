@@ -16,7 +16,8 @@ from message_filters import ApproximateTimeSynchronizer, SimpleFilter
 from rclpy.serialization import deserialize_message, serialize_message
 from rosidl_runtime_py.utilities import get_message
 from rosbag2_py import TopicMetadata, BagMetadata, StorageFilter
-from typing import Iterable, Sequence
+from typing import Sequence
+from collections import OrderedDict
 
 from . import FilterExtension, BagMessageTuple
 
@@ -110,6 +111,12 @@ class SyncFilter(FilterExtension):
             default=3,
             help='Queue size of synchronizer queues'
         )
+        parser.add_argument(
+            '--timestamp-filter',
+            choices=['none', 'first_topic'],
+            default='none',
+            help='Filter output timestamp e.g., on first input topic name'
+        )
 
     def set_args(self, metadatas: Sequence[BagMetadata], args):
         sync_topics = {topic.topic_metadata.name
@@ -120,9 +127,10 @@ class SyncFilter(FilterExtension):
             if topic not in sync_topics:
                 raise argparse.ArgumentError(
                     None, f'could not find topic {topic} in bags')
-
-        self._sync_filters = {topic: SyncSimpleFilter(
-            topic) for topic in sync_topics}
+        # sync topics are checked to be in bag -> now use args.topic to keep order
+        self._sync_filters = OrderedDict([(topic, SyncSimpleFilter(topic))
+                                          for topic in args.topic])
+        self._unify_first_topic = args.timestamp_filter == 'first_topic'
         self._synchronizer = ApproximateTimeSynchronizer(
             self._sync_filters.values(), args.queue_size, args.slop)
         self._synchronizer.registerCallback(self.sync_callback)
@@ -133,7 +141,7 @@ class SyncFilter(FilterExtension):
     def filter_topic(self, topic_metadata: TopicMetadata):
         topic_type = topic_metadata.type
         topic = topic_metadata.name
-        if topic in topic in self._sync_filters:
+        if topic in self._sync_filters:
             if topic_type not in self._type_map:
                 try:
                     message = get_message(topic_type)
@@ -148,8 +156,9 @@ class SyncFilter(FilterExtension):
             self._topic_type_map[topic] = self._type_map[topic_type]
         return topic_metadata
 
-    def sync_callback(self, *msgs: Iterable[BagWrappedMessage]):
-        self._msgs.extend([(msg.topic, serialize_message(msg.msg), msg.t)
+    def sync_callback(self, *msgs: BagWrappedMessage):
+        self._msgs.extend([(msg.topic, serialize_message(msg.msg),
+                           msgs[0].t if self._unify_first_topic else msg.t)
                            for msg in msgs])
         self._num_syncs += 1
 
