@@ -150,7 +150,9 @@ class CutFilter(FilterExtension):
         return min(1, max(0, (end - start) / metadata.duration))
 
     def filter_topic(self, topic_metadata):
-        self._deserializer.add_topic(topic_metadata)
+        if (self._topic_qos_durability_dict[topic_metadata.name] == QoSDurabilityPolicy.TRANSIENT_LOCAL
+                and self._transient_local_policy == 'snap'):
+            self._deserializer.add_topic(topic_metadata)
         return topic_metadata
 
     def filter_msg(self, serialized_msg):
