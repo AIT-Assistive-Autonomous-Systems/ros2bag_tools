@@ -17,6 +17,7 @@ from rclpy.serialization import deserialize_message, serialize_message
 from rosidl_runtime_py.utilities import get_message
 from rosbag2_py import TopicMetadata, BagMetadata, StorageFilter
 from typing import Sequence
+from collections import OrderedDict
 
 from . import FilterExtension, BagMessageTuple
 
@@ -127,13 +128,11 @@ class SyncFilter(FilterExtension):
                 raise argparse.ArgumentError(
                     None, f'could not find topic {topic} in bags')
         # sync topics are checked to be in bag -> now use args.topic to keep order
-        sync_topics = args.topic
+        self._sync_filters = OrderedDict([(topic, SyncSimpleFilter(topic))
+                                          for topic in args.topic])
         self._unify_first_topic = args.timestamp_filter == 'first_topic'
-        sync_filters = [SyncSimpleFilter(
-            topic) for topic in sync_topics]
         self._synchronizer = ApproximateTimeSynchronizer(
-            sync_filters, args.queue_size, args.slop)
-        self._sync_filters = {topic: filter for topic, filter in zip(sync_topics, sync_filters)}
+            self._sync_filters.values(), args.queue_size, args.slop)
         self._synchronizer.registerCallback(self.sync_callback)
 
     def get_storage_filter(self):
@@ -158,10 +157,8 @@ class SyncFilter(FilterExtension):
         return topic_metadata
 
     def sync_callback(self, *msgs: BagWrappedMessage):
-        if self._unify_first_topic:
-            unified_t = msgs[0].t
         self._msgs.extend([(msg.topic, serialize_message(msg.msg),
-                           unified_t if self._unify_first_topic else msg.t)
+                           msgs[0].t if self._unify_first_topic else msg.t)
                            for msg in msgs])
         self._num_syncs += 1
 
