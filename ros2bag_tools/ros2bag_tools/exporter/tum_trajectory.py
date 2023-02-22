@@ -30,7 +30,8 @@ class TUMTrajectoryExporter(Exporter):
     @staticmethod
     def add_arguments(parser):
         parser.add_argument('--precision', default=4, type=int)
-        parser.add_argument('--out', '-o', required=True, type=str, help='Path to output file')
+        parser.add_argument('--out', '-o', required=True,
+                            type=str, help='Path to output file')
 
     def open(self, args):
         self._args = args
@@ -62,7 +63,8 @@ class TUMTrajectoryExporter(Exporter):
         else:
             exp_clz = self.__class__.__name__
             msg_clz = msg.__class__.__name__
-            raise TypeError(f'{exp_clz} can not export messages of type {msg_clz}')
+            raise TypeError(
+                f'{exp_clz} can not export messages of type {msg_clz}')
 
         t_ros = Time.from_msg(msg.header.stamp)
         t_sec = t_ros.nanoseconds / 1e9
