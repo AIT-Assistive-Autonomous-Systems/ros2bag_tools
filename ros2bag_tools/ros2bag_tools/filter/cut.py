@@ -135,8 +135,11 @@ class CutFilter(FilterExtension):
         self._transient_local_policy = args.transient_local_policy
         for metadata in metadatas:
             for topic in metadata.topics_with_message_count:
-                self._topic_qos_durability_dict[topic.topic_metadata.name] = yaml.safe_load(
-                    topic.topic_metadata.offered_qos_profiles)[0]['durability']
+                durability = QoSDurabilityPolicy.SYSTEM_DEFAULT
+                if topic.topic_metadata.offered_qos_profiles.strip():
+                    durability = yaml.safe_load(topic.topic_metadata.offered_qos_profiles)[
+                        0]['durability']
+                self._topic_qos_durability_dict[topic.topic_metadata.name] = durability
 
     def output_size_factor(self, metadata):
         start = metadata.starting_time.astimezone(timezone.utc)
@@ -150,7 +153,8 @@ class CutFilter(FilterExtension):
         return min(1, max(0, (end - start) / metadata.duration))
 
     def filter_topic(self, topic_metadata):
-        if (self._topic_qos_durability_dict[topic_metadata.name] == QoSDurabilityPolicy.TRANSIENT_LOCAL
+        if (self._topic_qos_durability_dict[topic_metadata.name]
+                == QoSDurabilityPolicy.TRANSIENT_LOCAL
                 and self._transient_local_policy == 'snap'):
             self._deserializer.add_topic(topic_metadata)
         return topic_metadata
