@@ -61,9 +61,9 @@ def test_ros_day_time():
     assert(ros_t_end.nanoseconds == day_ns + time_ns)
 
 
-def test_bag_bounds():
+def test_bag_bounds(tmp_day_time_bag):
     info = Info()
-    metadata = info.read_metadata('test/day_time.bag', '')
+    metadata = info.read_metadata(tmp_day_time_bag, '')
     (bag_start, bag_end) = get_bag_bounds([metadata])
     assert(bag_start == datetime(1970, 1, 1, hour=12, minute=59,
            second=59, microsecond=999999, tzinfo=timezone.utc))

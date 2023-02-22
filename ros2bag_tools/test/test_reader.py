@@ -26,6 +26,7 @@ class CutArgs(NamedTuple):
     start: timedelta
     end: timedelta
     duration: timedelta
+    transient_local_policy: str
 
 
 class ExtractArgs(NamedTuple):
@@ -33,22 +34,20 @@ class ExtractArgs(NamedTuple):
     invert: bool
 
 
-def test_reader_cut_filtered():
-    bag_path = 'test/test.bag'
+def test_reader_cut_filtered(tmp_string_bag):
     filter = CutFilter()
     info = Info()
-    filter.set_args([info.read_metadata(bag_path, '')],
-                    CutArgs(None, timedelta(microseconds=1), None))
-    reader = FilteredReader([bag_path], filter)
+    filter.set_args([info.read_metadata(tmp_string_bag, '')],
+                    CutArgs(None, timedelta(microseconds=1), None, 'snap'))
+    reader = FilteredReader([tmp_string_bag], filter)
     it = iter(reader)
     assert('/data' == next(it)[0])
     with pytest.raises(StopIteration):
         next(it)
 
 
-def test_reader_unfiltered():
-    bag_path = 'test/test.bag'
-    reader = FilteredReader([bag_path], FilterExtension())
+def test_reader_unfiltered(tmp_string_bag):
+    reader = FilteredReader([tmp_string_bag], FilterExtension())
     it = iter(reader)
     assert('/data' == next(it)[0])
     assert('/data' == next(it)[0])
@@ -56,9 +55,9 @@ def test_reader_unfiltered():
         next(it)
 
 
-def test_reader_get_topics_union():
+def test_reader_get_topics_union(tmp_string_bag, tmp_diagnostics_bag):
     reader = FilteredReader(
-        ['test/test.bag', 'test/diagnostics.bag'], FilterExtension())
+        [tmp_string_bag, tmp_diagnostics_bag], FilterExtension())
     it = reader.get_all_topics_and_types()
     assert('/data' == next(it).name)
     assert('/diagnostics' == next(it).name)
@@ -66,8 +65,8 @@ def test_reader_get_topics_union():
         next(it)
 
 
-def test_reader_get_topics_filtered():
-    bags = ['test/test.bag', 'test/diagnostics.bag']
+def test_reader_get_topics_filtered(tmp_string_bag, tmp_diagnostics_bag):
+    bags = [tmp_string_bag, tmp_diagnostics_bag]
     filter = ExtractFilter()
     info = Info()
     filter.set_args([info.read_metadata(bag, '') for bag in bags],

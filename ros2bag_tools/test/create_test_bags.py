@@ -1,5 +1,4 @@
-#!/usr/bin/python3
-# Copyright 2021 AIT Austrian Institute of Technology GmbH
+# Copyright 2023 AIT Austrian Institute of Technology GmbH
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -12,7 +11,6 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-"""Create the test.bag file."""
 from typing import Tuple, Sequence
 from random import Random
 from rclpy.time import CONVERSION_CONSTANT, Time
@@ -26,7 +24,7 @@ from ros2bag_tools.filter import BagMessageTuple
 from ros2bag_tools.time import ros_time_from_nanoseconds
 
 
-def create_test_bag(path):
+def create_string_bag(path):
     writer = SequentialWriter()
     storage_options, converter_options = default_rosbag_options(path)
     writer.open(storage_options, converter_options)
@@ -46,7 +44,8 @@ def create_diagnostics_bag(path):
     storage_options, converter_options = default_rosbag_options(path)
     writer.open(storage_options, converter_options)
 
-    topic = TopicMetadata('/diagnostics', 'diagnostic_msgs/msg/DiagnosticArray', 'cdr')
+    topic = TopicMetadata(
+        '/diagnostics', 'diagnostic_msgs/msg/DiagnosticArray', 'cdr')
     writer.create_topic(topic)
 
     msg = DiagnosticArray()
@@ -137,12 +136,14 @@ def create_synced_bag(path) -> Tuple[TopicMetadata, Sequence[BagMessageTuple]]:
                 continue
             elif j != 1 or i == 3:
                 msgs.append(bag_tuple)
-            bag_tuple = (topic.name, serialize_message(msg), int(t.nanoseconds))
+            bag_tuple = (topic.name, serialize_message(
+                msg), int(t.nanoseconds))
             writer.write(*bag_tuple)
 
     # write late message
     bag_tuple = (dropped[1][0], dropped[1][1], dropped[1][2] + int(400e9))
     msgs.append(bag_tuple)
-    bag_tuple = (dropped[1][0], serialize_message(dropped[1][1]), dropped[1][2] + int(400e9))
+    bag_tuple = (dropped[1][0], serialize_message(
+        dropped[1][1]), dropped[1][2] + int(400e9))
     writer.write(*bag_tuple)
     return topics, synced_topics, msgs

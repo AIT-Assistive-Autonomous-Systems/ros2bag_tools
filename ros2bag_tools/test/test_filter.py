@@ -14,6 +14,7 @@
 
 import argparse
 import logging
+from pathlib import Path
 from rclpy.serialization import serialize_message, deserialize_message
 from rosbag2_py import Info, TopicMetadata
 from ros2bag_tools.filter import FilterResult
@@ -112,13 +113,13 @@ def test_replace_filter():
     assert(t == 0)
 
 
-def test_cut_filter():
+def test_cut_filter(tmp_string_bag):
     filter = CutFilter()
 
     parser = argparse.ArgumentParser('cut')
     filter.add_arguments(parser)
     args = parser.parse_args(['--duration', '0.5'])
-    filter.set_args([read_metadata('test/test.bag')], args)
+    filter.set_args([read_metadata(tmp_string_bag)], args)
 
     string_msg = String()
     string_msg.data = 'in'
@@ -140,7 +141,7 @@ def test_cut_filter():
     assert(filter.filter_msg(msg) == FilterResult.STOP_CURRENT_BAG)
 
 
-def test_cut_filter_args():
+def test_cut_filter_args(tmp_day_time_bag):
     filter = CutFilter()
 
     parser = argparse.ArgumentParser('cut')
@@ -149,17 +150,17 @@ def test_cut_filter_args():
     args = parser.parse_args(['--duration', '3603'])
     with pytest.raises(argparse.ArgumentError):
         # duration is too long for bag
-        filter.set_args([read_metadata('test/day_time.bag')], args)
+        filter.set_args([read_metadata(tmp_day_time_bag)], args)
 
     args = parser.parse_args(['--start', '13:15', '--end', '13:10'])
     with pytest.raises(argparse.ArgumentError):
         # end before start
-        filter.set_args([read_metadata('test/day_time.bag')], args)
+        filter.set_args([read_metadata(tmp_day_time_bag)], args)
 
     args = parser.parse_args(['--start', '12:00', '--end', '12:59'])
     with pytest.raises(argparse.ArgumentError):
         # error since time bounds are not covered by bag
-        filter.set_args([read_metadata('test/day_time.bag')], args)
+        filter.set_args([read_metadata(tmp_day_time_bag)], args)
 
 
 def test_reframe_filter():
@@ -207,13 +208,13 @@ def test_rename_filter():
     assert(topic == '/renamed')
 
 
-def test_restamp_filter():
+def test_restamp_filter(tmp_diagnostics_bag: Path):
     filter = RestampFilter()
     info = Info()
     parser = argparse.ArgumentParser('restamp')
     filter.add_arguments(parser)
     args = parser.parse_args([])
-    filter.set_args([info.read_metadata('test/diagnostics.bag', '')], args)
+    filter.set_args([info.read_metadata(tmp_diagnostics_bag, '')], args)
 
     topic_metadata = TopicMetadata(
         '/diagnostics', 'diagnostic_msgs/msg/DiagnosticArray', 'cdr')
@@ -230,14 +231,14 @@ def test_restamp_filter():
     assert(msg_filtered.header.stamp.nanosec == 0)
 
     args = parser.parse_args(['--invert'])
-    filter.set_args([info.read_metadata('test/diagnostics.bag', '')], args)
+    filter.set_args([info.read_metadata(tmp_diagnostics_bag, '')], args)
     (_, data, _) = filter.filter_msg(bag_msg)
     msg_filtered = deserialize_message(data, DiagnosticArray)
     assert(msg_filtered.header.stamp.nanosec == 1)
 
     args = parser.parse_args(
         ['--offset', '2', '--offset-topic', '/diagnostics'])
-    filter.set_args([info.read_metadata('test/diagnostics.bag', '')], args)
+    filter.set_args([info.read_metadata(tmp_diagnostics_bag, '')], args)
     (_, data, t) = filter.filter_msg(bag_msg)
     msg_filtered = deserialize_message(data, DiagnosticArray)
     assert(t == 2)
@@ -245,15 +246,15 @@ def test_restamp_filter():
 
     args = parser.parse_args(
         ['--offset-header', '--offset', '1', '--offset-topic', '/diagnostics'])
-    filter.set_args([info.read_metadata('test/diagnostics.bag', '')], args)
+    filter.set_args([info.read_metadata(tmp_diagnostics_bag, '')], args)
     (_, data, t) = filter.filter_msg(bag_msg)
     msg_filtered = deserialize_message(data, DiagnosticArray)
     assert(t == 1)
     assert(msg_filtered.header.stamp.nanosec == 1)
 
 
-def test_sync_filter(dummy_synced_bag):
-    bag_path, synced_topics, topics, synced_msgs = dummy_synced_bag
+def test_sync_filter(tmp_synced_bag):
+    bag_path, synced_topics, topics, synced_msgs = tmp_synced_bag
     assert(len(synced_msgs) > 0)
 
     test_filter = SyncFilter()
@@ -278,10 +279,10 @@ def test_sync_filter(dummy_synced_bag):
 
 
 def test_export_sync_selected(caplog: pytest.LogCaptureFixture,
-                              dummy_synced_bag,
+                              tmp_synced_bag,
                               dummy_synced_export_conf):
     filter_conf_path, export_conf_path, result_path = dummy_synced_export_conf
-    synced_bag, synced_topics, _, synced_msgs = dummy_synced_bag
+    synced_bag, synced_topics, _, synced_msgs = tmp_synced_bag
 
     parser = argparse.ArgumentParser('export')
     verb = ExportVerb()

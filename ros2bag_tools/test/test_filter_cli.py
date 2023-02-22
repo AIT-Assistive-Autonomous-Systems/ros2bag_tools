@@ -11,13 +11,11 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-
-from pathlib import Path
-import tempfile
-
 from launch import LaunchDescription
 from launch.actions import ExecuteProcess
+from tempfile import TemporaryDirectory
 
+from pathlib import Path
 import launch_testing
 import launch_testing.actions
 import launch_testing.asserts
@@ -27,6 +25,7 @@ from launch_testing.asserts import EXIT_OK
 
 import pytest
 import unittest
+from .create_test_bags import create_string_bag, create_diagnostics_bag, create_day_time_bag
 
 
 SHUTDOWN_TIMEOUT = 2
@@ -74,14 +73,33 @@ def count_messages(bag_path):
 
 class TestFilterCli(unittest.TestCase):
 
+    def setUp(self):
+        self._tmp_string_bag = TemporaryDirectory()
+        self.tmp_string_bag = str(
+            Path(self._tmp_string_bag.name) / 'string.bag')
+        create_string_bag(self.tmp_string_bag)
+
+        self._tmp_diagnostics_bag = TemporaryDirectory()
+        self.tmp_diagnostics_bag = str(
+            Path(self._tmp_diagnostics_bag.name) / 'diagnostics.bag')
+        create_diagnostics_bag(self.tmp_diagnostics_bag)
+
+        self._tmp_day_time_bag = TemporaryDirectory()
+        self.tmp_day_time_bag = str(
+            Path(self._tmp_day_time_bag.name) / 'day_time.bag')
+        create_day_time_bag(self.tmp_day_time_bag)
+
+    def tearDown(self):
+        self._tmp_string_bag.cleanup()
+        self._tmp_diagnostics_bag.cleanup()
+        self._tmp_day_time_bag.cleanup()
+
     def test_cut(self, launch_service, proc_info, proc_output):
         from example_interfaces.msg import String
-        inbag_path = 'test/test.bag'
-
-        with tempfile.TemporaryDirectory() as temp_dir:
-            outbag_path = Path(temp_dir) / 'ros2bag_cut_test.bag'
-            cmd = ['ros2', 'bag', 'cut', '--duration', '0.5', '-o', str(outbag_path)]
-            cmd.append(inbag_path)
+        with TemporaryDirectory() as out_dir:
+            outbag_path = str(Path(out_dir) / 'ros2bag_cut_test.bag')
+            cmd = ['ros2', 'bag', 'cut', '--duration', '0.5', '-o', outbag_path]
+            cmd.append(self.tmp_string_bag)
             bag_command_action = ExecuteProcess(
                 cmd=cmd,
                 name='ros2bag_tools-cli',
@@ -94,17 +112,17 @@ class TestFilterCli(unittest.TestCase):
                 assert bag_command.terminated
                 assert bag_command.exit_code == EXIT_OK
 
-            msgs = read_all_messages_of_topic(str(outbag_path), '/data', String)
+            msgs = read_all_messages_of_topic(outbag_path, '/data', String)
             assert len(msgs) == 1
             assert msgs[0].data == 'test_start'
 
     def test_cut_multiple(self, launch_service, proc_info, proc_output):
         """Test whether all messages of two bags are merged."""
-        with tempfile.TemporaryDirectory() as temp_dir:
-            outbag_path = Path(temp_dir) / 'ros2bag_cut_multiple_test.bag'
-            cmd = ['ros2', 'bag', 'cut', '--start', '0', '-o', str(outbag_path)]
-            cmd.append('test/test.bag')
-            cmd.append('test/diagnostics.bag')
+        with TemporaryDirectory() as out_dir:
+            outbag_path = str(Path(out_dir) / 'ros2bag_cut_multiple_test.bag')
+            cmd = ['ros2', 'bag', 'cut', '--start', '0', '-o', outbag_path]
+            cmd.append(self.tmp_string_bag)
+            cmd.append(self.tmp_diagnostics_bag)
             bag_command_action = ExecuteProcess(
                 cmd=cmd,
                 name='ros2bag_tools-cli',
@@ -117,18 +135,16 @@ class TestFilterCli(unittest.TestCase):
                 assert bag_command.terminated
                 assert bag_command.exit_code == EXIT_OK
 
-            msg_count = count_messages(str(outbag_path))
+            msg_count = count_messages(outbag_path)
             assert msg_count == 3
 
     def test_cut_day_time(self, launch_service, proc_info, proc_output):
-        inbag_path = 'test/day_time.bag'
-
-        with tempfile.TemporaryDirectory() as temp_dir:
-            outbag_path = Path(temp_dir) / 'ros2bag_cut_day_time_test.bag'
+        with TemporaryDirectory() as out_dir:
+            outbag_path = str(Path(out_dir) / 'ros2bag_cut_day_time_test.bag')
             cmd = ['ros2', 'bag', 'cut', '--start', '13:00', '--end', '14:00']
             cmd.append('-o')
-            cmd.append(str(outbag_path))
-            cmd.append(inbag_path)
+            cmd.append(outbag_path)
+            cmd.append(self.tmp_day_time_bag)
             bag_command_action = ExecuteProcess(
                 cmd=cmd,
                 name='ros2bag_tools-cli',
@@ -141,5 +157,5 @@ class TestFilterCli(unittest.TestCase):
                 assert bag_command.terminated
                 assert bag_command.exit_code == EXIT_OK
 
-            msg_count = count_messages(str(outbag_path))
+            msg_count = count_messages(outbag_path)
             assert msg_count == 2
