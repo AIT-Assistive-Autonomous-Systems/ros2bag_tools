@@ -14,7 +14,7 @@
 from enum import Enum
 from typing import Tuple, Union, List, Sequence
 import argparse
-from rosbag2_py import TopicMetadata, BagMetadata, StorageFilter
+from rosbag2_py import TopicMetadata, BagMetadata
 from rclpy.exceptions import InvalidTopicNameException
 from rclpy.validate_topic_name import validate_topic_name
 from rclpy.serialization import deserialize_message, serialize_message
@@ -26,6 +26,11 @@ from logging import Logger, getLogger
 class FilterResult(Enum):
     DROP_MESSAGE = 1
     STOP_CURRENT_BAG = 2
+
+
+class TopicRequest(Enum):
+    REQUIRED = 1
+    LIMIT = 2
 
 
 BagMessageTuple = Tuple[str, bytes, int]
@@ -41,7 +46,7 @@ class FilterExtension:
     The following methods can be defined:
     * `add_arguments`
     * `set_args`
-    * `get_storage_filter`
+    * `requested_topics`
     * `output_size_factor`
     * `filter_topic`
     * `filter_msg`
@@ -71,8 +76,23 @@ class FilterExtension:
     def set_args(self, _metadata: Sequence[BagMetadata], _args):
         pass
 
-    def get_storage_filter(self) -> StorageFilter:
-        return None
+    def requested_topics(self) -> List[Tuple[TopicRequest, str]]:
+        """
+        Return list of topic requirements for the reader.
+
+        These can be used to reduce the number of message iterations and speed up a filter chain.
+
+        Filters can either limit the reader (TopicRequest.LIMIT), to declare that the reader only
+        needs to read those topics.
+
+        In addition, filters can declare a requirement (TopicRequest.REQUIRED) to read topics that
+        is independent of other limits.
+
+        For instance, if a filter uses information of topic B to change topic A, it should REQUIRE
+        topic B. This way, if nothing limits the reader to topic A, ALL topics are read. But if
+        other filters limit to topic A, topic B is STILL read.
+        """
+        return []
 
     def output_size_factor(self, _metadata: BagMetadata):
         """Estimate multiple of input messages this filter will output."""

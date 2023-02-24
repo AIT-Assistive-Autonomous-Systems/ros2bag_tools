@@ -15,11 +15,11 @@ import argparse
 from message_filters import ApproximateTimeSynchronizer, SimpleFilter
 from rclpy.serialization import deserialize_message, serialize_message
 from rosidl_runtime_py.utilities import get_message
-from rosbag2_py import TopicMetadata, BagMetadata, StorageFilter
+from rosbag2_py import TopicMetadata, BagMetadata
 from typing import Sequence
 from collections import OrderedDict
 
-from . import FilterExtension, BagMessageTuple
+from . import FilterExtension, BagMessageTuple, TopicRequest
 
 
 class BagWrappedMessage:
@@ -135,8 +135,8 @@ class SyncFilter(FilterExtension):
             self._sync_filters.values(), args.queue_size, args.slop)
         self._synchronizer.registerCallback(self.sync_callback)
 
-    def get_storage_filter(self):
-        return StorageFilter(topics=list(self._sync_filters.keys()))
+    def requested_topics(self):
+        return [(TopicRequest.REQUIRED, t) for t in self._sync_filters.keys()]
 
     def filter_topic(self, topic_metadata: TopicMetadata):
         topic_type = topic_metadata.type

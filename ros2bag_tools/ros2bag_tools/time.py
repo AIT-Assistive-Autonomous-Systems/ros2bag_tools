@@ -17,23 +17,11 @@ import re
 from rosbag2_py import BagMetadata
 from typing import Sequence, Tuple
 from datetime import date, timedelta, datetime, timezone, time
-from rclpy.time import Duration, Time, CONVERSION_CONSTANT
+from rclpy.time import Time, CONVERSION_CONSTANT
 
 
 def datetime_to_ros_time(t: datetime) -> Time:
     return Time(seconds=t.timestamp())
-
-
-def ros_time_from_nanoseconds(ns) -> Time:
-    time_s = int(ns / CONVERSION_CONSTANT)
-    time_ns_only = ns % CONVERSION_CONSTANT
-    return Time(seconds=time_s, nanoseconds=time_ns_only)
-
-
-def ros_duration_from_nanoseconds(ns) -> Duration:
-    duration_s = int(ns / CONVERSION_CONSTANT)
-    duration_ns_only = ns % CONVERSION_CONSTANT
-    return Duration(seconds=duration_s, nanoseconds=duration_ns_only)
 
 
 def get_bag_bounds(metadatas: Sequence[BagMetadata]) -> Tuple[datetime, datetime]:

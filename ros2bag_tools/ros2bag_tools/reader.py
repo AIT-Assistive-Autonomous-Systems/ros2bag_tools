@@ -15,7 +15,7 @@
 from rosidl_runtime_py.utilities import get_message
 from rclpy.serialization import deserialize_message
 from rosbag2_tools import default_rosbag_options
-from ros2bag_tools.filter import FilterExtension, FilterResult
+from ros2bag_tools.filter import FilterExtension, FilterResult, TopicRequest
 from rosbag2_py import TopicMetadata, StorageFilter, SequentialReader
 
 ReadOrder = None
@@ -49,18 +49,24 @@ class TopicDeserializer:
         return deserialize_message(data, self._topic_type_map[topic])
 
 
+def topic_requests_to_storage_filter(topic_requests):
+    if len(topic_requests) == 0:
+        return None
+    if not any((r == TopicRequest.LIMIT for (r, _) in topic_requests)):
+        # if none of the requests limit the result, don't set a storage filter at all
+        return None
+    topics = {t for (_, t) in topic_requests}
+    return StorageFilter(topics=list(topics))
+
+
 class FilteredReader:
 
     def __init__(self, bag_paths, filter: FilterExtension, in_storage='', topics=None):
         assert(len(bag_paths) > 0)
 
-        storage_filter = filter.get_storage_filter()
-        if topics:
-            if not storage_filter:
-                storage_filter = StorageFilter(topics)
-            else:
-                topics = list(set(topics).union(set(storage_filter.topics)))
-                storage_filter = StorageFilter(topics)
+        requested_topics = filter.requested_topics() + \
+            [(TopicRequest.LIMIT, t) for t in (topics or [])]
+        storage_filter = topic_requests_to_storage_filter(requested_topics)
 
         self._readers = []
         for bag_path in bag_paths:

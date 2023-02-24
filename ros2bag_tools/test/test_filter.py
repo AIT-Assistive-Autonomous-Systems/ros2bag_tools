@@ -254,49 +254,48 @@ def test_restamp_filter(tmp_diagnostics_bag: Path):
 
 
 def test_sync_filter(tmp_synced_bag):
-    bag_path, synced_topics, topics, synced_msgs = tmp_synced_bag
-    assert(len(synced_msgs) > 0)
-
     test_filter = SyncFilter()
-    reader = FilteredReader(bag_paths=[bag_path], filter=test_filter)
     parser = argparse.ArgumentParser('sync')
     test_filter.add_arguments(parser)
-    args = parser.parse_args(['-t', *synced_topics, '--slop', '0.01'])
-    test_filter.set_args([read_metadata(bag_path)], args)
+    args = parser.parse_args(['-t', '/sync0', '/sync1', '--slop', '0.01'])
+    test_filter.set_args([read_metadata(tmp_synced_bag)], args)
 
+    reader = FilteredReader(bag_paths=[tmp_synced_bag], filter=test_filter)
+
+    topics = [TopicMetadata(topic, 'diagnostic_msgs/msg/DiagnosticArray', 'cdr')
+              for topic in ['/sync0', '/sync1', '/offsync0']]
     for meta in topics:
         assert(test_filter.filter_topic(meta) == meta)
 
-    msg_type = type(synced_msgs[0][1])
-    for msg in reader:
-        # serializing the same message and comparing it returns False
-        # thus compare deserialized message
-        topic, msg, t = msg
-        msg = (topic, deserialize_message(msg, msg_type), t)
-        assert(msg in synced_msgs)
-        synced_msgs.remove(msg)
-    assert(len(synced_msgs) == 0)
+    expected_counts = {
+        # syncN should only be counted if they match within 10ms
+        '/sync0': 2,
+        '/sync1': 2,
+        # offsync should pass through filter untouched
+        '/offsync0': 1,
+    }
+    counts = {}
+    for (topic, _, _) in reader:
+        if topic in counts:
+            counts[topic] += 1
+        else:
+            counts[topic] = 1
+    assert(expected_counts == counts)
 
 
 def test_export_sync_selected(caplog: pytest.LogCaptureFixture,
                               tmp_synced_bag,
-                              dummy_synced_export_conf):
-    filter_conf_path, export_conf_path, result_path = dummy_synced_export_conf
-    synced_bag, synced_topics, _, synced_msgs = tmp_synced_bag
+                              synced_export_conf):
+    filter_conf_path, export_conf_path = synced_export_conf
 
     parser = argparse.ArgumentParser('export')
     verb = ExportVerb()
 
-    msg_counts = {topic: 0 for topic in synced_topics}
-    for topic, _, _ in synced_msgs:
-        if topic in msg_counts:
-            msg_counts[topic] += 1
-
     with capture_at_level(caplog, logging.INFO, 'pytest.export.sync(0)'):
         verb.add_arguments(parser, 'pytest.export')
         args = parser.parse_args(['-f', filter_conf_path, '-c', export_conf_path,
-                                  '-i', synced_bag])
+                                  '-i', tmp_synced_bag])
         verb.main(args=args)
-    assert "total #synced-bundles: 4" in caplog.messages
-    assert "total #off-sync msgs on '/sync3': 1" in caplog.messages
-    assert "total #off-sync msgs on '/sync1': 1" in caplog.messages
+    assert "total #synced-bundles: 2" in caplog.messages
+    assert "total #off-sync msgs on '/sync0': 2" in caplog.messages
+    assert "total #off-sync msgs on '/sync1': 2" in caplog.messages

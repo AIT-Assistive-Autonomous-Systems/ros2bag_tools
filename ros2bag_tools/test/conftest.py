@@ -49,13 +49,13 @@ def tmp_images_bag(tmp_path):
 
 @pytest.fixture
 def tmp_synced_bag(tmp_path):
-    synced_bag = str(tmp_path / 'synced.bag')
-    topics, synced_topics, synced_msgs = create_synced_bag(synced_bag)
-    return synced_bag, synced_topics, topics, synced_msgs
+    bag_path = str(tmp_path / 'synced.bag')
+    create_synced_bag(bag_path)
+    return bag_path
 
 
 @pytest.fixture(scope="session")
-def dummy_synced_export_conf(tmp_path_factory: pytest.TempPathFactory) -> Tuple[str, str]:
+def synced_export_conf(tmp_path_factory: pytest.TempPathFactory) -> Tuple[str, str]:
     conf_path = tmp_path_factory.mktemp('conf')
     result_path = tmp_path_factory.mktemp('result')
 
@@ -64,10 +64,10 @@ def dummy_synced_export_conf(tmp_path_factory: pytest.TempPathFactory) -> Tuple[
 
     with filter_conf.open("w") as f:
         f.writelines([
-            'sync -t /sync1 /sync2 /sync3'
+            'sync -t /sync0 /sync1'
         ])
     with export_conf.open("w") as f:
         f.writelines([
-            f'/sync1 stamp -o {str(result_path)}/synced_stamps.txt'
+            f'/sync0 stamp -o {str(result_path)}/synced_stamps.txt'
         ])
-    return str(filter_conf), str(export_conf), str(result_path)
+    return str(filter_conf), str(export_conf)

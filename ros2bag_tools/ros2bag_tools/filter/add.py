@@ -17,7 +17,7 @@ from rosbag2_py import TopicMetadata
 from rosidl_runtime_py import set_message_fields
 from rosidl_runtime_py.utilities import get_message
 from rclpy.serialization import serialize_message, deserialize_message
-from ros2bag_tools.filter import FilterExtension
+from ros2bag_tools.filter import FilterExtension, TopicRequest
 
 
 class AddFilter(FilterExtension):
@@ -47,6 +47,9 @@ class AddFilter(FilterExtension):
         if not isinstance(self._values_dictionary, dict):
             raise RuntimeError(
                 '--values needs to point to a file containing a dictionary in YAML format')
+
+    def requested_filters(self):
+        return [(TopicRequest.REQUIRED, self._args.align_to)]
 
     def filter_topic(self, topic_metadata):
         if topic_metadata.name == self._args.align_to:

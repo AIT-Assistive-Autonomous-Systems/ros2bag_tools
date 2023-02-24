@@ -13,10 +13,11 @@
 # limitations under the License.
 
 import logging
-from rosbag2_py import BagMetadata, StorageFilter
+from rosbag2_py import BagMetadata
 from ros2bag_tools.filter import FilterExtension, FilterResult
 from ros2bag_tools.extension import ExtensionLoader, readargs
 from operator import itemgetter
+from itertools import chain
 
 logger = logging.getLogger(__name__)
 
@@ -51,20 +52,8 @@ class CompositeFilter(FilterExtension):
             total *= filter.output_size_factor(metadata)
         return total
 
-    def get_storage_filter(self):
-        """Combine storage filter of inner filters by union."""
-        composite_storage_filter = None
-        for filter in self._filters:
-            storage_filter = filter.get_storage_filter()
-            if storage_filter:
-                if not composite_storage_filter:
-                    composite_storage_filter = storage_filter
-                else:
-                    total_topics = set(composite_storage_filter.topics).union(
-                        storage_filter.topics)
-                    composite_storage_filter = StorageFilter(
-                        topics=list(total_topics))
-        return composite_storage_filter
+    def requested_topics(self):
+        return list(chain(*(f.requested_topics() for f in self._filters)))
 
     def filter_topic(self, topic_metadata):
         current_tm = [topic_metadata]

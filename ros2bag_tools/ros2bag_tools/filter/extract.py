@@ -12,8 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from rosbag2_py import BagMetadata, StorageFilter
-from ros2bag_tools.filter import FilterExtension, FilterResult
+from rosbag2_py import BagMetadata
+from ros2bag_tools.filter import FilterExtension, FilterResult, TopicRequest
 
 
 class ExtractFilter(FilterExtension):
@@ -50,8 +50,8 @@ class ExtractFilter(FilterExtension):
         # this might not always apply, but gives a good enough estimation for progress feedback
         return output_msg_count / total_msg_count
 
-    def get_storage_filter(self):
-        return StorageFilter(topics=list(self._output_topics))
+    def requested_filters(self):
+        return [(TopicRequest.LIMIT, t) for t in self._output_topics]
 
     def filter_topic(self, topic_metadata):
         if topic_metadata.name not in self._output_topics:
