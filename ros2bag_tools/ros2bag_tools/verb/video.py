@@ -26,6 +26,7 @@ from ros2bag.verb import VerbExtension
 
 
 IMAGE_MESSAGE_TYPE_NAME = 'sensor_msgs/msg/Image'
+COMPRESSED_IMAGE_MESSAGE_TYPE_NAME = 'sensor_msgs/msg/CompressedImage'
 RESIZE_INTERPOLATION = cv2.INTER_AREA
 
 
@@ -104,13 +105,21 @@ def estimate_fps(bag_path: str, storage_id: str, topic_name):
 
 
 def ensure_image(metadata, topic_name):
+    '''
+    Raises error if topic is not an image or compressed image.
+
+    If topic is an image topic, returns whether or not it is compressed
+    '''
     for entry in metadata.topics_with_message_count:
         if entry.topic_metadata.name == topic_name:
             if entry.topic_metadata.type != IMAGE_MESSAGE_TYPE_NAME:
-                raise ArgumentError(
-                    None, f'topic type is not {IMAGE_MESSAGE_TYPE_NAME}')
+                if entry.topic_metadata.type != COMPRESSED_IMAGE_MESSAGE_TYPE_NAME:
+                    raise ArgumentError(
+                        None, f'topic type is not {IMAGE_MESSAGE_TYPE_NAME} or {COMPRESSED_IMAGE_MESSAGE_TYPE_NAME}')
+                else:
+                    return True
             else:
-                return
+                return False
     raise ArgumentError(None, 'topic not in bag')
 
 
@@ -165,8 +174,9 @@ class VideoVerb(VerbExtension):
 
         info = Info()
         metadata = info.read_metadata(args.bag_file, args.storage)
+        is_compressed = False
         try:
-            ensure_image(metadata, args.topic)
+            is_compressed = ensure_image(metadata, args.topic)
         except Exception as e:
             return print_error("invalid topic: {}".format(e))
 
@@ -202,7 +212,11 @@ class VideoVerb(VerbExtension):
                 continue
             if cut_result == FilterResult.STOP_CURRENT_BAG:
                 break
-            cv_image = image_bridge.imgmsg_to_cv2(image, args.encoding)
+
+            if is_compressed:
+                cv_image = image_bridge.compressed_imgmsg_to_cv2(image)
+            else:
+                cv_image = image_bridge.imgmsg_to_cv2(image, args.encoding)
             if args.image_resize:
                 width = int(cv_image.shape[1] * args.image_resize)
                 height = int(cv_image.shape[0] * args.image_resize)
@@ -210,13 +224,22 @@ class VideoVerb(VerbExtension):
                 cv_image = cv2.resize(
                     cv_image, dim, interpolation=RESIZE_INTERPOLATION)
 
-            cv_image = cvtColorForDisplay(
-                cv_image, image.encoding, args.encoding,
-                do_dynamic_scaling=args.do_dynamic_scaling,
-                min_image_value=args.min_image_value or 0.0,
-                max_image_value=args.max_image_value or 0.0,
-                # colormap=args.colormap
-            )
+            if is_compressed:
+                cv_image = cvtColorForDisplay(
+                    cv_image, args.encoding, args.encoding,
+                    do_dynamic_scaling=args.do_dynamic_scaling,
+                    min_image_value=args.min_image_value or 0.0,
+                    max_image_value=args.max_image_value or 0.0,
+                    # colormap=args.colormap
+                )
+            else:
+                cv_image = cvtColorForDisplay(
+                    cv_image, image.encoding, args.encoding,
+                    do_dynamic_scaling=args.do_dynamic_scaling,
+                    min_image_value=args.min_image_value or 0.0,
+                    max_image_value=args.max_image_value or 0.0,
+                    # colormap=args.colormap
+                )
 
             processor.process(cv_image)
             if args.progress:
