@@ -171,7 +171,7 @@ class CompressedImageMsgWriter(ImageMsgWriterBase):
     @staticmethod
     def get_ext_format(ext: str) -> str:
         ext = ext.lower()[1:]
-        if ext in ['jpg' or 'jpeg']:
+        if ext in ['jpg', 'jpeg']:
             ext = 'jpeg'
         return ext
 
