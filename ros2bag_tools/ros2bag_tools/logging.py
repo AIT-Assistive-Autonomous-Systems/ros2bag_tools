@@ -14,6 +14,7 @@
 
 from rclpy.logging import get_logger as rclpy_get_logger
 from rclpy.impl.rcutils_logger import RcutilsLogger
+from functools import lru_cache
 import logging
 
 from typing import Union
@@ -37,6 +38,11 @@ def getLogger(logger: Union[str, logging.Logger, RcutilsLogger, None] = None) ->
     elif logger:
         result = root.getChild(logger)
     return result
+
+
+@lru_cache(None)
+def warn_once(logger: logging.Logger, msg: str):
+    logger.warning(msg)
 
 
 class RclpyAdapter:

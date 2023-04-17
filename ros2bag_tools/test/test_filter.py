@@ -29,7 +29,7 @@ from ros2bag_tools.filter.sync import SyncFilter
 from ros2bag_tools.reader import FilteredReader
 from example_interfaces.msg import String
 from diagnostic_msgs.msg import DiagnosticArray
-
+from std_msgs.msg import String as RosString
 from ros2bag_tools.verb.export import ExportVerb
 
 from .logutils import capture_at_level
@@ -251,6 +251,19 @@ def test_restamp_filter(tmp_diagnostics_bag: Path):
     msg_filtered = deserialize_message(data, DiagnosticArray)
     assert(t == 1)
     assert(msg_filtered.header.stamp.nanosec == 1)
+
+    # No header tests
+    topic_metadata = TopicMetadata(
+        '/string', 'std_msgs/msg/String', 'cdr')
+    assert(filter.filter_topic(topic_metadata) == topic_metadata)
+
+    msg = RosString()
+    msg.data = 'TestString'
+
+    bag_msg = ('/string', serialize_message(msg), 1)
+    (_, data, t) = filter.filter_msg(bag_msg)
+    msg_filtered = deserialize_message(data, RosString)
+    assert(t == 1)
 
 
 def test_sync_filter(tmp_synced_bag):
