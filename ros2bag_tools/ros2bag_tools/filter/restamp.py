@@ -16,6 +16,7 @@ from rclpy.time import Time, Duration
 from rclpy.serialization import serialize_message
 from ros2bag_tools.reader import TopicDeserializer
 from ros2bag_tools.filter import FilterExtension
+from ros2bag_tools.logging import warn_once
 from tf2_msgs.msg import TFMessage
 import re
 
@@ -53,6 +54,7 @@ def t_from_header(msg):
 class RestampFilter(FilterExtension):
 
     def __init__(self):
+        super().__init__()
         self._deserializer = TopicDeserializer()
 
     def add_arguments(self, parser):
@@ -104,7 +106,12 @@ class RestampFilter(FilterExtension):
         if self._invert:
             msg = set_header_stamp(msg, t)
         else:
-            t = t_from_header(msg)
+            new_t = t_from_header(msg)
+            if new_t is None:
+                warn_once(self._logger,
+                          f"{topic} has no header, using bag timestamp instead")
+            else:
+                t = new_t
 
         if topic in self._offset_topics:
             t += self._offset.nanoseconds
