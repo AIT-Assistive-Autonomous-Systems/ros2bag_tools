@@ -19,7 +19,7 @@ import pandas as pd
 
 def test_data_frame_range():
     reader = SequentialReader()
-    storage_options = StorageOptions(uri='test/range.bag', storage_id='sqlite3')
+    storage_options = StorageOptions(uri='test/range.bag')
     converter_options = ConverterOptions(
         input_serialization_format='cdr',
         output_serialization_format='cdr')
@@ -37,7 +37,7 @@ def test_data_frame_range():
 
 def test_data_frame_multi_topic():
     reader = SequentialReader()
-    storage_options = StorageOptions(uri='test/multi_topic.bag', storage_id='sqlite3')
+    storage_options = StorageOptions(uri='test/multi_topic.bag')
     converter_options = ConverterOptions(
         input_serialization_format='cdr',
         output_serialization_format='cdr')

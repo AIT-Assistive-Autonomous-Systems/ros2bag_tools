@@ -31,19 +31,16 @@ from ros2bag.api import print_error
 from ros2bag.verb import VerbExtension
 
 
-def get_rosbag_options(args):
+def get_reader_options(args):
     """Get rosbag options from args matching the ros2bag.api.add_standard_reader_args names."""
-    storage_id = args.storage if hasattr(args, 'storage') else 'sqlite3'
     serialization_format = (
         args.serialization_format if hasattr(
             args, 'serialization_format') else 'cdr'
     )
-    max_bagfile_size = args.max_bag_size if hasattr(
-        args, 'max_bag_size') else 0
-    storage_options = StorageOptions(
-        uri=args.bag_path,
-        storage_id=storage_id,
-        max_bagfile_size=max_bagfile_size)
+    storage_options = StorageOptions(uri=args.bag_path)
+    storage_id = args.storage if hasattr(args, 'storage') else ''
+    if storage_id:
+        storage_options.storage_id = storage_id
     converter_options = ConverterOptions(
         input_serialization_format=serialization_format,
         output_serialization_format=serialization_format)
@@ -61,13 +58,13 @@ class FilterVerb(VerbExtension):
         parser.add_argument(
             'bag_files', nargs='+', help='input bag files')
         parser.add_argument(
+            '-s', '--in-storage', default='',
+            choices=get_registered_readers(),
+            help='storage identifier to be used for the input bag')
+        parser.add_argument(
             '-o', '--output',
             help='destination of the bagfile to create, \
             defaults to a timestamped folder in the current directory')
-        parser.add_argument(
-            '-s', '--in-storage', default='sqlite3',
-            choices=get_registered_readers(),
-            help='storage identifier to be used for the input bag, defaults to "sqlite3"')
         parser.add_argument(
             '-b', '--max-bag-size', type=int, default=0,
             help='maximum size in bytes before the bagfile will be split. '
@@ -77,11 +74,10 @@ class FilterVerb(VerbExtension):
         parser.add_argument(
             '--out-storage', default='sqlite3',
             choices=get_registered_writers(),
-            help='storage identifier to be used for the output bag, defaults to "sqlite3"')
+            help='storage identifier to be used for the output bag')
         parser.add_argument(
             '-f', '--serialization-format', default='cdr',
-            help='rmw serialization format in which the messages are saved, defaults to the'
-                 ' rmw currently in use')
+            help='rmw serialization format in which the messages are saved, defaults to \'cdr\'')
         parser.add_argument('--progress', action='store_true',
                             help='show progress bar')
         self._filter.add_arguments(parser)
@@ -120,7 +116,7 @@ class FilterVerb(VerbExtension):
         args_out_bag = vars(args).copy()
         args_out_bag['storage'] = args.out_storage
         args_out_bag['bag_path'] = uri
-        out_storage_options, out_converter_options = get_rosbag_options(
+        out_storage_options, out_converter_options = get_reader_options(
             argparse.Namespace(**args_out_bag))
         writer.open(out_storage_options, out_converter_options)
 
