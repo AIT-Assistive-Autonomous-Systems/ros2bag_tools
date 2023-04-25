@@ -12,18 +12,17 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import os
 import cv2
 from argparse import ArgumentError
 from cv_bridge import CvBridge, cvtColorForDisplay
-from rosbag2_py import Info, SequentialReader, StorageOptions, ConverterOptions, StorageFilter
+from rosbag2_py import Info, SequentialReader, StorageFilter
 from ros2bag_tools.exporter.image import CompressedImageMsgWriter
 from ros2bag_tools.filter import FilterResult
 from ros2bag_tools.filter.cut import CutFilter
 from ros2bag_tools.progress import ProgressTracker
 from rosbag2_tools.bag_view import BagView
-from ros2bag.api import print_error
-from ros2bag.verb import VerbExtension
+from ros2bag.api import print_error, add_standard_reader_args
+from ros2bag.verb import VerbExtension, get_reader_options
 
 
 IMAGE_MESSAGE_TYPE_NAME = 'sensor_msgs/msg/Image'
@@ -132,15 +131,7 @@ class VideoVerb(VerbExtension):
         self._cut = CutFilter()
 
     def add_arguments(self, parser, cli_name):  # noqa: D102
-        parser.add_argument(
-            'bag_file', help='bag file to read data from')
-        parser.add_argument(
-            '-s', '--storage', default='sqlite3',
-            help='storage identifier to be used for the input bag, defaults to "sqlite3"')
-        parser.add_argument(
-            '-f', '--serialization-format', default='',
-            help='rmw serialization format in which the messages are read, defaults to the'
-                 ' rmw currently in use')
+        add_standard_reader_args(parser)
         parser.add_argument(
             '--progress', default=False, action='store_true',
             help='display reader progress in terminal')
@@ -171,9 +162,6 @@ class VideoVerb(VerbExtension):
         self._cut.add_arguments(parser)
 
     def main(self, *, args):  # noqa: D102
-        if not os.path.exists(args.bag_file):
-            return print_error("bag file '{}' does not exist!".format(args.bag_file))
-
         info = Info()
         metadata = info.read_metadata(args.bag_file, args.storage)
         is_compressed = False
@@ -183,11 +171,7 @@ class VideoVerb(VerbExtension):
             return print_error("invalid topic: {}".format(e))
 
         reader = SequentialReader()
-        storage_options = StorageOptions(
-            uri=args.bag_file, storage_id=args.storage)
-        converter_options = ConverterOptions(
-            input_serialization_format=args.serialization_format,
-            output_serialization_format=args.serialization_format)
+        storage_options, converter_options = get_reader_options(args)
         reader.open(storage_options, converter_options)
 
         self._cut.set_args([metadata], args)

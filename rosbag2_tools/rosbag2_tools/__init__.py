@@ -15,7 +15,7 @@
 from rosbag2_py import StorageOptions, ConverterOptions
 
 
-def default_rosbag_options(bag_path, storage_id='sqlite3'):
+def default_rosbag_options(bag_path, storage_id=''):
     storage_options = StorageOptions(uri=bag_path, storage_id=storage_id)
     converter_options = ConverterOptions(
         input_serialization_format='cdr',

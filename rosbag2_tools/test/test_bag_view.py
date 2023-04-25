@@ -18,7 +18,7 @@ from sensor_msgs.msg import Range
 
 def test_bag_view():
     reader = SequentialReader()
-    storage_options = StorageOptions(uri='test/range.bag', storage_id='sqlite3')
+    storage_options = StorageOptions(uri='test/range.bag')
     converter_options = ConverterOptions(
         input_serialization_format='cdr',
         output_serialization_format='cdr')

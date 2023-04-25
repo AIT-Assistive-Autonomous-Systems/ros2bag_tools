@@ -22,7 +22,7 @@ from diagnostic_msgs.msg import KeyValue
 
 def create_range_bag(path):
     writer = SequentialWriter()
-    storage_options = StorageOptions(uri=path, storage_id='sqlite3')
+    storage_options = StorageOptions(uri=path)
     converter_options = ConverterOptions(
         input_serialization_format='cdr',
         output_serialization_format='cdr')
@@ -44,7 +44,7 @@ def create_range_bag(path):
 
 def create_multi_topic_bag(path):
     writer = SequentialWriter()
-    storage_options = StorageOptions(uri=path, storage_id='sqlite3')
+    storage_options = StorageOptions(uri=path)
     converter_options = ConverterOptions(
         input_serialization_format='cdr',
         output_serialization_format='cdr')

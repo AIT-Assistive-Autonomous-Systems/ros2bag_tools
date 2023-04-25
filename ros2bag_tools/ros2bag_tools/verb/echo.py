@@ -13,10 +13,10 @@
 # limitations under the License.
 
 from rosidl_runtime_py import message_to_yaml
+from ros2bag.api import add_standard_reader_args
 from ros2bag.verb import VerbExtension
 from rosbag2_py import SequentialReader, StorageFilter
-from ros2bag_tools.args import add_standard_reader_args
-from ros2bag_tools.verb import get_rosbag_options
+from ros2bag_tools.verb import get_reader_options
 from rosbag2_tools.bag_view import BagView
 
 
@@ -30,7 +30,7 @@ class EchoVerb(VerbExtension):
         parser.add_argument('--no-pager', default=False, action='store_true')
 
     def main(self, *, args):
-        storage_options, converter_options = get_rosbag_options(args)
+        storage_options, converter_options = get_reader_options(args)
         reader = SequentialReader()
         reader.open(storage_options, converter_options)
         for _, msg, _ in BagView(reader, StorageFilter(topics=[args.topic_name])):

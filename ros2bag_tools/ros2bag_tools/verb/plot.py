@@ -12,52 +12,25 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import os
 import matplotlib.pyplot as plt
 from rosbag2_tools.bag_view import BagView
 from rosbag2_tools.data_frame import read_data_frames
-from ros2bag.api import print_error
-from ros2bag.verb import VerbExtension
+from ros2bag.api import add_standard_reader_args
+from ros2bag.verb import VerbExtension, get_reader_options
+from rosbag2_py import SequentialReader, StorageFilter
 
 
 class PlotVerb(VerbExtension):
     """Display a plot of bag data."""
 
     def add_arguments(self, parser, cli_name):  # noqa: D102
-        parser.add_argument(
-            'bag_file', help='bag file to read data from')
-        parser.add_argument(
-            '-s', '--storage', default='sqlite3',
-            help='storage identifier to be used for the input bag, defaults to "sqlite3"')
-        parser.add_argument(
-            '-f', '--serialization-format', default='',
-            help='rmw serialization format in which the messages are read, defaults to the'
-                 ' rmw currently in use')
+        add_standard_reader_args(parser)
         parser.add_argument('-t', '--topic', nargs='+', required=True,
                             help='topics with field name to visualize')
 
-    def main(self, *, args):  # noqa: D102
-        if not os.path.exists(args.bag_file):
-            return print_error("bag file '{}' does not exist!".format(args.bag_file))
-
-        # NOTE(hidmic): in merged install workspaces on Windows, Python entrypoint lookups
-        #               combined with constrained environments (as imposed by colcon test)
-        #               may result in DLL loading failures when attempting to import a C
-        #               extension. Therefore, do not import rosbag2_transport at the module
-        #               level but on demand, right before first use.
-        from rosbag2_py import (
-            SequentialReader,
-            StorageOptions,
-            ConverterOptions,
-            StorageFilter
-        )
-
+    def main(self, *, args):
+        in_storage_options, in_converter_options = get_reader_options(args)
         reader = SequentialReader()
-        in_storage_options = StorageOptions(
-            uri=args.bag_file, storage_id=args.storage)
-        in_converter_options = ConverterOptions(
-            input_serialization_format=args.serialization_format,
-            output_serialization_format=args.serialization_format)
         reader.open(in_storage_options, in_converter_options)
 
         topics_with_field = [tuple(t.split('.', 1)) for t in args.topic]

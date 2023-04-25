@@ -12,19 +12,17 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import os
 from array import array
 import numpy as np
 from rosbag2_py import (
     Info,
     SequentialReader,
-    StorageOptions,
     StorageFilter,
-    ConverterOptions,
 )
 from ros2bag_tools.progress import ProgressTracker
+from ros2bag_tools.verb import get_reader_options
 from rclpy.time import Time
-from ros2bag.api import print_error
+from ros2bag.api import add_standard_reader_args
 from ros2bag.verb import VerbExtension
 from rclpy.serialization import deserialize_message
 from rosidl_runtime_py.utilities import get_message
@@ -92,15 +90,7 @@ class SummaryVerb(VerbExtension):
     """Print a summary of the contents of a bag."""
 
     def add_arguments(self, parser, cli_name):  # noqa: D102
-        parser.add_argument(
-            'bag_file', help='bag file to summarize')
-        parser.add_argument(
-            '-s', '--storage', default='sqlite3',
-            help='storage identifier to be used for the input bag, defaults to "sqlite3"')
-        parser.add_argument(
-            '-f', '--serialization-format', default='',
-            help='rmw serialization format in which the messages are read, defaults to the'
-                 ' rmw currently in use')
+        add_standard_reader_args(parser)
         parser.add_argument(
             '--progress', default=False, action='store_true',
             help='display reader progress in terminal')
@@ -108,22 +98,15 @@ class SummaryVerb(VerbExtension):
                             help='topics to summarize, summarize all if empty')
 
     def main(self, *, args):  # noqa: D102
-        if not os.path.exists(args.bag_file):
-            return print_error("bag file '{}' does not exist!".format(args.bag_file))
-
         if not args.topic:
             args.topic = []
 
         reader = SequentialReader()
-        in_storage_options = StorageOptions(
-            uri=args.bag_file, storage_id=args.storage)
-        in_converter_options = ConverterOptions(
-            input_serialization_format=args.serialization_format,
-            output_serialization_format=args.serialization_format)
+        in_storage_options, in_converter_options = get_reader_options(args)
         reader.open(in_storage_options, in_converter_options)
 
         info = Info()
-        metadata = info.read_metadata(args.bag_file, args.storage)
+        metadata = info.read_metadata(args.bag_path, args.storage)
         message_counts = {}
         for entry in metadata.topics_with_message_count:
             message_counts[entry.topic_metadata.name] = entry.message_count
