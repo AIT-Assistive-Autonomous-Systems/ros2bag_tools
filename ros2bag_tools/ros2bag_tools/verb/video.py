@@ -16,6 +16,7 @@ import cv2
 from argparse import ArgumentError
 from cv_bridge import CvBridge, cvtColorForDisplay
 from rosbag2_py import Info, SequentialReader, StorageFilter
+from ros2bag_tools.exporter.image import CompressedImageMsgWriter
 from ros2bag_tools.filter import FilterResult
 from ros2bag_tools.filter.cut import CutFilter
 from ros2bag_tools.progress import ProgressTracker
@@ -25,6 +26,7 @@ from ros2bag.verb import VerbExtension, get_reader_options
 
 
 IMAGE_MESSAGE_TYPE_NAME = 'sensor_msgs/msg/Image'
+COMPRESSED_IMAGE_MESSAGE_TYPE_NAME = 'sensor_msgs/msg/CompressedImage'
 RESIZE_INTERPOLATION = cv2.INTER_AREA
 
 
@@ -103,13 +105,22 @@ def estimate_fps(bag_path: str, storage_id: str, topic_name):
 
 
 def ensure_image(metadata, topic_name):
+    """
+    Raise error if topic is not an image or compressed image.
+
+    If topic is an image topic, returns whether or not it is compressed
+    """
     for entry in metadata.topics_with_message_count:
         if entry.topic_metadata.name == topic_name:
             if entry.topic_metadata.type != IMAGE_MESSAGE_TYPE_NAME:
-                raise ArgumentError(
-                    None, f'topic type is not {IMAGE_MESSAGE_TYPE_NAME}')
+                if entry.topic_metadata.type != COMPRESSED_IMAGE_MESSAGE_TYPE_NAME:
+                    raise ArgumentError(
+                        None, f'topic type is not {IMAGE_MESSAGE_TYPE_NAME} or \
+                            {COMPRESSED_IMAGE_MESSAGE_TYPE_NAME}')
+                else:
+                    return True
             else:
-                return
+                return False
     raise ArgumentError(None, 'topic not in bag')
 
 
@@ -152,9 +163,10 @@ class VideoVerb(VerbExtension):
 
     def main(self, *, args):  # noqa: D102
         info = Info()
-        metadata = info.read_metadata(args.bag_path, args.storage)
+        metadata = info.read_metadata(args.bag_file, args.storage)
+        is_compressed = False
         try:
-            ensure_image(metadata, args.topic)
+            is_compressed = ensure_image(metadata, args.topic)
         except Exception as e:
             return print_error("invalid topic: {}".format(e))
 
@@ -186,7 +198,11 @@ class VideoVerb(VerbExtension):
                 continue
             if cut_result == FilterResult.STOP_CURRENT_BAG:
                 break
-            cv_image = image_bridge.imgmsg_to_cv2(image, args.encoding)
+
+            if is_compressed:
+                cv_image = image_bridge.compressed_imgmsg_to_cv2(image)
+            else:
+                cv_image = image_bridge.imgmsg_to_cv2(image, args.encoding)
             if args.image_resize:
                 width = int(cv_image.shape[1] * args.image_resize)
                 height = int(cv_image.shape[0] * args.image_resize)
@@ -194,8 +210,15 @@ class VideoVerb(VerbExtension):
                 cv_image = cv2.resize(
                     cv_image, dim, interpolation=RESIZE_INTERPOLATION)
 
+            if is_compressed:
+                in_fmt, __orig_enc, enc = CompressedImageMsgWriter.normalize_format_desc(
+                    image.format
+                )
+            else:
+                enc = image.encoding
+
             cv_image = cvtColorForDisplay(
-                cv_image, image.encoding, args.encoding,
+                cv_image, enc, args.encoding,
                 do_dynamic_scaling=args.do_dynamic_scaling,
                 min_image_value=args.min_image_value or 0.0,
                 max_image_value=args.max_image_value or 0.0,
