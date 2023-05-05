@@ -21,8 +21,9 @@ from ros2bag_tools.filter import FilterResult
 from ros2bag_tools.filter.cut import CutFilter
 from ros2bag_tools.progress import ProgressTracker
 from rosbag2_tools.bag_view import BagView
+from ros2bag_tools.verb import get_reader_options
 from ros2bag.api import print_error, add_standard_reader_args
-from ros2bag.verb import VerbExtension, get_reader_options
+from ros2bag.verb import VerbExtension
 
 
 IMAGE_MESSAGE_TYPE_NAME = 'sensor_msgs/msg/Image'
@@ -163,7 +164,7 @@ class VideoVerb(VerbExtension):
 
     def main(self, *, args):  # noqa: D102
         info = Info()
-        metadata = info.read_metadata(args.bag_file, args.storage)
+        metadata = info.read_metadata(args.bag_path, args.storage)
         is_compressed = False
         try:
             is_compressed = ensure_image(metadata, args.topic)
@@ -185,7 +186,7 @@ class VideoVerb(VerbExtension):
         bag_view = BagView(reader, filter)
         fps = args.fps
         if not fps:
-            fps = estimate_fps(args.bag_file, args.storage, args.topic)
+            fps = estimate_fps(args.bag_path, args.storage, args.topic)
         if args.output:
             processor = VideoWriter(args.output, fps)
         else:
