@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+from typing import Callable, Sequence
 from ros2bag_tools.filter import FilterExtension
 from ros2bag_tools.filter import FilterResult
 
@@ -20,30 +21,45 @@ class DropFilter(FilterExtension):
     """Drop X out every Y message of a topic."""
 
     def __init__(self):
-        self._topic = None
+        self._topics: Sequence[str] = []
         self._x = 0
         self._y = 0
         self._i = 0
 
     def add_arguments(self, parser):
-        parser.add_argument('-t', '--topic', help='topic to drop messages from')
         parser.add_argument(
-            '-x',
-            type=int,
-            required=True,
-            help='count of messages out of ytodrop'
+            "-t",
+            "--topics",
+            nargs="+",
+            help=(
+                "Topics to drop messages from. Use 'all' to drop messages from all "
+                "topics in the rosbag"
+            ),
         )
-        parser.add_argument('-y', type=int, required=True, help='module of the message counter')
+        parser.add_argument(
+            "-x", type=int, required=True, help="count of messages out of ytodrop"
+        )
+        parser.add_argument(
+            "-y", type=int, required=True, help="module of the message counter"
+        )
 
     def set_args(self, _metadata, args):
-        self._topic = args.topic
+        self._topics = args.topics
         self._x = args.x
         self._y = args.y
         assert self._x <= self._y
 
+    def _is_drop_topic(self, topic: str) -> bool:
+        """Return a boolean indicating whether we're interested in filtering this topic."""
+
+        if len(self._topics) == 1 and self._topics[0] == "all":
+            return True
+
+        return topic in self._topics
+
     def filter_msg(self, msg):
         (topic, _, _) = msg
-        if topic == self._topic:
+        if self._is_drop_topic(topic):
             do_drop = False
             if self._i >= self._y:
                 self._i = 0
@@ -52,4 +68,5 @@ class DropFilter(FilterExtension):
             self._i += 1
             if do_drop:
                 return FilterResult.DROP_MESSAGE
+
         return msg
