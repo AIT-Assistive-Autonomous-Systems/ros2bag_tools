@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from typing import Callable, Sequence
+from typing import Sequence
 from ros2bag_tools.filter import FilterExtension
 from ros2bag_tools.filter import FilterResult
 
@@ -51,7 +51,6 @@ class DropFilter(FilterExtension):
 
     def _is_drop_topic(self, topic: str) -> bool:
         """Return a boolean indicating whether we're interested in filtering this topic."""
-
         if len(self._topics) == 1 and self._topics[0] == "all":
             return True
 
