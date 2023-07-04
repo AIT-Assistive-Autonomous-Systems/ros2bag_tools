@@ -21,6 +21,7 @@ class DropFilter(FilterExtension):
     """Drop X out every Y message of a topic."""
 
     def __init__(self):
+        super().__init__(self)
         self._topics: Sequence[str] = []
         self._x = 0
         self._y = 0
