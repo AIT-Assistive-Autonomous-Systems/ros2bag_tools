@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from typing import Sequence
+from typing import Dict, Sequence
 from ros2bag_tools.filter import FilterExtension
 from ros2bag_tools.filter import FilterResult
 
@@ -25,7 +25,7 @@ class DropFilter(FilterExtension):
         self._topics: Sequence[str] = []
         self._x = 0
         self._y = 0
-        self._i = 0
+        self._msg_counters: Dict[str, int] = {}
 
     def add_arguments(self, parser):
         parser.add_argument(
@@ -59,13 +59,17 @@ class DropFilter(FilterExtension):
 
     def filter_msg(self, msg):
         (topic, _, _) = msg
+
+        if topic not in self._msg_counters:
+            self._msg_counters[topic] = 0
+
         if self._is_drop_topic(topic):
             do_drop = False
-            if self._i >= self._y:
-                self._i = 0
-            if self._i < self._x:
+            if self._msg_counters[topic] >= self._y:
+                self._msg_counters[topic] = 0
+            if self._msg_counters[topic] < self._x:
                 do_drop = True
-            self._i += 1
+            self._msg_counters[topic] += 1
             if do_drop:
                 return FilterResult.DROP_MESSAGE
 
