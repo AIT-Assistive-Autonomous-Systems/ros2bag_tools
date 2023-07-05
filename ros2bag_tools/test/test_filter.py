@@ -37,6 +37,9 @@ from .logutils import capture_at_level
 import pytest
 
 
+pkg_prefix = Path(__file__).parents[1]
+
+
 def read_metadata(path: str):
     info = Info()
     return info.read_metadata(path, '')
@@ -48,7 +51,8 @@ def test_add_filter():
     parser = argparse.ArgumentParser('add')
     filter.add_arguments(parser)
     args = parser.parse_args(
-        ['-t', '/data', '--type', 'example_interfaces/msg/String', '-v', 'test/data.yaml',
+        ['-t', '/data', '--type', 'example_interfaces/msg/String', '-v',
+         str(pkg_prefix/'test'/'data.yaml'),
          '--align-to', '/align'])
     filter.set_args(None, args)
 
@@ -92,7 +96,7 @@ def test_replace_filter():
 
     parser = argparse.ArgumentParser('replace')
     filter.add_arguments(parser)
-    args = parser.parse_args(['-t', '/data', '-v', 'test/data.yaml'])
+    args = parser.parse_args(['-t', '/data', '-v', str(pkg_prefix/'test'/'data.yaml')])
     filter.set_args(None, args)
 
     string_msg = String()

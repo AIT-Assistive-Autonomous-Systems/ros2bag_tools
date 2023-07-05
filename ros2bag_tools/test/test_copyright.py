@@ -12,6 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+from pathlib import Path
+
 from ament_copyright.main import main
 import pytest
 
@@ -19,5 +21,6 @@ import pytest
 @pytest.mark.copyright
 @pytest.mark.linter
 def test_copyright():
-    rc = main(argv=['.', 'test'])
+    pkg_prefix = str(Path(__file__).parents[1])
+    rc = main(argv=[pkg_prefix, 'test'])
     assert rc == 0, 'Found errors'

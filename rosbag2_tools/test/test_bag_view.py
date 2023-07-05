@@ -11,14 +11,18 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+from pathlib import Path
 from rosbag2_tools.bag_view import BagView
 from rosbag2_py import SequentialReader, StorageOptions, ConverterOptions
 from sensor_msgs.msg import Range
 
 
+pkg_prefix = Path(__file__).parents[1]
+
+
 def test_bag_view():
     reader = SequentialReader()
-    storage_options = StorageOptions(uri='test/range.bag')
+    storage_options = StorageOptions(uri=str(pkg_prefix/'test'/'range.bag'))
     converter_options = ConverterOptions(
         input_serialization_format='cdr',
         output_serialization_format='cdr')

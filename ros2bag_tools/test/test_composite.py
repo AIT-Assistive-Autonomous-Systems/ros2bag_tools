@@ -12,8 +12,12 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+from pathlib import Path
 import argparse
 from ros2bag_tools.filter.composite import CompositeFilter
+
+
+pkg_prefix = Path(__file__).parents[1]
 
 
 def test_composite_filter():
@@ -21,7 +25,7 @@ def test_composite_filter():
 
     parser = argparse.ArgumentParser('composite')
     filter.add_arguments(parser)
-    args = parser.parse_args(['-c', 'test/composite.config'])
+    args = parser.parse_args(['-c', str(pkg_prefix/'test'/'composite.config')])
 
     filter.set_args([], args)
     assert(len(filter.filter_msg(('/data', None, 0))) == 0)
