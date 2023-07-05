@@ -86,14 +86,13 @@ def test_drop_filter():
     args = parser.parse_args(['-t', '/data1', '/data2', '-x', '4', '-y', '10'])
     filter.set_args(None, args)
 
-
     msg1 = ('/data1', None, 0)
     msg2 = ('/data2', None, 0)
 
     msg_other = ('/data3', None, 0)
 
     for i in range(y):
-        for j in range(0, y, 2):
+        for j in range(y):
             assert(filter.filter_msg(msg_other) == msg_other)
             if j < x:
                 assert(filter.filter_msg(msg1) == FilterResult.DROP_MESSAGE)
