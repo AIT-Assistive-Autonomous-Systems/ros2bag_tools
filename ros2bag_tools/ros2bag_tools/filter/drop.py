@@ -60,11 +60,12 @@ class DropFilter(FilterExtension):
     def filter_msg(self, msg):
         (topic, _, _) = msg
 
-        if topic not in self._msg_counters:
-            self._msg_counters[topic] = 0
-
         if self._is_drop_topic(topic):
             do_drop = False
+
+            if topic not in self._msg_counters:
+                self._msg_counters[topic] = 0
+
             if self._msg_counters[topic] >= self._y:
                 self._msg_counters[topic] = 0
             if self._msg_counters[topic] < self._x:
