@@ -20,6 +20,7 @@ from rosbag2_py import Info, TopicMetadata
 from ros2bag_tools.filter import FilterResult
 from ros2bag_tools.filter.add import AddFilter
 from ros2bag_tools.filter.cut import CutFilter
+from ros2bag_tools.filter.drop import DropFilter
 from ros2bag_tools.filter.extract import ExtractFilter
 from ros2bag_tools.filter.reframe import ReframeFilter
 from ros2bag_tools.filter.rename import RenameFilter
@@ -73,6 +74,36 @@ def test_add_filter():
     assert(t0 == t1)
     assert(deserialize_message(data0, String).data == 'align')
     assert(deserialize_message(data1, String).data == 'out')
+
+
+def test_drop_filter():
+    filter = DropFilter()
+    y = 10
+    x = 4
+
+    parser = argparse.ArgumentParser('drop')
+    filter.add_arguments(parser)
+    args = parser.parse_args(['-t', '/data1', '/data2', '-x', '4', '-y', '10'])
+    filter.set_args(None, args)
+
+
+    msg1 = ('/data1', None, 0)
+    msg2 = ('/data2', None, 0)
+
+    msg_other = ('/data3', None, 0)
+
+    for i in range(y):
+        for j in range(0, y, 2):
+            assert(filter.filter_msg(msg_other) == msg_other)
+            if j < x:
+                assert(filter.filter_msg(msg1) == FilterResult.DROP_MESSAGE)
+                assert(filter.filter_msg(msg2) == FilterResult.DROP_MESSAGE)
+            else:
+                assert(filter.filter_msg(msg1) == msg1)
+                assert(filter.filter_msg(msg2) == msg2)
+
+    msg = ('/data', None, 0)
+    assert(filter.filter_msg(msg) == msg)
 
 
 def test_extract_filter():
