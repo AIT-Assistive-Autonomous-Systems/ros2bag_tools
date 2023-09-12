@@ -43,10 +43,10 @@ def get_screen_size():
 
 class VideoWriter:
 
-    def __init__(self, file_path, fps):
+    def __init__(self, file_path, fps, fourcc_code):
         self._writer = cv2.VideoWriter()
         self._file_path = file_path
-        self._fourcc = cv2.VideoWriter_fourcc('m', 'p', '4', 'v')
+        self._fourcc = cv2.VideoWriter_fourcc(*fourcc_code)
         if '.webm' == self._file_path[-5:]:
             self._fourcc = cv2.VideoWriter_fourcc('v', 'p', '0', '9')
         self._fps = fps
@@ -144,6 +144,8 @@ class VideoVerb(VerbExtension):
                             help='image resize factor')
         parser.add_argument('--fps', type=int,
                             help='video fps, default: estimated from message count')
+        parser.add_argument('--codec', type=str, default='mp4v',
+                    help='video codec, default: mp4v (see opencv documentation)')
 
         display_group = parser.add_argument_group(
             'display options',
@@ -182,13 +184,16 @@ class VideoVerb(VerbExtension):
         if args.progress:
             progress.add_estimated_work(
                 metadata, self._cut.output_size_factor(metadata))
+            
+        if len(args.codec) != 4:
+            return print_error("Codec parameter invalid: {}".format(args.codec))
 
         bag_view = BagView(reader, filter)
         fps = args.fps
         if not fps:
             fps = estimate_fps(args.bag_path, args.storage, args.topic)
         if args.output:
-            processor = VideoWriter(args.output, fps)
+            processor = VideoWriter(args.output, fps, args.codec)
         else:
             processor = VideoDisplay(args.topic, fps)
 
