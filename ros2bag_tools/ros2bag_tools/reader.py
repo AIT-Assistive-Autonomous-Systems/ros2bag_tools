@@ -71,11 +71,11 @@ class FilteredReader:
         self._readers = []
         for bag_path in bag_paths:
             reader = SequentialReader()
+            in_s_opts, in_c_opts = default_rosbag_options(bag_path, in_storage)
+            reader.open(in_s_opts, in_c_opts)
             if ReadOrder:
                 reader.set_read_order(
                     ReadOrder(ReadOrderSortBy.ReceivedTimestamp))
-            in_s_opts, in_c_opts = default_rosbag_options(bag_path, in_storage)
-            reader.open(in_s_opts, in_c_opts)
             if storage_filter:
                 reader.set_filter(storage_filter)
             self._readers.append(reader)
