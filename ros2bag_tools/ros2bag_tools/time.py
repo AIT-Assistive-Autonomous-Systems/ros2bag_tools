@@ -15,21 +15,31 @@
 import argparse
 import re
 from rosbag2_py import BagMetadata
-from typing import Sequence, Tuple
+from typing import Sequence, Tuple, Union
 from datetime import date, timedelta, datetime, timezone, time
-from rclpy.time import Time, CONVERSION_CONSTANT
+from rclpy.time import Time, Duration, CONVERSION_CONSTANT
 
 
 def datetime_to_ros_time(t: datetime) -> Time:
     return Time(seconds=t.timestamp())
 
 
+def metatime_to_datetime(t: Union[Time, datetime]) -> datetime:
+    # TODO (devrite): Switch to ros time processing as new storage api uses ros time.
+    return t if isinstance(t, datetime) else ros_to_datetime_utc(t)
+
+
+def metadelta_to_timedelta(t: Union[Duration, timedelta]) -> datetime:
+    # TODO (devrite): Switch to ros time processing as new storage api uses ros time.
+    return t if isinstance(t, timedelta) else ros_to_timedelta(t)
+
+
 def get_bag_bounds(metadatas: Sequence[BagMetadata]) -> Tuple[datetime, datetime]:
     total_start = datetime.max.replace(tzinfo=timezone.utc)
     total_end = datetime.min.replace(tzinfo=timezone.utc)
     for metadata in metadatas:
-        starting_time_utc = metadata.starting_time.astimezone(timezone.utc)
-        end_time = starting_time_utc + metadata.duration
+        starting_time_utc = metatime_to_datetime(metadata.starting_time).astimezone(timezone.utc)
+        end_time = starting_time_utc + metadelta_to_timedelta(metadata.duration)
         if starting_time_utc < total_start:
             total_start = starting_time_utc
         if end_time > total_end:
@@ -40,6 +50,10 @@ def get_bag_bounds(metadatas: Sequence[BagMetadata]) -> Tuple[datetime, datetime
 def ros_to_datetime_utc(ros_time: Time):
     (secs, nanosecs) = ros_time.seconds_nanoseconds()
     return datetime.fromtimestamp(secs + nanosecs / CONVERSION_CONSTANT, tz=timezone.utc)
+
+
+def ros_to_timedelta(duration: Duration):
+    return timedelta(microseconds=duration.nanoseconds/1000.0)
 
 
 def add_daytime(t: date, day_time: time) -> datetime:
