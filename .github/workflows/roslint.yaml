@@ -1,0 +1,39 @@
+name: roslint
+on:
+  pull_request:
+    paths-ignore: 
+      - '*.md'
+      - '*LICENSE'
+  push:
+    branches: [master]
+    paths-ignore:
+      - '*.md'
+      - '*LICENSE'
+  workflow_dispatch:
+jobs:
+  lint:
+    name: ament_${{ matrix.linter }}_${{ matrix.package }}
+    runs-on: ubuntu-latest
+    container:
+      image: ros:rolling-ros-base
+    strategy:
+      fail-fast: false
+      matrix:
+          linter: [copyright, flake8, pep257, xmllint]
+          package: [ros2bag_tools, rosbag2_tools]
+    steps:
+      -
+        name: Checkout code
+        uses: actions/checkout@v4
+      -
+        name: Setup ros
+        uses: ros-tooling/setup-ros@v0.7
+      - 
+        name: Temporary disbale some flake
+        run: 'sudo DEBIAN_FRONTEND=noninteractive apt-get install -y --fix-broken && sudo apt-get remove python3-flake8-* -y'
+      -
+        name: Run linter
+        uses: ros-tooling/action-ros-lint@master
+        with:
+          linter: ${{ matrix.linter }}
+          package-name: ${{ matrix.package }}

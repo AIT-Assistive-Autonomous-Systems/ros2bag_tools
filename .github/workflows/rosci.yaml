@@ -1,0 +1,35 @@
+name: rosci
+on:
+  pull_request:
+    paths-ignore: 
+      - '*.md'
+      - '*LICENSE'
+  push:
+    branches: [master]
+    paths-ignore:
+      - '*.md'
+jobs:
+  build_and_test:
+    name: rosci_${{ matrix.ros-distro }}
+    runs-on: ubuntu-latest
+    container:
+      image: ros:${{ matrix.ros-distro }}-ros-base
+    strategy:
+      fail-fast: false
+      matrix:
+        ros-distro: [humble, iron, rolling]
+    steps:
+      -
+        name: Checkout code
+        uses: actions/checkout@v4
+      -
+        name: Setup ros
+        uses: ros-tooling/setup-ros@v0.7
+      - 
+        name: Temporary disbale some flake
+        run: 'sudo DEBIAN_FRONTEND=noninteractive apt-get install -y --fix-broken && sudo apt-get remove python3-flake8-* -y'
+      -
+        name: build and test using rosci
+        uses: ros-tooling/action-ros-ci@v0.3
+        with:
+          target-ros2-distro: ${{ matrix.ros-distro }}

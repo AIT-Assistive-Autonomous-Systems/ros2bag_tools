@@ -23,6 +23,12 @@ ros2bag_tools adds verb extensions to the ros2bag cli.
 You can check detailed usage information with `ros2 bag $VERB --help`.
 Bold verbs support chaining as described in [chaining](#chaining).
 
+## Build status
+
+Default branch: [![colcon build and test](https://github.com/AIT-Assistive-Autonomous-Systems/ros2bag_tools/actions/workflows/ros.yaml/badge.svg?branch=master)](https://github.com/AIT-Assistive-Autonomous-Systems/ros2bag_tools/actions/workflows/ros.yaml)
+
+Latest run: [![colcon build and test](https://github.com/AIT-Assistive-Autonomous-Systems/ros2bag_tools/actions/workflows/ros.yaml/badge.svg)](https://github.com/AIT-Assistive-Autonomous-Systems/ros2bag_tools/actions/workflows/ros.yaml)
+
 ## chaining
 
 Each command writes a new output bag on disk.
