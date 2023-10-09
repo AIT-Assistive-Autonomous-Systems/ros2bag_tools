@@ -13,22 +13,15 @@
 # limitations under the License.
 from pathlib import Path
 from rosbag2_tools.bag_view import BagView
-from rosbag2_py import SequentialReader, StorageOptions, ConverterOptions
 from sensor_msgs.msg import Range
 
 
 pkg_prefix = Path(__file__).parents[1]
 
 
-def test_bag_view():
-    reader = SequentialReader()
-    storage_options = StorageOptions(uri=str(pkg_prefix/'test'/'range.bag'))
-    converter_options = ConverterOptions(
-        input_serialization_format='cdr',
-        output_serialization_format='cdr')
-    reader.open(storage_options, converter_options)
+def test_bag_view(tmp_range_bag):
     items = []
-    for item in BagView(reader):
+    for item in BagView(tmp_range_bag):
         items.append(item)
     assert(len(items) == 2)
     msgs = [msg for (_, msg, _) in items]

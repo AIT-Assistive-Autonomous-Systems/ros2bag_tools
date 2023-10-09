@@ -24,6 +24,7 @@ from rosbag2_tools.bag_view import BagView
 from ros2bag_tools.verb import get_reader_options
 from ros2bag.api import print_error, add_standard_reader_args
 from ros2bag.verb import VerbExtension
+from ros2bag_tools.time import metadelta_to_timedelta
 
 
 IMAGE_MESSAGE_TYPE_NAME = 'sensor_msgs/msg/Image'
@@ -102,7 +103,7 @@ def estimate_fps(bag_path: str, storage_id: str, topic_name):
     metadata = info.read_metadata(bag_path, storage_id)
     for entry in metadata.topics_with_message_count:
         if entry.topic_metadata.name == topic_name:
-            return entry.message_count / metadata.duration.total_seconds()
+            return entry.message_count / metadelta_to_timedelta(metadata.duration).total_seconds()
 
 
 def ensure_image(metadata, topic_name):

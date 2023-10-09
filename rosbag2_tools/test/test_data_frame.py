@@ -14,21 +14,14 @@
 from pathlib import Path
 from rosbag2_tools.bag_view import BagView
 from rosbag2_tools.data_frame import read_data_frames
-from rosbag2_py import SequentialReader, StorageOptions, ConverterOptions
 import pandas as pd
 
 
 pkg_prefix = Path(__file__).parents[1]
 
 
-def test_data_frame_range():
-    reader = SequentialReader()
-    storage_options = StorageOptions(uri=str(pkg_prefix/'test'/'range.bag'))
-    converter_options = ConverterOptions(
-        input_serialization_format='cdr',
-        output_serialization_format='cdr')
-    reader.open(storage_options, converter_options)
-    dfs = read_data_frames(BagView(reader), {'/range': ['range']})
+def test_data_frame_range(tmp_range_bag):
+    dfs = read_data_frames(BagView(tmp_range_bag), {'/range': ['range']})
     assert('/range' in dfs)
     df = dfs['/range']
     stamp0 = pd.Timestamp(90, unit='ns', tz='UTC')
@@ -39,16 +32,9 @@ def test_data_frame_range():
     assert(df['range'][1] == 20.0)
 
 
-def test_data_frame_multi_topic():
-    reader = SequentialReader()
-    storage_options = StorageOptions(uri=str(pkg_prefix/'test'/'multi_topic.bag'))
-    converter_options = ConverterOptions(
-        input_serialization_format='cdr',
-        output_serialization_format='cdr')
-    reader.open(storage_options, converter_options)
-
+def test_data_frame_multi_topic(tmp_multi_topic_bag):
     fields = {'/range': ['range'], '/diagnostics': ['key', 'value']}
-    dfs = read_data_frames(BagView(reader), fields)
+    dfs = read_data_frames(BagView(tmp_multi_topic_bag), fields)
 
     assert('/range' in dfs)
     assert('/diagnostics' in dfs)

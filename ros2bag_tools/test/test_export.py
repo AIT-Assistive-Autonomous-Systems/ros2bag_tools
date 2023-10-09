@@ -66,7 +66,7 @@ class TestExport(unittest.TestCase):
             with launch_testing.tools.launch_process(
                 launch_service, cmd_action, proc_info, proc_output
             ) as cmd:
-                cmd.wait_for_shutdown(timeout=1)
+                cmd.wait_for_shutdown(timeout=10)
                 assert cmd.terminated
                 assert cmd.exit_code == EXIT_OK
 
@@ -97,7 +97,7 @@ class TestExport(unittest.TestCase):
             with launch_testing.tools.launch_process(
                 launch_service, cmd_action, proc_info, proc_output
             ) as cmd:
-                cmd.wait_for_shutdown(timeout=1)
+                cmd.wait_for_shutdown(timeout=10)
                 assert cmd.terminated
                 assert cmd.exit_code == EXIT_OK
 

@@ -26,6 +26,7 @@ from ros2bag.api import add_standard_reader_args
 from ros2bag.verb import VerbExtension
 from rclpy.serialization import deserialize_message
 from rosidl_runtime_py.utilities import get_message
+from ros2bag_tools.time import metadelta_to_timedelta
 
 
 def generic_equals(ref_val, val):
@@ -110,7 +111,7 @@ class SummaryVerb(VerbExtension):
         message_counts = {}
         for entry in metadata.topics_with_message_count:
             message_counts[entry.topic_metadata.name] = entry.message_count
-        bag_duration_s = metadata.duration.total_seconds()
+        bag_duration_s = metadelta_to_timedelta(metadata.duration).total_seconds()
 
         type_name_to_type_map = {}
         topic_to_type_map = {}

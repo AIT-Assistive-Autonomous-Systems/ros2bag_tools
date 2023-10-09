@@ -21,7 +21,8 @@ from ros2bag_tools.reader import TopicDeserializer
 from ros2bag_tools.filter import FilterExtension, FilterResult
 from ros2bag_tools.filter.restamp import set_header_stamp
 from ros2bag_tools.time import DurationOrDayTimeType, DurationType, get_bag_bounds, is_same_day,\
-    datetime_to_ros_time, add_daytime, ros_to_datetime_utc
+    datetime_to_ros_time, add_daytime, ros_to_datetime_utc, metatime_to_datetime,\
+    metadelta_to_timedelta
 
 
 def compute_timespan(start, duration, end, bags_start_time: datetime, bags_end_time: datetime):
@@ -142,15 +143,16 @@ class CutFilter(FilterExtension):
                 self._topic_qos_durability_dict[topic.topic_metadata.name] = durability
 
     def output_size_factor(self, metadata):
-        start = metadata.starting_time.astimezone(timezone.utc)
-        end = start + metadata.duration
+        start = metatime_to_datetime(metadata.starting_time).astimezone(timezone.utc)
+        duration = metadelta_to_timedelta(metadata.duration)
+        end = start + duration
         filter_start = ros_to_datetime_utc(self._start_time)
         filter_end = ros_to_datetime_utc(self._end_time)
         if start < filter_start:
             start = filter_start
         if filter_end < end:
             end = filter_end
-        return min(1, max(0, (end - start) / metadata.duration))
+        return min(1, max(0, (end - start) / duration))
 
     def filter_topic(self, topic_metadata):
         if (self._topic_qos_durability_dict[topic_metadata.name]

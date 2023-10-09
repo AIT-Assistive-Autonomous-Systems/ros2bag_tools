@@ -13,7 +13,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 """Create test bag files."""
-import sys
 from rclpy.serialization import serialize_message
 from rosbag2_py import SequentialWriter, StorageOptions, ConverterOptions, TopicMetadata
 from sensor_msgs.msg import Range
@@ -66,6 +65,3 @@ def create_multi_topic_bag(path):
     msg.key = 'cpu'
     msg.value = 'warn'
     writer.write('/diagnostics', serialize_message(msg), 200)
-
-
-create_multi_topic_bag(sys.argv[1])
