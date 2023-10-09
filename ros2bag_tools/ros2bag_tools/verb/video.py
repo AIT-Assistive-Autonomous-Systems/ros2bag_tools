@@ -145,7 +145,7 @@ class VideoVerb(VerbExtension):
         parser.add_argument('--fps', type=int,
                             help='video fps, default: estimated from message count')
         parser.add_argument('--codec', type=str, default='mp4v',
-                    help='video codec, default: mp4v (see opencv documentation)')
+                            help='video codec, default: mp4v (see opencv documentation)')
 
         display_group = parser.add_argument_group(
             'display options',
@@ -184,7 +184,7 @@ class VideoVerb(VerbExtension):
         if args.progress:
             progress.add_estimated_work(
                 metadata, self._cut.output_size_factor(metadata))
-            
+
         if len(args.codec) != 4:
             return print_error("Codec parameter invalid: {}".format(args.codec))
 
