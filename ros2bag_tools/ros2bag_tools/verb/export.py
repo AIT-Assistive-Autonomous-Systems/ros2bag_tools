@@ -72,6 +72,11 @@ class ExportVerb(VerbExtension):
 
     def main(self, *, args):  # noqa: D102
         exporters = []
+
+        if bool(args.exporter) == bool(args.config):
+            err = 'Either an exporter id or an exporter config [-c] must be provided.'
+            return print_error(err)
+
         if args.exporter:
             assert not args.config
             exporter = self._exporters[args.exporter]()
@@ -89,6 +94,10 @@ class ExportVerb(VerbExtension):
                     exporter, exporter_args = loader.load(exporter_name, exporter_args)
                     exporter.open(exporter_args)
                     exporters.append((topic, exporter))
+
+        if not exporters:
+            err = 'At least one exporter must be specified.'
+            return print_error(err)
 
         assert(len(exporters) > 0)
 
