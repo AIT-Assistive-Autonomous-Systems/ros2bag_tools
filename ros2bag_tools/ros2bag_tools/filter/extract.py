@@ -12,8 +12,11 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+from ros2bag_tools.filter import FilterExtension
+from ros2bag_tools.filter import FilterResult
+from ros2bag_tools.filter import TopicRequest
+
 from rosbag2_py import BagMetadata
-from ros2bag_tools.filter import FilterExtension, FilterResult, TopicRequest
 
 
 class ExtractFilter(FilterExtension):

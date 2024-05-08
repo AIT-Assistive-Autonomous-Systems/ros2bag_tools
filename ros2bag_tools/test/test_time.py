@@ -13,12 +13,22 @@
 # limitations under the License.
 
 from argparse import ArgumentTypeError
-from datetime import date, datetime, time, timedelta, timezone
-from rclpy.time import CONVERSION_CONSTANT
-from rosbag2_py import Info
-from ros2bag_tools.time import DurationOrDayTimeType, add_daytime, datetime_to_ros_time, \
-    get_bag_bounds
+from datetime import date
+from datetime import datetime
+from datetime import time
+from datetime import timedelta
+from datetime import timezone
+
 import pytest
+
+from rclpy.time import CONVERSION_CONSTANT
+
+from ros2bag_tools.time import add_daytime
+from ros2bag_tools.time import datetime_to_ros_time
+from ros2bag_tools.time import DurationOrDayTimeType
+from ros2bag_tools.time import get_bag_bounds
+
+from rosbag2_py import Info
 
 
 def test_duration_or_daytime_type():

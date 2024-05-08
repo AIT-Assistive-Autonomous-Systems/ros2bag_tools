@@ -12,19 +12,29 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import cv2
 from argparse import ArgumentError
-from cv_bridge import CvBridge, cvtColorForDisplay
-from rosbag2_py import Info, SequentialReader, StorageFilter
+
+import cv2
+
+from cv_bridge import CvBridge
+from cv_bridge import cvtColorForDisplay
+
+from ros2bag.api import add_standard_reader_args
+from ros2bag.api import print_error
+from ros2bag.verb import VerbExtension
+
 from ros2bag_tools.exporter.image import CompressedImageMsgWriter
 from ros2bag_tools.filter import FilterResult
 from ros2bag_tools.filter.cut import CutFilter
 from ros2bag_tools.progress import ProgressTracker
-from rosbag2_tools.bag_view import BagView
-from ros2bag_tools.verb import get_reader_options
-from ros2bag.api import print_error, add_standard_reader_args
-from ros2bag.verb import VerbExtension
 from ros2bag_tools.time import metadelta_to_timedelta
+from ros2bag_tools.verb import get_reader_options
+
+from rosbag2_py import Info
+from rosbag2_py import SequentialReader
+from rosbag2_py import StorageFilter
+
+from rosbag2_tools.bag_view import BagView
 
 
 IMAGE_MESSAGE_TYPE_NAME = 'sensor_msgs/msg/Image'
@@ -172,7 +182,7 @@ class VideoVerb(VerbExtension):
         try:
             is_compressed = ensure_image(metadata, args.topic)
         except Exception as e:
-            return print_error("invalid topic: {}".format(e))
+            return print_error(f'invalid topic: {e}')
 
         reader = SequentialReader()
         storage_options, converter_options = get_reader_options(args)
@@ -180,16 +190,16 @@ class VideoVerb(VerbExtension):
 
         self._cut.set_args([metadata], args)
 
-        filter = StorageFilter(topics=[args.topic])
+        storage_filter = StorageFilter(topics=[args.topic])
         progress = ProgressTracker()
         if args.progress:
             progress.add_estimated_work(
                 metadata, self._cut.output_size_factor(metadata))
 
         if len(args.codec) != 4:
-            return print_error("Codec parameter invalid: {}".format(args.codec))
+            return print_error(f'Codec parameter invalid: {args.codec}')
 
-        bag_view = BagView(reader, filter)
+        bag_view = BagView(reader, storage_filter)
         fps = args.fps
         if not fps:
             fps = estimate_fps(args.bag_path, args.storage, args.topic)

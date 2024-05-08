@@ -13,10 +13,14 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 from typing import Tuple
-from .create_test_bags import create_string_bag, create_diagnostics_bag, create_day_time_bag,\
-    create_images_bag, create_synced_bag
 
 import pytest
+
+from .create_test_bags import create_day_time_bag
+from .create_test_bags import create_diagnostics_bag
+from .create_test_bags import create_images_bag
+from .create_test_bags import create_string_bag
+from .create_test_bags import create_synced_bag
 
 
 @pytest.fixture
@@ -54,7 +58,7 @@ def tmp_synced_bag(tmp_path):
     return bag_path
 
 
-@pytest.fixture(scope="session")
+@pytest.fixture(scope='session')
 def synced_export_conf(tmp_path_factory: pytest.TempPathFactory) -> Tuple[str, str]:
     conf_path = tmp_path_factory.mktemp('conf')
     result_path = tmp_path_factory.mktemp('result')
@@ -62,11 +66,11 @@ def synced_export_conf(tmp_path_factory: pytest.TempPathFactory) -> Tuple[str, s
     filter_conf = conf_path / 'sync_filter.conf'
     export_conf = conf_path / 'sync_export.conf'
 
-    with filter_conf.open("w") as f:
+    with filter_conf.open('w') as f:
         f.writelines([
             'sync -t /sync0 /sync1'
         ])
-    with export_conf.open("w") as f:
+    with export_conf.open('w') as f:
         f.writelines([
             f'/sync0 stamp -o {str(result_path)}/synced_stamps.txt'
         ])

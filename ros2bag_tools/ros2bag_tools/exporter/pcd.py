@@ -12,8 +12,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import numpy as np
 from pathlib import Path
+
+import numpy as np
+
 from ros2bag_tools.exporter import Exporter
 
 
@@ -89,7 +91,7 @@ class PcdExporter(Exporter):
                                 %%t   ... timestamp
                                 %%i   ... sequence index""")
 
-    def open(self, args):
+    def open(self, args):  # noqa: A003
         self._dir = Path(args.dir)
         self._dir.mkdir(parents=True, exist_ok=True)
         self._name = args.name

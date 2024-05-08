@@ -12,7 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from rosbag2_py import StorageOptions, ConverterOptions
+from rosbag2_py import ConverterOptions
+from rosbag2_py import StorageOptions
 
 
 def default_rosbag_options(bag_path, storage_id=''):

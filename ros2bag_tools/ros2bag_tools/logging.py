@@ -12,13 +12,12 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from rclpy.logging import get_logger as rclpy_get_logger
-from rclpy.impl.rcutils_logger import RcutilsLogger
 from functools import lru_cache
 import logging
-
 from typing import Union
 
+from rclpy.impl.rcutils_logger import RcutilsLogger
+from rclpy.logging import get_logger as rclpy_get_logger
 
 root: logging.Logger = None
 

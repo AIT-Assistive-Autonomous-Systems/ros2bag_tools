@@ -11,21 +11,29 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+from warnings import warn
+
+from rclpy.serialization import deserialize_message
+
+from ros2bag_tools.filter import FilterExtension
+from ros2bag_tools.filter import FilterResult
+from ros2bag_tools.filter import TopicRequest
+
+from rosbag2_py import SequentialReader
+from rosbag2_py import StorageFilter
+from rosbag2_py import TopicMetadata
+
+from rosbag2_tools import default_rosbag_options
 
 from rosidl_runtime_py.utilities import get_message
-from rclpy.serialization import deserialize_message
-from rosbag2_tools import default_rosbag_options
-from ros2bag_tools.filter import FilterExtension, FilterResult, TopicRequest
-from rosbag2_py import TopicMetadata, StorageFilter, SequentialReader
+
 
 ReadOrder = None
 ReadOrderSortBy = None
 
 try:
-    from rosbag2_py import (
-        ReadOrder,
-        ReadOrderSortBy
-    )
+    from rosbag2_py import ReadOrder
+    from rosbag2_py import ReadOrderSortBy
 except(ImportError):
     pass
 
@@ -61,10 +69,21 @@ def topic_requests_to_storage_filter(topic_requests):
 
 class FilteredReader:
 
-    def __init__(self, bag_paths, filter: FilterExtension, in_storage='', topics=None):
+    def __init__(self,
+                 bag_paths,
+                 extension: FilterExtension = None,
+                 in_storage='',
+                 topics=None,
+                 **kwargs):
         assert(len(bag_paths) > 0)
+        extension = extension if extension is not None else kwargs.get('filter', None)
 
-        requested_topics = filter.requested_topics() + \
+        if 'filter' in kwargs:
+            warn('arg filter deprecated use extension instead', DeprecationWarning)
+
+        assert(extension is not None)
+
+        requested_topics = extension.requested_topics() + \
             [(TopicRequest.LIMIT, t) for t in (topics or [])]
         storage_filter = topic_requests_to_storage_filter(requested_topics)
 
@@ -79,7 +98,7 @@ class FilteredReader:
             if storage_filter:
                 reader.set_filter(storage_filter)
             self._readers.append(reader)
-        self._filter = filter
+        self._filter = extension
         self._storage_filter_topics = storage_filter.topics if storage_filter else []
         self._queue = []
         self._flushed = False

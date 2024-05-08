@@ -12,13 +12,17 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from rclpy.time import Time, Duration
+import re
+
 from rclpy.serialization import serialize_message
-from ros2bag_tools.reader import TopicDeserializer
+from rclpy.time import Duration
+from rclpy.time import Time
+
 from ros2bag_tools.filter import FilterExtension
 from ros2bag_tools.logging import warn_once
+from ros2bag_tools.reader import TopicDeserializer
+
 from tf2_msgs.msg import TFMessage
-import re
 
 
 def nanoseconds_duration(data: str):
@@ -109,7 +113,7 @@ class RestampFilter(FilterExtension):
             new_t = t_from_header(msg)
             if new_t is None:
                 warn_once(self._logger,
-                          f"{topic} has no header, using bag timestamp instead")
+                          f'{topic} has no header, using bag timestamp instead')
             else:
                 t = new_t
 

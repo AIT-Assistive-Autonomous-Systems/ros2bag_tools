@@ -2,10 +2,8 @@
 
 | Workflow | Branch | Status |
 | -------  | ------ | ------ |
-| Build and test | master | [![rosci](https://github.com/AIT-Assistive-Autonomous-Systems/ros2bag_tools/actions/workflows/rosci.yaml/badge.svg?branch=master)](https://github.com/AIT-Assistive-Autonomous-Systems/ros2bag_tools/actions/workflows/rosci.yaml) |
-| Lint | master | [![roslint](https://github.com/AIT-Assistive-Autonomous-Systems/ros2bag_tools/actions/workflows/roslint.yaml/badge.svg?branch=master)](https://github.com/AIT-Assistive-Autonomous-Systems/ros2bag_tools/actions/workflows/roslint.yaml) |
-| Build and test |  | [![rosci](https://github.com/AIT-Assistive-Autonomous-Systems/ros2bag_tools/actions/workflows/rosci.yaml/badge.svg)](https://github.com/AIT-Assistive-Autonomous-Systems/ros2bag_tools/actions/workflows/rosci.yaml) |
-| Lint | | [![roslint](https://github.com/AIT-Assistive-Autonomous-Systems/ros2bag_tools/actions/workflows/roslint.yaml/badge.svg)](https://github.com/AIT-Assistive-Autonomous-Systems/ros2bag_tools/actions/workflows/roslint.yaml) |
+| Build and test | | [![rosci](https://github.com/AIT-Assistive-Autonomous-Systems/ros2bag_tools/actions/workflows/rosci.yaml/badge.svg?branch=master)](https://github.com/AIT-Assistive-Autonomous-Systems/ros2bag_tools/actions/workflows/rosci.yaml) |
+| Lint | | [![roslint](https://github.com/AIT-Assistive-Autonomous-Systems/ros2bag_tools/actions/workflows/roslint.yaml/badge.svg?branch=master)](https://github.com/AIT-Assistive-Autonomous-Systems/ros2bag_tools/actions/workflows/roslint.yaml) |
 
 # ROS2 bag tools
 

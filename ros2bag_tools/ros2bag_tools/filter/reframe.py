@@ -12,8 +12,11 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+from rclpy.serialization import deserialize_message
+from rclpy.serialization import serialize_message
+
 from ros2bag_tools.filter import FilterExtension
-from rclpy.serialization import deserialize_message, serialize_message
+
 from rosidl_runtime_py.utilities import get_message
 
 

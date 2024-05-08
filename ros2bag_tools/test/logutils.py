@@ -13,10 +13,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 from contextlib import contextmanager
-from pytest import LogCaptureFixture
+import logging
 from typing import Generator
 
-import logging
+from pytest import LogCaptureFixture
 
 import ros2bag_tools.logging as r2bt_logging
 

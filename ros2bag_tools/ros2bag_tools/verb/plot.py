@@ -13,11 +13,15 @@
 # limitations under the License.
 
 import matplotlib.pyplot as plt
+from ros2bag.api import add_standard_reader_args
+from ros2bag.verb import get_reader_options
+from ros2bag.verb import VerbExtension
+
+from rosbag2_py import SequentialReader
+from rosbag2_py import StorageFilter
+
 from rosbag2_tools.bag_view import BagView
 from rosbag2_tools.data_frame import read_data_frames
-from ros2bag.api import add_standard_reader_args
-from ros2bag.verb import VerbExtension, get_reader_options
-from rosbag2_py import SequentialReader, StorageFilter
 
 
 class PlotVerb(VerbExtension):
@@ -35,14 +39,14 @@ class PlotVerb(VerbExtension):
 
         topics_with_field = [tuple(t.split('.', 1)) for t in args.topic]
 
-        filter = StorageFilter(topics=[twf[0] for twf in topics_with_field])
+        storage_filter = StorageFilter(topics=[twf[0] for twf in topics_with_field])
         fields_by_topic = {}
         for topic, field in topics_with_field:
             if topic not in fields_by_topic:
                 fields_by_topic[topic] = []
             fields_by_topic[topic].append(field)
 
-        bag_view = BagView(reader, filter)
+        bag_view = BagView(reader, storage_filter)
         dfs = read_data_frames(bag_view, fields_by_topic)
         _, ax = plt.subplots()
         for topic, fields in fields_by_topic.items():

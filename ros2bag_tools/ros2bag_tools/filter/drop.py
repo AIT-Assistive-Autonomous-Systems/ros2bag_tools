@@ -13,6 +13,7 @@
 # limitations under the License.
 
 from typing import Dict, Sequence
+
 from ros2bag_tools.filter import FilterExtension
 from ros2bag_tools.filter import FilterResult
 
@@ -29,19 +30,19 @@ class DropFilter(FilterExtension):
 
     def add_arguments(self, parser):
         parser.add_argument(
-            "-t",
-            "--topics",
-            nargs="+",
+            '-t',
+            '--topics',
+            nargs='+',
             help=(
-                "Topics to drop messages from. Use 'all' to drop messages from all "
-                "topics in the rosbag"
+                'Topics to drop messages from. Use "all" to drop messages from all '
+                'topics in the rosbag'
             ),
         )
         parser.add_argument(
-            "-x", type=int, required=True, help="count of messages out of ytodrop"
+            '-x', type=int, required=True, help='count of messages out of ytodrop'
         )
         parser.add_argument(
-            "-y", type=int, required=True, help="module of the message counter"
+            '-y', type=int, required=True, help='module of the message counter'
         )
 
     def set_args(self, _metadata, args):
@@ -52,7 +53,7 @@ class DropFilter(FilterExtension):
 
     def _is_drop_topic(self, topic: str) -> bool:
         """Return a boolean indicating whether we're interested in filtering this topic."""
-        if len(self._topics) == 1 and self._topics[0] == "all":
+        if len(self._topics) == 1 and self._topics[0] == 'all':
             return True
 
         return topic in self._topics

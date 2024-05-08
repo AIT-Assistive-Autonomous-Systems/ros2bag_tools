@@ -12,11 +12,15 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import yaml
+from rclpy.serialization import deserialize_message
+from rclpy.serialization import serialize_message
+
+from ros2bag_tools.filter import FilterExtension
+
 from rosidl_runtime_py import set_message_fields
 from rosidl_runtime_py.utilities import get_message
-from rclpy.serialization import serialize_message, deserialize_message
-from ros2bag_tools.filter import FilterExtension
+
+import yaml
 
 
 class ReplaceFilter(FilterExtension):

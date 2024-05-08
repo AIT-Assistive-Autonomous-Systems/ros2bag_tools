@@ -11,15 +11,23 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-from typing import Tuple, Sequence
-from rclpy.time import CONVERSION_CONSTANT, Time
-from rclpy.serialization import serialize_message
-from rosbag2_tools import default_rosbag_options
-from rosbag2_py import SequentialWriter, TopicMetadata
-from example_interfaces.msg import String
+from typing import Sequence, Tuple
+
 from diagnostic_msgs.msg import DiagnosticArray
-from sensor_msgs.msg import Image
+from example_interfaces.msg import String
+
+from rclpy.serialization import serialize_message
+from rclpy.time import CONVERSION_CONSTANT
+from rclpy.time import Time
+
 from ros2bag_tools.filter import BagMessageTuple
+
+from rosbag2_py import SequentialWriter
+from rosbag2_py import TopicMetadata
+
+from rosbag2_tools import default_rosbag_options
+
+from sensor_msgs.msg import Image
 
 
 def create_string_bag(path):

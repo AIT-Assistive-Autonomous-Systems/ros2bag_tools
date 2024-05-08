@@ -12,21 +12,26 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import operator
 import logging
-import rosbag2_py
-from rosbag2_py import Info
+import operator
 from typing import NamedTuple
-from ros2bag_tools.reader import TopicDeserializer
-from ros2bag_tools.exporter import ExporterError
-from ros2bag.api import print_error, check_path_exists
+
+from ros2bag.api import check_path_exists
+from ros2bag.api import print_error
 from ros2bag.verb import VerbExtension
+
+from ros2bag_tools.exporter import ExporterError
+from ros2bag_tools.extension import ExtensionLoader
+from ros2bag_tools.extension import readargs
 from ros2bag_tools.filter import FilterExtension
 from ros2bag_tools.filter.composite import CompositeFilter
-from ros2bag_tools.verb import FilteredReader
-from ros2cli.entry_points import load_entry_points
-from ros2bag_tools.extension import ExtensionLoader, readargs
 from ros2bag_tools.logging import getLogger
+from ros2bag_tools.reader import TopicDeserializer
+from ros2bag_tools.verb import FilteredReader
+
+from ros2cli.entry_points import load_entry_points
+import rosbag2_py
+from rosbag2_py import Info
 
 
 logger = logging.getLogger(__name__)

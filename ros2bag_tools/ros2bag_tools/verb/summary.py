@@ -13,20 +13,21 @@
 # limitations under the License.
 
 from array import array
+
 import numpy as np
-from rosbag2_py import (
-    Info,
-    SequentialReader,
-    StorageFilter,
-)
-from ros2bag_tools.progress import ProgressTracker
-from ros2bag_tools.verb import get_reader_options
+from rclpy.serialization import deserialize_message
 from rclpy.time import Time
 from ros2bag.api import add_standard_reader_args
 from ros2bag.verb import VerbExtension
-from rclpy.serialization import deserialize_message
-from rosidl_runtime_py.utilities import get_message
+
+from ros2bag_tools.progress import ProgressTracker
 from ros2bag_tools.time import metadelta_to_timedelta
+from ros2bag_tools.verb import get_reader_options
+
+from rosbag2_py import Info
+from rosbag2_py import SequentialReader
+from rosbag2_py import StorageFilter
+from rosidl_runtime_py.utilities import get_message
 
 
 def generic_equals(ref_val, val):

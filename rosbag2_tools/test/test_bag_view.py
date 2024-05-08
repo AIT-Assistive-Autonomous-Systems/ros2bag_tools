@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 from pathlib import Path
+
 from rosbag2_tools.bag_view import BagView
 from sensor_msgs.msg import Range
 

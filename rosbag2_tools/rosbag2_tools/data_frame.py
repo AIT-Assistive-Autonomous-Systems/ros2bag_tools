@@ -16,8 +16,8 @@ from typing import Dict, List
 
 import pandas as pd
 from rclpy.time import Time
-from rosidl_runtime_py.utilities import get_message
 from rosbag2_tools.bag_view import BagView
+from rosidl_runtime_py.utilities import get_message
 
 
 # https://stackoverflow.com/questions/31174295/getattr-and-setattr-on-nested-subobjects-chained-properties

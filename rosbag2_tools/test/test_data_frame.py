@@ -12,10 +12,11 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 from pathlib import Path
-from rosbag2_tools.bag_view import BagView
-from rosbag2_tools.data_frame import read_data_frames
+
 import pandas as pd
 
+from rosbag2_tools.bag_view import BagView
+from rosbag2_tools.data_frame import read_data_frames
 
 pkg_prefix = Path(__file__).parents[1]
 

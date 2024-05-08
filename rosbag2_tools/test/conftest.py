@@ -12,8 +12,10 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-from .create_test_bags import create_range_bag, create_multi_topic_bag
 import pytest
+
+from .create_test_bags import create_multi_topic_bag
+from .create_test_bags import create_range_bag
 
 
 @pytest.fixture

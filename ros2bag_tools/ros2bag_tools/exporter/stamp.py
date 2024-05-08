@@ -13,6 +13,7 @@
 # limitations under the License.
 
 from rclpy.time import Time
+
 from ros2bag_tools.exporter import Exporter
 
 
@@ -31,7 +32,7 @@ class StampExporter(Exporter):
         parser.add_argument('--header', action='store_true',
                             help='Use header stamp rather than bag time')
 
-    def open(self, args):
+    def open(self, args):  # noqa: A003
         self._args = args
         self._f = open(self._args.out, 'w')
         self._i = 0
