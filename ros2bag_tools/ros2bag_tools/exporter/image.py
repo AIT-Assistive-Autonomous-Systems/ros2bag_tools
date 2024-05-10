@@ -83,25 +83,26 @@ class ImageMsgWriterBase(metaclass=ABCMeta):
         img_msg,
         out_enc: str,
         demosaicing: Optional[str],
-        ext: str, in_enc: Optional[str] = None
+        ext: str,
+        in_enc: Optional[str] = None,
     ) -> AnyStr:
         """
         Write encoded image to buffer.
 
         Args:
         ----
-            img_msg:        Input message to be extracted/recoded.
-            out_enc:        Desired output encoding or None/Empty.
-            in_enc:         Override image encoding derived from message (or None/Empty).
-                            If the input encoding encoding can be derived without decoding
-                            the image and the output encoding is the same no decoding occurs.
-                            If they differ or color conversion may be performed.
-                            Overriding only works if the derived format and in_enc are of same
-                            input size.
-            demosaicing:    Demosaicing type if desired or None.
-            ext:            Extension or suffix of the representing the output format/file.
-                            For compressed formats if the stored format is the same as the
-                            requested format no decoding or recoding will be performed.
+        img_msg: Input message to be extracted/recoded.
+        out_enc: Desired output encoding or None/Empty.
+        demosaicing: Demosaicing type if desired or None.
+        ext: Extension or suffix of the representing the output format/file.
+             For compressed formats if the stored format is the same as the
+             requested format no decoding or recoding will be performed.
+        in_enc: Override image encoding derived from message (or None/Empty).
+                If the input encoding encoding can be derived without decoding
+                the image and the output encoding is the same no decoding occurs.
+                If they differ or color conversion may be performed.
+                Overriding only works if the derived format and in_enc are of same
+                input size.
 
         Return:
         ------
