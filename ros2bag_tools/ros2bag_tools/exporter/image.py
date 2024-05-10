@@ -12,15 +12,19 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from cv_bridge import CvBridge, CvBridgeError
-from cv_bridge.boost.cv_bridge_boost import cvtColor2
-from sensor_msgs.msg import Image, CompressedImage
+from abc import ABCMeta
+from abc import abstractmethod
 from pathlib import Path
-from abc import ABCMeta, abstractmethod
-from typing import Any, AnyStr, Optional, Union, Tuple
+from typing import Any, AnyStr, Optional, Tuple, Union
+
 import cv2 as cv
+from cv_bridge import CvBridge
+from cv_bridge import CvBridgeError
+from cv_bridge.boost.cv_bridge_boost import cvtColor2
 import numpy as np
 from ros2bag_tools.exporter import Exporter
+from sensor_msgs.msg import CompressedImage
+from sensor_msgs.msg import Image
 
 
 def check_override_encoding(
@@ -41,7 +45,7 @@ def check_override_encoding(
     out_size = np.dtype(out_type[0]).itemsize * out_type[1]
     if in_size != out_size:
         raise ValueError(
-            f"Input type and output type size per pixel do not match ({in_enc}, {out_enc})")
+            f'Input type and output type size per pixel do not match ({in_enc}, {out_enc})')
     return out_enc
 
 
@@ -62,6 +66,12 @@ def bayer_conversion_code(bayer_encoding: str, desired_encoding: str, demosaicin
 
 
 class ImageMsgWriterBase(metaclass=ABCMeta):
+    """
+    Base class image message types to buffers.
+
+    Encodes type specific messages to specific buffer outputs representing the extension.
+    """
+
     @staticmethod
     @abstractmethod
     def get_supported_msg_type() -> Any:
@@ -297,7 +307,7 @@ class ImageExporter(Exporter):
         parser.add_argument('--input-encoding', default='passthrough',
                             help='Override input encoding, (e.g. if input is gray but bayer)')
 
-    def open(self, args):
+    def open(self, args):  # noqa: A003
         self._idx = 0
         self._dir = Path(args.dir)
 

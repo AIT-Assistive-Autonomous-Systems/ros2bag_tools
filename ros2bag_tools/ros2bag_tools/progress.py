@@ -50,8 +50,8 @@ class ProgressTracker:
         if self._i % every != 0:
             return
         values = (update, self.n_processed, self.n_expected)
-        print("{0[0]:.2%} {0[1]}/{0[2]} ...".format(values), end='\r')
+        print('{0[0]:.2%} {0[1]}/{0[2]} ...'.format(values), end='\r')
 
     def print_finish(self):
         # print done and clear to end of line
-        print("100% Done\033[K")
+        print('100% Done\033[K')

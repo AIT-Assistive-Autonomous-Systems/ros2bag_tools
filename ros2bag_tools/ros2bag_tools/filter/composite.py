@@ -12,12 +12,17 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import logging
-from rosbag2_py import BagMetadata
-from ros2bag_tools.filter import FilterExtension, FilterResult
-from ros2bag_tools.extension import ExtensionLoader, readargs
-from operator import itemgetter
 from itertools import chain
+import logging
+from operator import itemgetter
+
+from ros2bag_tools.extension import ExtensionLoader
+from ros2bag_tools.extension import readargs
+from ros2bag_tools.filter import FilterExtension
+from ros2bag_tools.filter import FilterResult
+
+from rosbag2_py import BagMetadata
+
 
 logger = logging.getLogger(__name__)
 
@@ -37,19 +42,19 @@ class CompositeFilter(FilterExtension):
     def set_args(self, metadatas, args):
         with open(args.config, 'r') as f:
             for i, argv in enumerate(readargs(f)):
-                assert(len(argv) >= 1)
+                assert (len(argv) >= 1)
                 filter_name = argv[0]
                 arg_arr = argv[1:]
-                filter, filter_args = self._loader.load(filter_name, arg_arr)
-                filter.set_logger(self._logger.getChild(f'{filter_name}({i})'))
-                filter.set_args(metadatas, filter_args)
-                self._filters.append(filter)
-        assert(len(self._filters) > 0)
+                filter_extension, filter_args = self._loader.load(filter_name, arg_arr)
+                filter_extension.set_logger(self._logger.getChild(f'{filter_name}({i})'))
+                filter_extension.set_args(metadatas, filter_args)
+                self._filters.append(filter_extension)
+        assert (len(self._filters) > 0)
 
     def output_size_factor(self, metadata: BagMetadata):
         total = 1.0
-        for filter in self._filters:
-            total *= filter.output_size_factor(metadata)
+        for f in self._filters:
+            total *= f.output_size_factor(metadata)
         return total
 
     def requested_topics(self):

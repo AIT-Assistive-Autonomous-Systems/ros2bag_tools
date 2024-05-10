@@ -27,9 +27,6 @@ jobs:
         name: Setup ros
         uses: ros-tooling/setup-ros@v0.7
       - 
-        name: Temporary disbale some flake
-        run: 'sudo DEBIAN_FRONTEND=noninteractive apt-get install -y --fix-broken && sudo apt-get remove python3-flake8-* -y'
-      -
         name: build and test using rosci
         uses: ros-tooling/action-ros-ci@v0.3
         with:

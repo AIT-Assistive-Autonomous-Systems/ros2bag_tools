@@ -11,13 +11,18 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+from rclpy.serialization import deserialize_message
+from rclpy.serialization import serialize_message
 
-import yaml
+from ros2bag_tools.filter import FilterExtension
+from ros2bag_tools.filter import TopicRequest
+
 from rosbag2_py import TopicMetadata
+
 from rosidl_runtime_py import set_message_fields
 from rosidl_runtime_py.utilities import get_message
-from rclpy.serialization import serialize_message, deserialize_message
-from ros2bag_tools.filter import FilterExtension, TopicRequest
+
+import yaml
 
 
 class AddFilter(FilterExtension):

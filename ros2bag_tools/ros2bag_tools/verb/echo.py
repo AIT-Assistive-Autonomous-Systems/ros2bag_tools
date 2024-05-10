@@ -12,12 +12,15 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from rosidl_runtime_py import message_to_yaml
 from ros2bag.api import add_standard_reader_args
 from ros2bag.verb import VerbExtension
-from rosbag2_py import SequentialReader, StorageFilter
 from ros2bag_tools.verb import get_reader_options
+
+from rosbag2_py import SequentialReader
+from rosbag2_py import StorageFilter
 from rosbag2_tools.bag_view import BagView
+
+from rosidl_runtime_py import message_to_yaml
 
 
 class EchoVerb(VerbExtension):

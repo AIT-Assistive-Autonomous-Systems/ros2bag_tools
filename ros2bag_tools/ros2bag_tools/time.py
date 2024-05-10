@@ -13,11 +13,18 @@
 # limitations under the License.
 
 import argparse
+from datetime import date
+from datetime import datetime
+from datetime import time
+from datetime import timedelta
+from datetime import timezone
 import re
-from rosbag2_py import BagMetadata
 from typing import Sequence, Tuple, Union
-from datetime import date, timedelta, datetime, timezone, time
-from rclpy.time import Time, Duration, CONVERSION_CONSTANT
+
+from rclpy.time import CONVERSION_CONSTANT
+from rclpy.time import Duration
+from rclpy.time import Time
+from rosbag2_py import BagMetadata
 
 
 def datetime_to_ros_time(t: datetime) -> Time:
@@ -72,24 +79,24 @@ def DurationType(values):
     try:
         seconds = float(values)
         if seconds < 0:
-            raise argparse.ArgumentTypeError("duration must be positive")
+            raise argparse.ArgumentTypeError('duration must be positive')
         return timedelta(seconds=seconds)
     except ValueError:
-        raise argparse.ArgumentTypeError("duration must be float (in seconds)")
+        raise argparse.ArgumentTypeError('duration must be float (in seconds)')
 
 
 def DayTimeType(values):
     try:
-        match = re.findall(r"(\d+):(\d+):(\d+):(\d+)", values)
+        match = re.findall(r'(\d+):(\d+):(\d+):(\d+)', values)
         if len(match) == 0:
-            match = re.findall(r"(\d+):(\d+):(\d+)", values)
+            match = re.findall(r'(\d+):(\d+):(\d+)', values)
         if len(match) == 0:
-            match = re.findall(r"(\d+):(\d+)", values)
+            match = re.findall(r'(\d+):(\d+)', values)
         if len(match) == 0:
-            raise argparse.ArgumentTypeError("pass daytime as hh:mm[:ss[:ms]]")
+            raise argparse.ArgumentTypeError('pass daytime as hh:mm[:ss[:ms]]')
 
         if len(match[0]) < 2 or len(match[0]) > 4:
-            raise argparse.ArgumentTypeError("pass daytime as hh:mm[:ss[:ms]]")
+            raise argparse.ArgumentTypeError('pass daytime as hh:mm[:ss[:ms]]')
 
         ms = 0
         s = 0
@@ -101,17 +108,17 @@ def DayTimeType(values):
             ms = int(match[0][3])
 
         if h < 0 or h > 23:
-            raise argparse.ArgumentTypeError("hour between 0 and 23")
+            raise argparse.ArgumentTypeError('hour between 0 and 23')
         if m < 0 or m > 59:
-            raise argparse.ArgumentTypeError("minute between 0 and 59")
+            raise argparse.ArgumentTypeError('minute between 0 and 59')
         if s < 0 or s > 59:
-            raise argparse.ArgumentTypeError("second between 0 and 59")
+            raise argparse.ArgumentTypeError('second between 0 and 59')
         if ms < 0 or ms > 999:
-            raise argparse.ArgumentTypeError("millisecond between 0 and 999")
+            raise argparse.ArgumentTypeError('millisecond between 0 and 999')
 
         return time(h, m, s, ms * 1000, tzinfo=timezone.utc)
     except ValueError:
-        raise argparse.ArgumentTypeError("duration must be float (in seconds)")
+        raise argparse.ArgumentTypeError('duration must be float (in seconds)')
 
 
 def DurationOrDayTimeType(values):

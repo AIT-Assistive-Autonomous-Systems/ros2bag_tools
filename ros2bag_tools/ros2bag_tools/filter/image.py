@@ -16,8 +16,11 @@ import argparse
 
 import cv2 as cv
 from cv_bridge import CvBridge
-from sensor_msgs.msg import Image, CameraInfo
+
 from ros2bag_tools.filter import TypeAwareTopicFilter
+
+from sensor_msgs.msg import CameraInfo
+from sensor_msgs.msg import Image
 
 
 def ImageResizeArg(value):

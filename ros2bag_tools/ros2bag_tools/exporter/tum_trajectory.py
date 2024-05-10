@@ -12,12 +12,14 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from rclpy.time import Time
-from geometry_msgs.msg import Vector3, Quaternion
-from nav_msgs.msg import Odometry
-from sensor_msgs.msg import NavSatFix
 from geodesy.utm import fromLatLong
-from ros2bag_tools.exporter import Exporter, ExporterError
+from geometry_msgs.msg import Quaternion
+from geometry_msgs.msg import Vector3
+from nav_msgs.msg import Odometry
+from rclpy.time import Time
+from ros2bag_tools.exporter import Exporter
+from ros2bag_tools.exporter import ExporterError
+from sensor_msgs.msg import NavSatFix
 
 
 class TUMTrajectoryExporter(Exporter):
@@ -33,7 +35,7 @@ class TUMTrajectoryExporter(Exporter):
         parser.add_argument('--out', '-o', required=True,
                             type=str, help='Path to output file')
 
-    def open(self, args):
+    def open(self, args):  # noqa: A003
         self._args = args
         self._f = open(self._args.out, 'w')
 

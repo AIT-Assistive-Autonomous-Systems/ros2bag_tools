@@ -14,21 +14,22 @@
 
 import os
 from pathlib import Path
-from tempfile import TemporaryDirectory, NamedTemporaryFile
+from tempfile import NamedTemporaryFile
+from tempfile import TemporaryDirectory
+import unittest
 
 from launch import LaunchDescription
 from launch.actions import ExecuteProcess
-
 import launch_testing
 import launch_testing.actions
 import launch_testing.asserts
+from launch_testing.asserts import EXIT_OK
 import launch_testing.markers
 import launch_testing.tools
-from launch_testing.asserts import EXIT_OK
-
 import pytest  # noqa: F401
-import unittest
-from .create_test_bags import create_diagnostics_bag, create_images_bag
+
+from .create_test_bags import create_diagnostics_bag
+from .create_test_bags import create_images_bag
 
 
 @pytest.mark.rostest

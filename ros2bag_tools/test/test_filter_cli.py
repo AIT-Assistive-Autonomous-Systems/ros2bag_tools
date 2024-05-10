@@ -11,22 +11,23 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+from pathlib import Path
+from tempfile import TemporaryDirectory
+import unittest
+
 from launch import LaunchDescription
 from launch.actions import ExecuteProcess
-from tempfile import TemporaryDirectory
-
-from pathlib import Path
 import launch_testing
 import launch_testing.actions
 import launch_testing.asserts
+from launch_testing.asserts import EXIT_OK
 import launch_testing.markers
 import launch_testing.tools
-from launch_testing.asserts import EXIT_OK
-
 import pytest
-import unittest
-from .create_test_bags import create_string_bag, create_diagnostics_bag, create_day_time_bag
 
+from .create_test_bags import create_day_time_bag
+from .create_test_bags import create_diagnostics_bag
+from .create_test_bags import create_string_bag
 
 SHUTDOWN_TIMEOUT = 2
 
@@ -37,10 +38,10 @@ def generate_test_description():
     return LaunchDescription([launch_testing.actions.ReadyToTest()])
 
 
-def read_all_messages_of_topic(bag_path, topic, type):
+def read_all_messages_of_topic(bag_path, topic, msg_type):
     """Read all messages of given topic and type from a rosbag into a list."""
-    from rosbag2_py import SequentialReader
     from rclpy.serialization import deserialize_message
+    from rosbag2_py import SequentialReader
     from rosbag2_tools import default_rosbag_options
 
     storage_options, converter_options = default_rosbag_options(bag_path)
@@ -52,7 +53,7 @@ def read_all_messages_of_topic(bag_path, topic, type):
     while reader.has_next():
         (tpc, data, _) = reader.read_next()
         if tpc == topic:
-            result.append(deserialize_message(data, type))
+            result.append(deserialize_message(data, msg_type))
     return result
 
 

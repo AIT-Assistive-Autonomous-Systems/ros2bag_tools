@@ -12,21 +12,26 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import operator
 import logging
-import rosbag2_py
-from rosbag2_py import Info
+import operator
 from typing import NamedTuple
-from ros2bag_tools.reader import TopicDeserializer
-from ros2bag_tools.exporter import ExporterError
-from ros2bag.api import print_error, check_path_exists
+
+from ros2bag.api import check_path_exists
+from ros2bag.api import print_error
 from ros2bag.verb import VerbExtension
+
+from ros2bag_tools.exporter import ExporterError
+from ros2bag_tools.extension import ExtensionLoader
+from ros2bag_tools.extension import readargs
 from ros2bag_tools.filter import FilterExtension
 from ros2bag_tools.filter.composite import CompositeFilter
-from ros2bag_tools.verb import FilteredReader
-from ros2cli.entry_points import load_entry_points
-from ros2bag_tools.extension import ExtensionLoader, readargs
 from ros2bag_tools.logging import getLogger
+from ros2bag_tools.reader import TopicDeserializer
+from ros2bag_tools.verb import FilteredReader
+
+from ros2cli.entry_points import load_entry_points
+import rosbag2_py
+from rosbag2_py import Info
 
 
 logger = logging.getLogger(__name__)
@@ -72,6 +77,11 @@ class ExportVerb(VerbExtension):
 
     def main(self, *, args):  # noqa: D102
         exporters = []
+
+        if bool(args.exporter) == bool(args.config):
+            err = 'Either an exporter id or an exporter config [-c] must be provided.'
+            return print_error(err)
+
         if args.exporter:
             assert not args.config
             exporter = self._exporters[args.exporter]()
@@ -82,7 +92,7 @@ class ExportVerb(VerbExtension):
             loader = ExtensionLoader('ros2bag_tools.exporter', logger)
             with open(args.config, 'r') as f:
                 for argv in readargs(f):
-                    assert(len(argv) >= 2)
+                    assert (len(argv) >= 2)
                     topic = argv[0]
                     exporter_name = argv[1]
                     exporter_args = argv[2:]
@@ -90,7 +100,11 @@ class ExportVerb(VerbExtension):
                     exporter.open(exporter_args)
                     exporters.append((topic, exporter))
 
-        assert(len(exporters) > 0)
+        if not exporters:
+            err = 'At least one exporter must be specified.'
+            return print_error(err)
+
+        assert (len(exporters) > 0)
 
         info = Info()
         metadatas = [info.read_metadata(args.bag_path, args.storage)]

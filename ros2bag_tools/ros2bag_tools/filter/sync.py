@@ -12,17 +12,24 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 import argparse
-from message_filters import ApproximateTimeSynchronizer, SimpleFilter
-from rclpy.serialization import deserialize_message, serialize_message
-from rosidl_runtime_py.utilities import get_message
-from rosbag2_py import TopicMetadata, BagMetadata
-from typing import Sequence
 from collections import OrderedDict
+from typing import Sequence
 
-from . import FilterExtension, BagMessageTuple, TopicRequest
+from message_filters import ApproximateTimeSynchronizer
+from message_filters import SimpleFilter
+from rclpy.serialization import deserialize_message
+from rclpy.serialization import serialize_message
+from rosbag2_py import BagMetadata
+from rosbag2_py import TopicMetadata
+from rosidl_runtime_py.utilities import get_message
+
+from . import BagMessageTuple
+from . import FilterExtension
+from . import TopicRequest
 
 
 class BagWrappedMessage:
+
     def __init__(self, t, topic, msg):
         self._topic = topic
         self._t = t
@@ -64,7 +71,7 @@ class SyncSimpleFilter(SimpleFilter):
 
 def at_least_two(i):
     if int(i) < 2:
-        raise RuntimeError("Must be at least 2")
+        raise RuntimeError('Must be at least 2')
     return int(i)
 
 
@@ -72,7 +79,7 @@ def positive(numeric):
     def check_value(arg):
         arg = numeric(arg)
         if arg < 0:
-            raise RuntimeError("Must be >= 0")
+            raise RuntimeError('Must be >= 0')
         return arg
     return check_value
 
@@ -149,10 +156,10 @@ class SyncFilter(FilterExtension):
                     fields = message.get_fields_and_field_types()
                     if 'header' not in fields or fields['header'] != 'std_msgs/Header':
                         raise AttributeError(
-                            f"Message {topic_type} has no header field.")
+                            f'Message {topic_type} has no header field.')
                 except (AttributeError, ModuleNotFoundError, ValueError):
                     raise RuntimeError(
-                        f"Cannot load message type '{topic_type}'")
+                        f'Cannot load message type "{topic_type}"')
             self._topic_type_map[topic] = self._type_map[topic_type]
         return topic_metadata
 
@@ -179,10 +186,10 @@ class SyncFilter(FilterExtension):
         return result
 
     def flush(self):
-        self._logger.info(f"total #synced-bundles: {self._num_syncs}")
-        for topic, filter in self._sync_filters.items():
-            num_drops = filter.num_signaled - self._num_syncs
+        self._logger.info(f'total #synced-bundles: {self._num_syncs}')
+        for topic, topic_filter in self._sync_filters.items():
+            num_drops = topic_filter.num_signaled - self._num_syncs
             if num_drops > 0:
                 self._logger.warning(
-                    f"total #off-sync msgs on '{topic}': {num_drops}")
+                    f'total #off-sync msgs on "{topic}": {num_drops}')
         return []

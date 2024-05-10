@@ -13,10 +13,13 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 """Create test bag files."""
-from rclpy.serialization import serialize_message
-from rosbag2_py import SequentialWriter, StorageOptions, ConverterOptions, TopicMetadata
-from sensor_msgs.msg import Range
 from diagnostic_msgs.msg import KeyValue
+from rclpy.serialization import serialize_message
+from rosbag2_py import ConverterOptions
+from rosbag2_py import SequentialWriter
+from rosbag2_py import StorageOptions
+from rosbag2_py import TopicMetadata
+from sensor_msgs.msg import Range
 
 
 def create_range_bag(path):

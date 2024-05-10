@@ -12,8 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from ros2bag_tools.verb import FilterVerb
 from ros2bag_tools.filter.reframe import ReframeFilter
+from ros2bag_tools.verb import FilterVerb
 
 
 class ReframeVerb(FilterVerb):

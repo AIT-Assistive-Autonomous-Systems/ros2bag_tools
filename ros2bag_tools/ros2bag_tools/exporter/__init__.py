@@ -14,20 +14,27 @@
 
 
 class ExporterError(Exception):
+    """Error class to raise an exporter error."""
+
     pass
 
 
 class Exporter:
+    """Exporter base class for exporter extensions."""
 
     @staticmethod
     def add_arguments(parser):
+        """Add exporter specific arguments."""
         pass
 
-    def open(self, args):
+    def open(self, args):  # noqa: A003
+        """Initialize exporter based on configuration."""
         pass
 
     def write(self, topic, msg, t):
+        """Process and write/export a message."""
         pass
 
     def close(self):
+        """Close the exporter and flush if needed."""
         pass

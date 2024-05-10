@@ -13,16 +13,28 @@
 # limitations under the License.
 
 import argparse
-import yaml
-from datetime import datetime, time, timezone
+from datetime import datetime
+from datetime import time
+from datetime import timezone
+
 from rclpy.qos import QoSDurabilityPolicy
 from rclpy.serialization import serialize_message
-from ros2bag_tools.reader import TopicDeserializer
-from ros2bag_tools.filter import FilterExtension, FilterResult
+
+from ros2bag_tools.filter import FilterExtension
+from ros2bag_tools.filter import FilterResult
 from ros2bag_tools.filter.restamp import set_header_stamp
-from ros2bag_tools.time import DurationOrDayTimeType, DurationType, get_bag_bounds, is_same_day,\
-    datetime_to_ros_time, add_daytime, ros_to_datetime_utc, metatime_to_datetime,\
-    metadelta_to_timedelta
+from ros2bag_tools.reader import TopicDeserializer
+from ros2bag_tools.time import add_daytime
+from ros2bag_tools.time import datetime_to_ros_time
+from ros2bag_tools.time import DurationOrDayTimeType
+from ros2bag_tools.time import DurationType
+from ros2bag_tools.time import get_bag_bounds
+from ros2bag_tools.time import is_same_day
+from ros2bag_tools.time import metadelta_to_timedelta
+from ros2bag_tools.time import metatime_to_datetime
+from ros2bag_tools.time import ros_to_datetime_utc
+
+import yaml
 
 
 def compute_timespan(start, duration, end, bags_start_time: datetime, bags_end_time: datetime):
@@ -31,7 +43,7 @@ def compute_timespan(start, duration, end, bags_start_time: datetime, bags_end_t
 
     if start is not None:
         if isinstance(start, time):
-            assert(start_time.date() == end_time.date())
+            assert (start_time.date() == end_time.date())
             start_time = add_daytime(start_time.date(), start)
         else:
             start_time += start
@@ -40,7 +52,7 @@ def compute_timespan(start, duration, end, bags_start_time: datetime, bags_end_t
 
     if end is not None:
         if isinstance(end, time):
-            assert(start_time.date() == end_time.date())
+            assert (start_time.date() == end_time.date())
             end_time = add_daytime(start_time.date(), end)
         else:
             end_time = start_time + end
