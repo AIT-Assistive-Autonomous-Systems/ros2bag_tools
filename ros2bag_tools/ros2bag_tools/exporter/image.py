@@ -66,6 +66,12 @@ def bayer_conversion_code(bayer_encoding: str, desired_encoding: str, demosaicin
 
 
 class ImageMsgWriterBase(metaclass=ABCMeta):
+    """
+    Base class image message types to buffers.
+
+    Encodes type specific messages to specific buffer outputs representing the extension.
+    """
+
     @staticmethod
     @abstractmethod
     def get_supported_msg_type() -> Any:

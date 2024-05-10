@@ -23,28 +23,28 @@ pkg_prefix = Path(__file__).parents[1]
 
 def test_data_frame_range(tmp_range_bag):
     dfs = read_data_frames(BagView(tmp_range_bag), {'/range': ['range']})
-    assert('/range' in dfs)
+    assert ('/range' in dfs)
     df = dfs['/range']
     stamp0 = pd.Timestamp(90, unit='ns', tz='UTC')
     stamp1 = pd.Timestamp(190, unit='ns', tz='UTC')
-    assert(df['header.stamp'][0] == stamp0)
-    assert(df['header.stamp'][1] == stamp1)
-    assert(df['range'][0] == 10.0)
-    assert(df['range'][1] == 20.0)
+    assert (df['header.stamp'][0] == stamp0)
+    assert (df['header.stamp'][1] == stamp1)
+    assert (df['range'][0] == 10.0)
+    assert (df['range'][1] == 20.0)
 
 
 def test_data_frame_multi_topic(tmp_multi_topic_bag):
     fields = {'/range': ['range'], '/diagnostics': ['key', 'value']}
     dfs = read_data_frames(BagView(tmp_multi_topic_bag), fields)
 
-    assert('/range' in dfs)
-    assert('/diagnostics' in dfs)
+    assert ('/range' in dfs)
+    assert ('/diagnostics' in dfs)
 
     df = dfs['/range']
     stamp0 = pd.Timestamp(90, unit='ns', tz='UTC')
-    assert(df['header.stamp'][0] == stamp0)
-    assert(df['range'][0] == 10.0)
+    assert (df['header.stamp'][0] == stamp0)
+    assert (df['range'][0] == 10.0)
 
     df = dfs['/diagnostics']
-    assert(df['key'][0] == 'cpu')
-    assert(df['value'][0] == 'warn')
+    assert (df['key'][0] == 'cpu')
+    assert (df['value'][0] == 'warn')

@@ -42,14 +42,14 @@ class CompositeFilter(FilterExtension):
     def set_args(self, metadatas, args):
         with open(args.config, 'r') as f:
             for i, argv in enumerate(readargs(f)):
-                assert(len(argv) >= 1)
+                assert (len(argv) >= 1)
                 filter_name = argv[0]
                 arg_arr = argv[1:]
                 filter_extension, filter_args = self._loader.load(filter_name, arg_arr)
                 filter_extension.set_logger(self._logger.getChild(f'{filter_name}({i})'))
                 filter_extension.set_args(metadatas, filter_args)
                 self._filters.append(filter_extension)
-        assert(len(self._filters) > 0)
+        assert (len(self._filters) > 0)
 
     def output_size_factor(self, metadata: BagMetadata):
         total = 1.0

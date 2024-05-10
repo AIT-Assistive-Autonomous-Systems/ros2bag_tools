@@ -28,4 +28,4 @@ def test_composite_filter():
     args = parser.parse_args(['-c', str(pkg_prefix/'test'/'composite.config')])
 
     test_filter.set_args([], args)
-    assert(len(test_filter.filter_msg(('/data', None, 0))) == 0)
+    assert (len(test_filter.filter_msg(('/data', None, 0))) == 0)

@@ -29,6 +29,7 @@ from . import TopicRequest
 
 
 class BagWrappedMessage:
+
     def __init__(self, t, topic, msg):
         self._topic = topic
         self._t = t

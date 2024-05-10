@@ -43,7 +43,7 @@ def compute_timespan(start, duration, end, bags_start_time: datetime, bags_end_t
 
     if start is not None:
         if isinstance(start, time):
-            assert(start_time.date() == end_time.date())
+            assert (start_time.date() == end_time.date())
             start_time = add_daytime(start_time.date(), start)
         else:
             start_time += start
@@ -52,7 +52,7 @@ def compute_timespan(start, duration, end, bags_start_time: datetime, bags_end_t
 
     if end is not None:
         if isinstance(end, time):
-            assert(start_time.date() == end_time.date())
+            assert (start_time.date() == end_time.date())
             end_time = add_daytime(start_time.date(), end)
         else:
             end_time = start_time + end

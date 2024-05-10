@@ -72,7 +72,7 @@ class VideoWriter:
             has_color = len(image.shape) >= 3 and image.shape[2] != 1
             self._writer.open(self._file_path, self._fourcc,
                               self._fps, video_size, has_color)
-            assert(self._writer.isOpened())
+            assert (self._writer.isOpened())
             self._initialized = True
         self._writer.write(image)
 

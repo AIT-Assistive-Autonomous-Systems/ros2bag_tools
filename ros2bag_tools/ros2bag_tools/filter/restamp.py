@@ -82,7 +82,7 @@ class RestampFilter(FilterExtension):
         for metadata in metadatas:
             for topic in metadata.topics_with_message_count:
                 topic_name = topic.topic_metadata.name
-                if any([re.match(r, topic_name) for r in args.offset_topic]):
+                if any((re.match(r, topic_name) for r in args.offset_topic)):
                     self._offset_topics.add(topic_name)
         self._offset = args.offset
         self._offset_header = args.offset_header

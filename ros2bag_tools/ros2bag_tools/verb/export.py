@@ -92,7 +92,7 @@ class ExportVerb(VerbExtension):
             loader = ExtensionLoader('ros2bag_tools.exporter', logger)
             with open(args.config, 'r') as f:
                 for argv in readargs(f):
-                    assert(len(argv) >= 2)
+                    assert (len(argv) >= 2)
                     topic = argv[0]
                     exporter_name = argv[1]
                     exporter_args = argv[2:]
@@ -104,7 +104,7 @@ class ExportVerb(VerbExtension):
             err = 'At least one exporter must be specified.'
             return print_error(err)
 
-        assert(len(exporters) > 0)
+        assert (len(exporters) > 0)
 
         info = Info()
         metadatas = [info.read_metadata(args.bag_path, args.storage)]

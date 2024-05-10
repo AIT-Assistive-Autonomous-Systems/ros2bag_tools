@@ -67,24 +67,24 @@ def test_add_filter():
     topic_metadata = TopicMetadata(
         '/align', 'example_interfaces/msg/String', 'cdr')
     topics = test_filter.filter_topic(topic_metadata)
-    assert(len(topics) == 2)
-    assert(topics[0].name == '/align')
-    assert(topics[0].type == 'example_interfaces/msg/String')
-    assert(topics[1].name == '/data')
-    assert(topics[1].type == 'example_interfaces/msg/String')
+    assert (len(topics) == 2)
+    assert (topics[0].name == '/align')
+    assert (topics[0].type == 'example_interfaces/msg/String')
+    assert (topics[1].name == '/data')
+    assert (topics[1].type == 'example_interfaces/msg/String')
 
     msg = String()
     msg.data = 'align'
     msgs = test_filter.filter_msg(('/align', serialize_message(msg), 1))
 
-    assert(len(msgs) == 2)
+    assert (len(msgs) == 2)
     (topic0, data0, t0) = msgs[0]
     (topic1, data1, t1) = msgs[1]
-    assert(topic0 == '/align')
-    assert(topic1 == '/data')
-    assert(t0 == t1)
-    assert(deserialize_message(data0, String).data == 'align')
-    assert(deserialize_message(data1, String).data == 'out')
+    assert (topic0 == '/align')
+    assert (topic1 == '/data')
+    assert (t0 == t1)
+    assert (deserialize_message(data0, String).data == 'align')
+    assert (deserialize_message(data1, String).data == 'out')
 
 
 def test_drop_filter():
@@ -104,16 +104,16 @@ def test_drop_filter():
 
     for i in range(y):
         for j in range(y):
-            assert(test_filter.filter_msg(msg_other) == msg_other)
+            assert (test_filter.filter_msg(msg_other) == msg_other)
             if j < x:
-                assert(test_filter.filter_msg(msg1) == FilterResult.DROP_MESSAGE)
-                assert(test_filter.filter_msg(msg2) == FilterResult.DROP_MESSAGE)
+                assert (test_filter.filter_msg(msg1) == FilterResult.DROP_MESSAGE)
+                assert (test_filter.filter_msg(msg2) == FilterResult.DROP_MESSAGE)
             else:
-                assert(test_filter.filter_msg(msg1) == msg1)
-                assert(test_filter.filter_msg(msg2) == msg2)
+                assert (test_filter.filter_msg(msg1) == msg1)
+                assert (test_filter.filter_msg(msg2) == msg2)
 
     msg = ('/data', None, 0)
-    assert(test_filter.filter_msg(msg) == msg)
+    assert (test_filter.filter_msg(msg) == msg)
 
 
 def test_extract_filter():
@@ -125,7 +125,7 @@ def test_extract_filter():
     test_filter.set_args(None, args)
 
     msg = ('/data', None, 0)
-    assert(test_filter.filter_msg(msg) == msg)
+    assert (test_filter.filter_msg(msg) == msg)
 
 
 def test_replace_filter():
@@ -146,12 +146,12 @@ def test_replace_filter():
 
     topic_metadata = TopicMetadata(
         '/data', 'example_interfaces/msg/String', 'cdr')
-    assert(test_filter.filter_topic(topic_metadata) == topic_metadata)
+    assert (test_filter.filter_topic(topic_metadata) == topic_metadata)
     (topic, result_data, t) = test_filter.filter_msg(msg)
-    assert(topic == '/data')
+    assert (topic == '/data')
     result_msg = deserialize_message(result_data, String)
-    assert(result_msg.data == 'out')
-    assert(t == 0)
+    assert (result_msg.data == 'out')
+    assert (t == 0)
 
 
 def test_cut_filter(tmp_string_bag):
@@ -167,19 +167,19 @@ def test_cut_filter(tmp_string_bag):
 
     # timestamp before bag start
     msg = ('/data', serialize_message(string_msg), 0)
-    assert(test_filter.filter_msg(msg) == FilterResult.DROP_MESSAGE)
+    assert (test_filter.filter_msg(msg) == FilterResult.DROP_MESSAGE)
 
     # exact start timestamp
     msg = ('/data', serialize_message(string_msg), 1000)
-    assert(test_filter.filter_msg(msg) == msg)
+    assert (test_filter.filter_msg(msg) == msg)
 
     # timestamp within the bag and cut duration
     msg = ('/data', serialize_message(string_msg), 500 * 1000 * 1000 - 1000)
-    assert(test_filter.filter_msg(msg) == msg)
+    assert (test_filter.filter_msg(msg) == msg)
 
     # timestamp after the requested duration, but before the last message in the test bag
     msg = ('/data', serialize_message(string_msg), 1000 * 1000 * 1000 + 1000)
-    assert(test_filter.filter_msg(msg) == FilterResult.STOP_CURRENT_BAG)
+    assert (test_filter.filter_msg(msg) == FilterResult.STOP_CURRENT_BAG)
 
 
 def test_cut_filter_args(tmp_day_time_bag):
@@ -214,7 +214,7 @@ def test_reframe_filter():
 
     topic_metadata = TopicMetadata(
         '/diagnostics', 'diagnostic_msgs/msg/DiagnosticArray', 'cdr')
-    assert(test_filter.filter_topic(topic_metadata) == topic_metadata)
+    assert (test_filter.filter_topic(topic_metadata) == topic_metadata)
 
     msg = DiagnosticArray()
     msg.header.frame_id = 'frame0'
@@ -225,7 +225,7 @@ def test_reframe_filter():
     bag_msg = ('/diagnostics', serialize_message(msg), 1)
     (_, data, _) = test_filter.filter_msg(bag_msg)
     new_msg = deserialize_message(data, DiagnosticArray)
-    assert(new_msg.header.frame_id == 'frame1')
+    assert (new_msg.header.frame_id == 'frame1')
 
 
 def test_rename_filter():
@@ -238,7 +238,7 @@ def test_rename_filter():
 
     topic_metadata = TopicMetadata(
         '/data', 'example_interfaces/msg/String', 'cdr')
-    assert(test_filter.filter_topic(topic_metadata).name == '/renamed')
+    assert (test_filter.filter_topic(topic_metadata).name == '/renamed')
 
     msg = String()
     msg.data = 'test'
@@ -246,7 +246,7 @@ def test_rename_filter():
     # timestamp within the bag and cut duration
     bag_msg = ('/data', serialize_message(msg), 1)
     (topic, _, _) = test_filter.filter_msg(bag_msg)
-    assert(topic == '/renamed')
+    assert (topic == '/renamed')
 
 
 def test_restamp_filter(tmp_diagnostics_bag: Path):
@@ -259,7 +259,7 @@ def test_restamp_filter(tmp_diagnostics_bag: Path):
 
     topic_metadata = TopicMetadata(
         '/diagnostics', 'diagnostic_msgs/msg/DiagnosticArray', 'cdr')
-    assert(test_filter.filter_topic(topic_metadata) == topic_metadata)
+    assert (test_filter.filter_topic(topic_metadata) == topic_metadata)
 
     msg = DiagnosticArray()
     msg.header.stamp.sec = 0
@@ -268,35 +268,35 @@ def test_restamp_filter(tmp_diagnostics_bag: Path):
     bag_msg = ('/diagnostics', serialize_message(msg), 1)
     (_, data, t) = test_filter.filter_msg(bag_msg)
     msg_filtered = deserialize_message(data, DiagnosticArray)
-    assert(t == 0)
-    assert(msg_filtered.header.stamp.nanosec == 0)
+    assert (t == 0)
+    assert (msg_filtered.header.stamp.nanosec == 0)
 
     args = parser.parse_args(['--invert'])
     test_filter.set_args([info.read_metadata(tmp_diagnostics_bag, '')], args)
     (_, data, _) = test_filter.filter_msg(bag_msg)
     msg_filtered = deserialize_message(data, DiagnosticArray)
-    assert(msg_filtered.header.stamp.nanosec == 1)
+    assert (msg_filtered.header.stamp.nanosec == 1)
 
     args = parser.parse_args(
         ['--offset', '2', '--offset-topic', '/diagnostics'])
     test_filter.set_args([info.read_metadata(tmp_diagnostics_bag, '')], args)
     (_, data, t) = test_filter.filter_msg(bag_msg)
     msg_filtered = deserialize_message(data, DiagnosticArray)
-    assert(t == 2)
-    assert(msg_filtered.header.stamp.nanosec == 0)
+    assert (t == 2)
+    assert (msg_filtered.header.stamp.nanosec == 0)
 
     args = parser.parse_args(
         ['--offset-header', '--offset', '1', '--offset-topic', '/diagnostics'])
     test_filter.set_args([info.read_metadata(tmp_diagnostics_bag, '')], args)
     (_, data, t) = test_filter.filter_msg(bag_msg)
     msg_filtered = deserialize_message(data, DiagnosticArray)
-    assert(t == 1)
-    assert(msg_filtered.header.stamp.nanosec == 1)
+    assert (t == 1)
+    assert (msg_filtered.header.stamp.nanosec == 1)
 
     # No header tests
     topic_metadata = TopicMetadata(
         '/string', 'std_msgs/msg/String', 'cdr')
-    assert(test_filter.filter_topic(topic_metadata) == topic_metadata)
+    assert (test_filter.filter_topic(topic_metadata) == topic_metadata)
 
     msg = RosString()
     msg.data = 'TestString'
@@ -304,7 +304,7 @@ def test_restamp_filter(tmp_diagnostics_bag: Path):
     bag_msg = ('/string', serialize_message(msg), 1)
     (_, data, t) = test_filter.filter_msg(bag_msg)
     msg_filtered = deserialize_message(data, RosString)
-    assert(t == 1)
+    assert (t == 1)
 
 
 def test_sync_filter(tmp_synced_bag):
@@ -319,7 +319,7 @@ def test_sync_filter(tmp_synced_bag):
     topics = [TopicMetadata(topic, 'diagnostic_msgs/msg/DiagnosticArray', 'cdr')
               for topic in ['/sync0', '/sync1', '/offsync0']]
     for meta in topics:
-        assert(test_filter.filter_topic(meta) == meta)
+        assert (test_filter.filter_topic(meta) == meta)
 
     expected_counts = {
         # syncN should only be counted if they match within 10ms
@@ -334,7 +334,7 @@ def test_sync_filter(tmp_synced_bag):
             counts[topic] += 1
         else:
             counts[topic] = 1
-    assert(expected_counts == counts)
+    assert (expected_counts == counts)
 
 
 def test_export_sync_selected(caplog: pytest.LogCaptureFixture,

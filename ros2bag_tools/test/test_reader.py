@@ -44,7 +44,7 @@ def test_reader_cut_filtered(tmp_string_bag):
                          CutArgs(None, timedelta(microseconds=1), None, 'snap'))
     reader = FilteredReader([tmp_string_bag], test_filter)
     it = iter(reader)
-    assert('/data' == next(it)[0])
+    assert ('/data' == next(it)[0])
     with pytest.raises(StopIteration):
         next(it)
 
@@ -52,8 +52,8 @@ def test_reader_cut_filtered(tmp_string_bag):
 def test_reader_unfiltered(tmp_string_bag):
     reader = FilteredReader([tmp_string_bag], FilterExtension())
     it = iter(reader)
-    assert('/data' == next(it)[0])
-    assert('/data' == next(it)[0])
+    assert ('/data' == next(it)[0])
+    assert ('/data' == next(it)[0])
     with pytest.raises(StopIteration):
         next(it)
 
@@ -62,8 +62,8 @@ def test_reader_get_topics_union(tmp_string_bag, tmp_diagnostics_bag):
     reader = FilteredReader(
         [tmp_string_bag, tmp_diagnostics_bag], FilterExtension())
     it = reader.get_all_topics_and_types()
-    assert('/data' == next(it).name)
-    assert('/diagnostics' == next(it).name)
+    assert ('/data' == next(it).name)
+    assert ('/diagnostics' == next(it).name)
     with pytest.raises(StopIteration):
         next(it)
 
@@ -76,6 +76,6 @@ def test_reader_get_topics_filtered(tmp_string_bag, tmp_diagnostics_bag):
                          ExtractArgs(['/diagnostics'], False))
     reader = FilteredReader(bags, test_filter)
     it = reader.get_all_topics_and_types()
-    assert('/diagnostics' == next(it).name)
+    assert ('/diagnostics' == next(it).name)
     with pytest.raises(StopIteration):
         next(it)

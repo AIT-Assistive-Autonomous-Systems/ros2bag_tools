@@ -48,7 +48,7 @@ class ConstantFieldSummaryOutput:
         self._value = None
 
     def update(self, message):
-        assert(hasattr(message, self._field_name))
+        assert (hasattr(message, self._field_name))
         value = getattr(message, self._field_name)
         # ensure the value is actually constant across the bag
         assert generic_equals(self._value, value)
@@ -66,7 +66,7 @@ class ValueRangeSummaryOutput:
         self._values = []
 
     def update(self, message):
-        assert(hasattr(message, self._field_name))
+        assert (hasattr(message, self._field_name))
         value = getattr(message, self._field_name)
         self._values.append(value)
 

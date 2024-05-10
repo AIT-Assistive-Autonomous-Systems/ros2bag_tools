@@ -34,7 +34,7 @@ ReadOrderSortBy = None
 try:
     from rosbag2_py import ReadOrder
     from rosbag2_py import ReadOrderSortBy
-except(ImportError):
+except (ImportError):
     pass
 
 
@@ -75,13 +75,13 @@ class FilteredReader:
                  in_storage='',
                  topics=None,
                  **kwargs):
-        assert(len(bag_paths) > 0)
+        assert (len(bag_paths) > 0)
         extension = extension if extension is not None else kwargs.get('filter', None)
 
         if 'filter' in kwargs:
             warn('arg filter deprecated use extension instead', DeprecationWarning)
 
-        assert(extension is not None)
+        assert (extension is not None)
 
         requested_topics = extension.requested_topics() + \
             [(TopicRequest.LIMIT, t) for t in (topics or [])]
