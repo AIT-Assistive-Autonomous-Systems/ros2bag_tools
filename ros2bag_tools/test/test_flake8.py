@@ -21,8 +21,9 @@ import pytest
 @pytest.mark.flake8
 @pytest.mark.linter
 def test_flake8():
-    pkg_prefix = str(Path(__file__).parents[1])
-    rc, errors = main_with_errors(argv=[pkg_prefix])
+    pkg_prefix = Path(__file__).parents[1]
+    config_file = pkg_prefix / '.flake8'
+    rc, errors = main_with_errors(argv=['--config', str(config_file), str(pkg_prefix)])
     assert rc == 0, \
         'Found %d code style errors / warnings:\n' % len(errors) + \
         '\n'.join(errors)
