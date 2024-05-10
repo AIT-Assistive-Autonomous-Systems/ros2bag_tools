@@ -13,7 +13,7 @@
 # limitations under the License.
 import argparse
 from enum import Enum
-from logging import getLogger
+
 from logging import Logger
 from typing import List, Sequence, Tuple, Union
 
@@ -21,10 +21,15 @@ from rclpy.exceptions import InvalidTopicNameException
 from rclpy.serialization import deserialize_message
 from rclpy.serialization import serialize_message
 from rclpy.validate_topic_name import validate_topic_name
+
+from ros2bag_tools.logging import getLogger
+
 from ros2cli.plugin_system import PLUGIN_SYSTEM_VERSION
 from ros2cli.plugin_system import satisfies_version
+
 from rosbag2_py import BagMetadata
 from rosbag2_py import TopicMetadata
+
 from rosidl_runtime_py.utilities import get_message
 
 
@@ -63,12 +68,7 @@ class FilterExtension:
         super(FilterExtension, self).__init__()
         satisfies_version(PLUGIN_SYSTEM_VERSION, '^0.1')
 
-        if isinstance(logger, str):
-            self._logger = getLogger(logger)
-        elif logger is None:
-            self._logger = getLogger(__name__)
-        else:
-            self._logger = logger
+        self._logger = getLogger(logger)
 
     def set_logger(self, logger: Logger):
         if logger is None:

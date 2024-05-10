@@ -12,6 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+# noqa: A005
+
 from functools import lru_cache
 import logging
 from typing import Union
@@ -19,23 +21,21 @@ from typing import Union
 from rclpy.impl.rcutils_logger import RcutilsLogger
 from rclpy.logging import get_logger as rclpy_get_logger
 
+
 root: logging.Logger = None
 
 
 def getLogger(logger: Union[str, logging.Logger, RcutilsLogger, None] = None) -> logging.Logger:
-    result = root
-    if root is None:
-        if logger:
-            if isinstance(logger, str):
-                result = RclpyAdapter(rclpy_get_logger(logger))
-            elif isinstance(logger, RcutilsLogger):
-                result = RclpyAdapter(logger)
-            else:
-                result = logger
-        else:
-            result = logging.getLogger()
-    elif logger:
-        result = root.getChild(logger)
+    result = None
+
+    if isinstance(logger, str):
+        result = RclpyAdapter(rclpy_get_logger(logger)) if root is None else root.getChild(logger)
+    elif isinstance(logger, RcutilsLogger):
+        result = RclpyAdapter(logger)
+    elif logger is None:
+        result = logging.getLogger() if root is None else root
+    else:
+        result = logger
     return result
 
 
