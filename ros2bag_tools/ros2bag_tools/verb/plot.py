@@ -14,8 +14,9 @@
 
 import matplotlib.pyplot as plt
 from ros2bag.api import add_standard_reader_args
-from ros2bag.verb import get_reader_options
 from ros2bag.verb import VerbExtension
+
+from ros2bag_tools.verb import get_reader_options
 
 from rosbag2_py import SequentialReader
 from rosbag2_py import StorageFilter
