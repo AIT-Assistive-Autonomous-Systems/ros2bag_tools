@@ -19,6 +19,7 @@ ros2bag_tools adds verb extensions to the ros2bag cli.
 | plot    | plot message data to a new window, see [plot](#plot) |
 | process | chain multiple filters, see [chaining](#chaining) |
 | **prune** | remove topics without messages |
+| **prefix** | add a fixed prefix to all topics inside a bag file |
 | **reframe** | change frame_id on messages with headers |
 | **rename**  | change name of a topic |
 | **replace** | replace messages of a specific topic with message data specified in a yaml file |
