@@ -28,6 +28,6 @@ jobs:
         uses: ros-tooling/setup-ros@v0.7
       - 
         name: build and test using rosci
-        uses: ros-tooling/action-ros-ci@v0.3
+        uses: ros-tooling/action-ros-ci@v0.4
         with:
           target-ros2-distro: ${{ matrix.ros-distro }}
