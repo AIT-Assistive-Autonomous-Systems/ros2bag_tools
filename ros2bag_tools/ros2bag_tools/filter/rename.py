@@ -18,24 +18,37 @@ from ros2bag_tools.filter import FilterExtension
 class RenameFilter(FilterExtension):
 
     def __init__(self):
-        self._topic = None
-        self._new_name = None
+        self._rename_map = {}
 
     def add_arguments(self, parser):
-        parser.add_argument('-t', '--topic', help='topic to rename')
-        parser.add_argument('--name', required=True, help='new name to set')
+        parser.add_argument(
+            '-t', '--topic', 
+            action='append', 
+            dest='topics',
+            required=True,
+            help='Topic to rename. Can be specified multiple times with corresponding --name arguments.'
+        )
+        parser.add_argument(
+            '--name', 
+            action='append', 
+            dest='names',
+            required=True,
+            help='New name to set. Can be specified multiple times with corresponding --topic arguments.'
+        )
 
     def set_args(self, _metadata, args):
-        self._topic = args.topic
-        self._new_name = args.name
+        if len(args.topics) != len(args.names):
+            raise ValueError('Number of topics must match number of names')
+        
+        self._rename_map = dict(zip(args.topics, args.names))
 
     def filter_topic(self, topic_metadata):
-        if topic_metadata.name == self._topic:
-            topic_metadata.name = self._new_name
+        if topic_metadata.name in self._rename_map:
+            topic_metadata.name = self._rename_map[topic_metadata.name]
         return topic_metadata
 
     def filter_msg(self, msg):
         (topic, data, t) = msg
-        if topic == self._topic:
-            return (self._new_name, data, t)
+        if topic in self._rename_map:
+            return (self._rename_map[topic], data, t)
         return msg
