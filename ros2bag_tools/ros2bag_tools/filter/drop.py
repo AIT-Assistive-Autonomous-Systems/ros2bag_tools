@@ -14,7 +14,6 @@
 
 from typing import Dict, Sequence
 
-from ros2bag.api import print_error
 from ros2bag_tools.filter import FilterExtension, FilterResult
 
 
@@ -38,27 +37,27 @@ class DropFilter(FilterExtension):
             ),
         )
         parser.add_argument(
-            "-x",
+            '-x',
             type=int,
             required=True,
-            help="Count of messages out of y to drop. Must be > 0.",
+            help='Count of messages out of y to drop. Must be > 0.',
         )
         parser.add_argument(
-            "-y",
+            '-y',
             type=int,
             required=True,
-            help="Module of the message counter. Must be > 0 and => x.",
+            help='Module of the message counter. Must be > 0 and => x.',
         )
 
     def set_args(self, _metadata, args):
         if not args.y > 0:
-            print(print_error("y must be > 0"))
+            self._logger.error('y must be > 0')
             exit(1)
         if not args.x > 0:
-            print(print_error("x must be > 0"))
+            self._logger.error('x must be > 0')
             exit(1)
         if not args.y >= args.x:
-            print(print_error("y must be => x"))
+            self._logger.error('y must be => x')
             exit(1)
 
         self._topics = args.topics
@@ -78,23 +77,23 @@ class DropFilter(FilterExtension):
         if self._is_drop_topic(topic):
             # initialize counters
             if topic not in self._msg_counters:
-                self._msg_counters[topic] = {"total": 0, "dropped": 0}
+                self._msg_counters[topic] = {'total': 0, 'dropped': 0}
 
             # reset counters if we have reached sample size
-            if self._msg_counters[topic]["total"] == self._sample_size:
-                self._msg_counters[topic] = {"total": 0, "dropped": 0}
+            if self._msg_counters[topic]['total'] == self._sample_size:
+                self._msg_counters[topic] = {'total': 0, 'dropped': 0}
 
-            self._msg_counters[topic]["total"] += 1
+            self._msg_counters[topic]['total'] += 1
 
             # calculate current dropped messages ratio
             ratio = (
-                self._msg_counters[topic]["dropped"]
-                / self._msg_counters[topic]["total"]
+                self._msg_counters[topic]['dropped']
+                / self._msg_counters[topic]['total']
             )
 
             # drop message if we are currently below target ratio
             if ratio < self._ratio:
-                self._msg_counters[topic]["dropped"] += 1
+                self._msg_counters[topic]['dropped'] += 1
                 return FilterResult.DROP_MESSAGE
 
         return msg
