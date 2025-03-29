@@ -22,24 +22,26 @@ class RenameFilter(FilterExtension):
 
     def add_arguments(self, parser):
         parser.add_argument(
-            '-t', '--topic', 
-            action='append', 
+            '-t', '--topic',
+            action='append',
             dest='topics',
             required=True,
-            help='Topic to rename. Can be specified multiple times with corresponding --name arguments.'
+            help='Topic to rename. Can be specified multiple times with corresponding --name '
+                 'arguments.'
         )
         parser.add_argument(
-            '--name', 
-            action='append', 
+            '--name',
+            action='append',
             dest='names',
             required=True,
-            help='New name to set. Can be specified multiple times with corresponding --topic arguments.'
+            help='New name to set. Can be specified multiple times with corresponding --topic '
+                 'arguments.'
         )
 
     def set_args(self, _metadata, args):
         if len(args.topics) != len(args.names):
             raise ValueError('Number of topics must match number of names')
-        
+
         self._rename_map = dict(zip(args.topics, args.names))
 
     def filter_topic(self, topic_metadata):
