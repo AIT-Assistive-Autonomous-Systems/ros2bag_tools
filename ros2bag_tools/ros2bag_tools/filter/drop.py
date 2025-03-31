@@ -49,7 +49,7 @@ class DropFilter(FilterExtension):
             '-y',
             type=int,
             required=False,
-            help='Module of the message counter. Must be > 0 and => x. '
+            help='Module of the message counter. Must be > 0 and >= x. '
             'Requires x to be set and ratio to be unset.',
             default=-1
         )
@@ -72,11 +72,11 @@ class DropFilter(FilterExtension):
                 self._logger.error('x must be > 0')
                 exit(1)
             if not args.y >= args.x:
-                self._logger.error('y must be => x')
+                self._logger.error('y must be >= x')
                 exit(1)
             self._ratio = Fraction(args.x, args.y)
         else:
-            if args.ratio < 0 or args.ratio > 1:
+            if args.ratio <= 0 or args.ratio > 1:
                 self._logger.error('ratio must be > 0 and <= 1')
                 exit(1)
             self._ratio = args.ratio
