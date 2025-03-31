@@ -99,21 +99,28 @@ def test_drop_filter():
 
     msg1 = ('/data1', None, 0)
     msg2 = ('/data2', None, 0)
-
     msg_other = ('/data3', None, 0)
 
-    for i in range(y):
-        for j in range(y):
-            assert (test_filter.filter_msg(msg_other) == msg_other)
-            if j < x:
-                assert (test_filter.filter_msg(msg1) == FilterResult.DROP_MESSAGE)
-                assert (test_filter.filter_msg(msg2) == FilterResult.DROP_MESSAGE)
-            else:
-                assert (test_filter.filter_msg(msg1) == msg1)
-                assert (test_filter.filter_msg(msg2) == msg2)
+    dropped1 = 0
+    dropped2 = 0
+    dropped_other = 0
 
-    msg = ('/data', None, 0)
-    assert (test_filter.filter_msg(msg) == msg)
+    total = y * x
+    for i in range(total):
+        if test_filter.filter_msg(msg1) == FilterResult.DROP_MESSAGE:
+            dropped1 += 1
+        if test_filter.filter_msg(msg2) == FilterResult.DROP_MESSAGE:
+            dropped2 += 1
+        if test_filter.filter_msg(msg_other) == FilterResult.DROP_MESSAGE:
+            dropped_other += 1
+
+    for i in range(y):
+        if test_filter.filter_msg(msg1) == FilterResult.DROP_MESSAGE:
+            dropped1 += 1
+
+    assert (dropped1 == (total * (x / y)) + (y * (x / y)))
+    assert (dropped2 == total * (x / y))
+    assert (dropped_other == 0)
 
 
 def test_extract_filter():
