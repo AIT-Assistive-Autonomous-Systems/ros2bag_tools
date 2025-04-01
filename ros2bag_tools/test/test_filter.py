@@ -13,6 +13,7 @@
 # limitations under the License.
 
 import argparse
+from fractions import Fraction
 import logging
 from pathlib import Path
 
@@ -92,28 +93,44 @@ def test_drop_filter():
     y = 10
     x = 4
 
-    parser = argparse.ArgumentParser('drop')
-    test_filter.add_arguments(parser)
-    args = parser.parse_args(['-t', '/data1', '/data2', '-x', '4', '-y', '10'])
-    test_filter.set_args(None, args)
-
     msg1 = ('/data1', None, 0)
     msg2 = ('/data2', None, 0)
-
     msg_other = ('/data3', None, 0)
 
-    for i in range(y):
-        for j in range(y):
-            assert (test_filter.filter_msg(msg_other) == msg_other)
-            if j < x:
-                assert (test_filter.filter_msg(msg1) == FilterResult.DROP_MESSAGE)
-                assert (test_filter.filter_msg(msg2) == FilterResult.DROP_MESSAGE)
-            else:
-                assert (test_filter.filter_msg(msg1) == msg1)
-                assert (test_filter.filter_msg(msg2) == msg2)
+    def perform_test():
+        dropped1 = 0
+        dropped2 = 0
+        dropped_other = 0
 
-    msg = ('/data', None, 0)
-    assert (test_filter.filter_msg(msg) == msg)
+        total = y * x
+        for i in range(total):
+            if test_filter.filter_msg(msg1) == FilterResult.DROP_MESSAGE:
+                dropped1 += 1
+            if test_filter.filter_msg(msg2) == FilterResult.DROP_MESSAGE:
+                dropped2 += 1
+            if test_filter.filter_msg(msg_other) == FilterResult.DROP_MESSAGE:
+                dropped_other += 1
+
+        for i in range(y):
+            if test_filter.filter_msg(msg1) == FilterResult.DROP_MESSAGE:
+                dropped1 += 1
+
+        assert (dropped1 == (total * Fraction(x, y)) + (y * Fraction(x, y)))
+        assert (dropped2 == total * Fraction(x, y))
+        assert (dropped_other == 0)
+
+    parser = argparse.ArgumentParser('drop')
+    test_filter.add_arguments(parser)
+
+    # perform test with x y arguments
+    args = parser.parse_args(['-t', '/data1', '/data2', '-x', str(x), '-y', str(y)])
+    test_filter.set_args(None, args)
+    perform_test()
+
+    # perform test with ratio argument
+    args = parser.parse_args(['-t', '/data1', '/data2', '-r', f'{x}/{y}'])
+    test_filter.set_args(None, args)
+    perform_test()
 
 
 def test_extract_filter():
