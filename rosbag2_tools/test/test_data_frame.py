@@ -14,7 +14,9 @@
 from pathlib import Path
 
 import pandas as pd
+import pytest
 
+from rosbag2_py import StorageFilter
 from rosbag2_tools.bag_view import BagView
 from rosbag2_tools.data_frame import read_data_frames
 
@@ -48,3 +50,20 @@ def test_data_frame_multi_topic(tmp_multi_topic_bag):
     df = dfs['/diagnostics']
     assert (df['key'][0] == 'cpu')
     assert (df['value'][0] == 'warn')
+
+
+def test_data_frame_multi_topic_fail(tmp_multi_topic_bag):
+    fields = {'/range': ['range']}
+    with pytest.raises(KeyError):
+        read_data_frames(BagView(tmp_multi_topic_bag), fields)
+
+
+def test_data_frame_multi_topic_but_just_use_one(tmp_multi_topic_bag):
+    fields = {'/range': ['range']}
+    storage_filter = StorageFilter(topics=list(fields.keys()))
+    dfs = read_data_frames(BagView(tmp_multi_topic_bag, storage_filter), fields)
+
+    assert ('/range' in dfs)
+
+    with pytest.raises(KeyError):
+        dfs['/diagnostics']
