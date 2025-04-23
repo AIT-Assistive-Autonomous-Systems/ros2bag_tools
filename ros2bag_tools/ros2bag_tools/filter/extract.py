@@ -53,7 +53,7 @@ class ExtractFilter(FilterExtension):
         # this might not always apply, but gives a good enough estimation for progress feedback
         return output_msg_count / total_msg_count
 
-    def requested_filters(self):
+    def requested_topics(self):
         return [(TopicRequest.LIMIT, t) for t in self._output_topics]
 
     def filter_topic(self, topic_metadata):

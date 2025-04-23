@@ -53,7 +53,7 @@ class AddFilter(FilterExtension):
             raise RuntimeError(
                 '--values needs to point to a file containing a dictionary in YAML format')
 
-    def requested_filters(self):
+    def requested_topics(self):
         return [(TopicRequest.REQUIRED, self._args.align_to)]
 
     def filter_topic(self, topic_metadata):
