@@ -5,7 +5,7 @@ on:
       - '*.md'
       - '*LICENSE'
   push:
-    branches: [master]
+    branches: [humble]
     paths-ignore:
       - '*.md'
   workflow_dispatch:
@@ -18,7 +18,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        ros-distro: [humble, iron]
+        ros-distro: ["${{ github.base_ref || github.ref_name }}", iron]
     steps:
       -
         name: Checkout code
