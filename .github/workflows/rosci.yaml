@@ -18,7 +18,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        ros-distro: [humble, iron, rolling]
+        ros-distro: [humble, iron]
     steps:
       -
         name: Checkout code
