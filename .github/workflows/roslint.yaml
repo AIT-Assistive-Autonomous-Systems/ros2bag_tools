@@ -5,7 +5,7 @@ on:
       - '*.md'
       - '*LICENSE'
   push:
-    branches: [master]
+    branches: [humble]
     paths-ignore:
       - '*.md'
       - '*LICENSE'
