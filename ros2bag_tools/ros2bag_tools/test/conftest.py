@@ -65,8 +65,8 @@ def tmp_images_bag(tmp_path):
 @pytest.fixture
 def tmp_synced_bag(tmp_path):
     bag_path = str(tmp_path / 'synced.bag')
-    create_synced_bag(bag_path)
-    return bag_path
+    entries = create_synced_bag(bag_path)
+    return bag_path, entries
 
 
 @pytest.fixture(scope='session')

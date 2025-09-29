@@ -132,15 +132,17 @@ def create_synced_bag(
         entries = {
             # times in ms (match between /syncN = m, no match = x)
             # assumes 10ms match tolerance (exclusive)
-            #             m    m    x    x
-            '/sync0':    [0, 100, 200, 300],
-            '/sync1':    [0, 109, 210, 311],
-            '/offsync0': [20]
+            # True means should produce a match/sync.
+            '/sync0':    [(0, True), (50, False), (80, False), (100, True), (200, False),
+                          (300, False)],
+            '/sync1':    [(0, True), (109, True), (210, False), (311, False)],
+            '/offsync0': [(20, True), (120, True), (220, True), (320, True)],  # all pass through
         }
         for topic, ts in entries.items():
-            for ms in ts:
+            for ms, _ in ts:
                 ns = int(ms*1e6)
                 t = Time(nanoseconds=ns)
                 msg = DiagnosticArray()
                 msg.header.stamp = t.to_msg()
                 writer.write(topic, serialize_message(msg), ns)
+        return entries
