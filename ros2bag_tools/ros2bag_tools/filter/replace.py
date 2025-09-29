@@ -17,7 +17,8 @@ from rclpy.serialization import serialize_message
 
 from ros2bag_tools.filter import FilterExtension
 
-from rosidl_runtime_py import set_message_fields
+from rosbag2_tools.utils import set_message_fields
+
 from rosidl_runtime_py.utilities import get_message
 
 import yaml
@@ -32,6 +33,12 @@ class ReplaceFilter(FilterExtension):
 
     def add_arguments(self, parser):
         parser.add_argument('-t', '--topic', required=True, help='topic to replace data for')
+        parser.add_argument('-c', '--copy', action='store_true',
+                            help='Copy original values (not just header).')
+        parser.add_argument('--skip-missing', action='store_true',
+                            help='Skip missing fields in the message.')
+        parser.add_argument('--skip-value-errors', action='store_true',
+                            help='Skip errors when setting values of fields.')
         parser.add_argument('-v', '--values', required=True, help='path to yaml data to load')
 
     def set_args(self, _metadata, args):
@@ -56,14 +63,16 @@ class ReplaceFilter(FilterExtension):
                 raise RuntimeError(f"Could not load message type of topic '{topic}'")
 
             msg = deserialize_message(data, self._msg_module)
-            new_data = self._msg_module()
+            new_data = msg if self._args.copy else self._msg_module()
+
             try:
-                set_message_fields(new_data, self._values_dictionary)
+                if not self._args.copy and hasattr(msg, 'header') and hasattr(new_data, 'header'):
+                    new_data.header = msg.header
+                set_message_fields(new_data,
+                                   self._values_dictionary,
+                                   strict=not self._args.skip_value_errors,
+                                   strict_keys=not self._args.skip_missing)
             except Exception as e:
-                return 'Failed to populate field: {0}'.format(e)
-            if (hasattr(msg, 'header') and hasattr(new_data, 'header')
-                    and new_data.header.stamp.sec == 0
-                    and new_data.header.stamp.nanosec == 0):
-                new_data.header = msg.header
+                raise RuntimeError('Failed to populate field: {0}'.format(e))
             return (topic, serialize_message(new_data), t)
         return msg
