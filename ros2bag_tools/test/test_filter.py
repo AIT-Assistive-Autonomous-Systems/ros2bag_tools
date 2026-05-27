@@ -245,6 +245,16 @@ def test_reframe_filter():
     assert (new_msg.header.frame_id == 'frame1')
 
 
+def _mk_meta(name: str):
+    return TopicMetadata(name, 'example_interfaces/msg/String', 'cdr')
+
+
+def _mk_bag_msg(topic: str, t: int = 1):
+    msg = String()
+    msg.data = 'test'
+    return (topic, serialize_message(msg), t)
+
+
 def test_rename_filter():
     test_filter = RenameFilter()
 
@@ -253,17 +263,137 @@ def test_rename_filter():
     args = parser.parse_args(['-t', '/data', '--name', '/renamed'])
     test_filter.set_args(None, args)
 
-    topic_metadata = TopicMetadata(
-        '/data', 'example_interfaces/msg/String', 'cdr')
+    topic_metadata = _mk_meta('/data')
     assert (test_filter.filter_topic(topic_metadata).name == '/renamed')
 
-    msg = String()
-    msg.data = 'test'
-
     # timestamp within the bag and cut duration
-    bag_msg = ('/data', serialize_message(msg), 1)
+    bag_msg = _mk_bag_msg('/data')
     (topic, _, _) = test_filter.filter_msg(bag_msg)
     assert (topic == '/renamed')
+
+
+def test_rename_filter_glob_basic():
+    test_filter = RenameFilter()
+
+    parser = argparse.ArgumentParser('rename')
+    test_filter.add_arguments(parser)
+    args = parser.parse_args(['-t', '/one/*', '--name', '/renamed'])
+    test_filter.set_args(None, args)
+
+    tm = _mk_meta('/one/two/three')
+    assert test_filter.filter_topic(tm).name == '/renamed'
+
+    bag_msg = _mk_bag_msg('/one/two/three')
+    (topic, _, _) = test_filter.filter_msg(bag_msg)
+    assert (topic == '/renamed')
+
+
+def test_rename_filter_exact_beats_glob():
+    test_filter = RenameFilter()
+
+    parser = argparse.ArgumentParser('rename')
+    test_filter.add_arguments(parser)
+
+    args = parser.parse_args([
+        '-t', '/one/*', '--name', '/globbed',
+        '-t', '/one/two/three', '--name', '/exact',
+    ])
+    test_filter.set_args(None, args)
+
+    tm = _mk_meta('/one/two/three')
+    assert test_filter.filter_topic(tm).name == '/exact'
+
+    (topic, _, _) = test_filter.filter_msg(_mk_bag_msg('/one/two/three'))
+    assert topic == '/exact'
+
+
+def test_rename_filter_more_specific_glob_wins_over_less_specific():
+    test_filter = RenameFilter()
+
+    parser = argparse.ArgumentParser('rename')
+    test_filter.add_arguments(parser)
+
+    args = parser.parse_args([
+        '-t', '/one/*', '--name', '/broad',
+        '-t', '/one/two/*', '--name', '/narrow',
+    ])
+    test_filter.set_args(None, args)
+
+    tm = _mk_meta('/one/two/three')
+    assert test_filter.filter_topic(tm).name == '/narrow'
+
+    (topic, _, _) = test_filter.filter_msg(_mk_bag_msg('/one/two/three'))
+    assert topic == '/narrow'
+
+
+def test_rename_filter_glob_tie_breaker_is_cli_order():
+    test_filter = RenameFilter()
+
+    parser = argparse.ArgumentParser('rename')
+    test_filter.add_arguments(parser)
+
+    args = parser.parse_args([
+        '-t', '/one/*a*', '--name', '/first',
+        '-t', '/one/*b*', '--name', '/second',
+    ])
+    test_filter.set_args(None, args)
+
+    tm = _mk_meta('/one/xxaayybb')
+    assert test_filter.filter_topic(tm).name == '/first'
+
+    (topic, _, _) = test_filter.filter_msg(_mk_bag_msg('/one/xxaayybb'))
+    assert topic == '/first'
+
+
+def test_rename_filter_no_match_no_change():
+    test_filter = RenameFilter()
+
+    parser = argparse.ArgumentParser('rename')
+    test_filter.add_arguments(parser)
+    args = parser.parse_args(['-t', '/one/*', '--name', '/renamed'])
+    test_filter.set_args(None, args)
+
+    tm = _mk_meta('/other/topic')
+    assert test_filter.filter_topic(tm).name == '/other/topic'
+
+    (topic, _, _) = test_filter.filter_msg(_mk_bag_msg('/other/topic'))
+    assert topic == '/other/topic'
+
+
+def test_rename_filter_glob_star_capture_single_group():
+    test_filter = RenameFilter()
+
+    parser = argparse.ArgumentParser('rename')
+    test_filter.add_arguments(parser)
+
+    args = parser.parse_args([
+        '-t', '/one/*', '--name', '/new/one/\\1',
+    ])
+    test_filter.set_args(None, args)
+
+    tm = _mk_meta('/one/two/three')
+    assert test_filter.filter_topic(tm).name == '/new/one/two/three'
+
+    (topic, _, _) = test_filter.filter_msg(_mk_bag_msg('/one/two/three'))
+    assert topic == '/new/one/two/three'
+
+
+def test_rename_filter_glob_star_capture_multiple_groups():
+    test_filter = RenameFilter()
+
+    parser = argparse.ArgumentParser('rename')
+    test_filter.add_arguments(parser)
+
+    args = parser.parse_args([
+        '-t', '/cam*/image/*', '--name', '/camera/\\1/frames/\\2',
+    ])
+    test_filter.set_args(None, args)
+
+    tm = _mk_meta('/cam3/image/raw')
+    assert test_filter.filter_topic(tm).name == '/camera/3/frames/raw'
+
+    (topic, _, _) = test_filter.filter_msg(_mk_bag_msg('/cam3/image/raw'))
+    assert topic == '/camera/3/frames/raw'
 
 
 def test_restamp_filter(tmp_diagnostics_bag: Path):

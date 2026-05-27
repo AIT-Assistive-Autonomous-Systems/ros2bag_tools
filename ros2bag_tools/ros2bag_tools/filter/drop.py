@@ -17,6 +17,8 @@ from typing import Dict, Sequence
 
 from ros2bag_tools.filter import FilterExtension, FilterResult
 
+import fnmatch
+
 
 class DropFilter(FilterExtension):
     """Drop X out every Y message of a topic."""
@@ -88,7 +90,7 @@ class DropFilter(FilterExtension):
         if len(self._topics) == 1 and self._topics[0] == 'all':
             return True
 
-        return topic in self._topics
+        return any(fnmatch.fnmatch(topic, pattern) for pattern in self._topics)
 
     def filter_msg(self, msg):
         (topic, _, _) = msg
