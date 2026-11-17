@@ -215,6 +215,81 @@ def test_cut_filter_transient(tmp_string_transient_bag):
     assert (test_filter.filter_msg(msg) == msg)
 
 
+SNAP_LAST_WINDOW = ['--start', '0.5', '--end', '1.0']
+
+
+def _snap_last_cut_filter(bag_path, cut_args):
+    test_filter = CutFilter()
+    parser = argparse.ArgumentParser('cut')
+    test_filter.add_arguments(parser)
+    args = parser.parse_args(cut_args + ['--transient-local-policy', 'snap_last'])
+    metadata = read_metadata(bag_path)
+    test_filter.set_args([metadata], args)
+    for topic in metadata.topics_with_message_count:
+        test_filter.filter_topic(topic.topic_metadata)
+    return test_filter
+
+
+def test_cut_filter_transient_snap_last(tmp_string_transient_bag):
+    # bag starts at 1000ns, cut window starts 0.5s after bag start
+    test_filter = _snap_last_cut_filter(tmp_string_transient_bag, SNAP_LAST_WINDOW)
+    start_ns = 1000 + 500 * 1000 * 1000
+
+    string_msg = String()
+    for i in range(3):
+        string_msg.data = f'old_{i}'
+        msg = ('/data', serialize_message(string_msg), 1000 + i)
+        assert (test_filter.filter_msg(msg) == FilterResult.DROP_MESSAGE)
+
+    # first message inside the window releases only the last prior message, snapped to start
+    string_msg.data = 'in'
+    in_msg = ('/data', serialize_message(string_msg), start_ns + 10)
+    result = test_filter.filter_msg(in_msg)
+    assert (isinstance(result, list) and len(result) == 2)
+    (topic, data, t) = result[0]
+    assert (topic == '/data')
+    assert (t == start_ns)
+    assert (deserialize_message(data, String).data == 'old_2')
+    assert (result[1] == in_msg)
+
+    # nothing held back any more
+    assert (test_filter.filter_msg(in_msg) == in_msg)
+    assert (test_filter.flush() == [])
+
+
+def test_cut_filter_transient_snap_last_flush(tmp_string_transient_bag):
+    test_filter = _snap_last_cut_filter(tmp_string_transient_bag, SNAP_LAST_WINDOW)
+    start_ns = 1000 + 500 * 1000 * 1000
+
+    string_msg = String()
+    string_msg.data = 'old'
+    assert (test_filter.filter_msg(('/data', serialize_message(string_msg), 1000))
+            == FilterResult.DROP_MESSAGE)
+
+    # input ends before any message inside the window
+    result = test_filter.flush()
+    assert (len(result) == 1)
+    assert (result[0][2] == start_ns)
+    assert (deserialize_message(result[0][1], String).data == 'old')
+
+
+def test_cut_filter_transient_snap_last_after_end(tmp_string_transient_bag):
+    test_filter = _snap_last_cut_filter(tmp_string_transient_bag, SNAP_LAST_WINDOW)
+    start_ns = 1000 + 500 * 1000 * 1000
+    end_ns = start_ns + 1000 * 1000 * 1000  # --end offset is relative to --start
+
+    string_msg = String()
+    string_msg.data = 'old'
+    assert (test_filter.filter_msg(('/data', serialize_message(string_msg), 1000))
+            == FilterResult.DROP_MESSAGE)
+
+    # first message after the window still writes the held-back message, then stops
+    after_msg = ('/data', serialize_message(string_msg), end_ns + 1)
+    result = test_filter.filter_msg(after_msg)
+    assert (len(result) == 1 and result[0][2] == start_ns)
+    assert (test_filter.filter_msg(after_msg) == FilterResult.STOP_CURRENT_BAG)
+
+
 def test_cut_filter_args(tmp_day_time_bag):
     test_filter = CutFilter()
 

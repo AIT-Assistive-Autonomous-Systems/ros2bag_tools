@@ -77,6 +77,8 @@ class CutFilter(FilterExtension):
         self._topic_qos_any_transient_dict = {}
         self._deserializer = TopicDeserializer()
         self._transient_topic_cache_dict = {}
+        # snap_last: latest message before the cut start, per transient_local topic
+        self._pending_transient_msgs = {}
 
     def add_arguments(self, parser):
         self._start_arg = parser.add_argument(
@@ -91,11 +93,13 @@ class CutFilter(FilterExtension):
         self._transient_local_policy_arg = parser.add_argument(
             '--transient-local-policy',
             default='snap',
-            choices=['snap', 'keep', 'drop'],
+            choices=['snap', 'snap_last', 'keep', 'drop'],
             help='Specify how to handle messages with transient_local durability with timestamps '
             'prior to the start cut time, defaults to "snap". '
             '"snap": set timestamp of prior transient_local messages to the start time '
             'of the new bag. '
+            '"snap_last": like "snap", but only keep the last prior message per topic, '
+            'which is what a late-joining transient_local subscriber would receive. '
             '"keep": keep prior transient_local messages with their original timestamp, '
             'might lead to time gaps in the bag. '
             '"drop": drop all prior transient_local messages')
@@ -167,7 +171,7 @@ class CutFilter(FilterExtension):
     def filter_topic(self, topic_metadata):
         if (self._topic_qos_any_transient_dict[topic_metadata.name]
                 == QoSDurabilityPolicy.TRANSIENT_LOCAL
-                and self._transient_local_policy == 'snap'):
+                and self._transient_local_policy in ('snap', 'snap_last')):
             self._deserializer.add_topic(topic_metadata)
         return topic_metadata
 
@@ -183,14 +187,34 @@ class CutFilter(FilterExtension):
                 if self._transient_local_policy == 'drop':
                     return FilterResult.DROP_MESSAGE
                 elif self._transient_local_policy == 'snap':
-                    msg = self._deserializer.deserialize(topic, data)
-                    msg = set_header_stamp(msg, self._start_time.nanoseconds)
-                    t = self._start_time.nanoseconds
-                    data = serialize_message(msg)
+                    (topic, data, t) = self._snap(topic, data)
+                elif self._transient_local_policy == 'snap_last':
+                    # hold back until the first message inside the cut window,
+                    # later messages on the same topic replace earlier ones
+                    self._pending_transient_msgs.pop(topic, None)
+                    self._pending_transient_msgs[topic] = data
+                    return FilterResult.DROP_MESSAGE
                 elif self._transient_local_policy == 'keep':
                     pass
             else:
                 return FilterResult.DROP_MESSAGE
+        pending = self._release_pending_transient_msgs()
         if t > self._end_time.nanoseconds:
-            return FilterResult.STOP_CURRENT_BAG
-        return (topic, data, t)
+            # emit held-back messages first, the next message will stop the bag again
+            return pending if pending else FilterResult.STOP_CURRENT_BAG
+        return pending + [(topic, data, t)] if pending else (topic, data, t)
+
+    def flush(self):
+        return self._release_pending_transient_msgs()
+
+    def _snap(self, topic, data):
+        msg = self._deserializer.deserialize(topic, data)
+        msg = set_header_stamp(msg, self._start_time.nanoseconds)
+        return (topic, serialize_message(msg), self._start_time.nanoseconds)
+
+    def _release_pending_transient_msgs(self):
+        # dict keeps insertion order, i.e. order of the latest message per topic
+        pending = [self._snap(topic, data)
+                   for topic, data in self._pending_transient_msgs.items()]
+        self._pending_transient_msgs = {}
+        return pending
