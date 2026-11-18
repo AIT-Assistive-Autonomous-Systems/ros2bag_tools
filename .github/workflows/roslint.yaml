@@ -36,3 +36,4 @@ jobs:
         with:
           linter: ${{ matrix.linter }}
           package-name: ${{ matrix.package }}
+          arguments: ${{ matrix.linter == 'flake8' && format('--config {0}/.flake8', matrix.package) || '' }}
