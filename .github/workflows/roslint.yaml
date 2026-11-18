@@ -1,14 +1,13 @@
 name: roslint
 on:
   pull_request:
-    paths-ignore: 
+    paths-ignore:
       - '*.md'
       - '*LICENSE'
   push:
     branches: [rolling]
     paths-ignore:
       - '*.md'
-      - '*LICENSE'
   workflow_dispatch:
 jobs:
   lint:
@@ -30,9 +29,10 @@ jobs:
         uses: ros-tooling/setup-ros@v0.7
         with:
           use-ros2-testing: true
-      - 
+      -
         name: Run linter
         uses: ros-tooling/action-ros-lint@master
         with:
           linter: ${{ matrix.linter }}
           package-name: ${{ matrix.package }}
+          arguments: ${{ matrix.linter == 'flake8' && format('--config {0}/.flake8', matrix.package) || '' }}
