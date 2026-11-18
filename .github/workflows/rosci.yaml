@@ -33,3 +33,8 @@ jobs:
         uses: ros-tooling/action-ros-ci@v0.4
         with:
           target-ros2-distro: ${{ matrix.ros-distro }}
+          package-name: ros2bag_tools rosbag2_tools
+          # Remove the source import once Rolling publishes a fixed geodesy binary.
+          vcs-repo-file-url: ${{ matrix.ros-distro == 'rolling' && '.github/rolling.repos' || '' }}
+          # Rolling's setuptools no longer exposes tests_require for Colcon auto-detection.
+          colcon-defaults: ${{ matrix.ros-distro == 'rolling' && '{"test":{"python-testing":"pytest"}}' || '' }}
