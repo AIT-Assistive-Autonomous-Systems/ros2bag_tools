@@ -1,7 +1,7 @@
 name: rosci
 on:
   pull_request:
-    paths-ignore: 
+    paths-ignore:
       - '*.md'
       - '*LICENSE'
   push:
@@ -26,7 +26,9 @@ jobs:
       -
         name: Setup ros
         uses: ros-tooling/setup-ros@v0.7
-      - 
+        with:
+          use-ros2-testing: true
+      -
         name: build and test using rosci
         uses: ros-tooling/action-ros-ci@v0.4
         with:
