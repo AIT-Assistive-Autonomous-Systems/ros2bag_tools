@@ -23,6 +23,7 @@ from .create_test_bags import create_diagnostics_bag
 from .create_test_bags import create_images_bag
 from .create_test_bags import create_string_bag
 from .create_test_bags import create_synced_bag
+from .create_test_bags import create_transient_cut_bag
 
 
 @pytest.fixture
@@ -38,6 +39,13 @@ def tmp_string_transient_bag(tmp_path):
     profile = QoSProfile(depth=1)
     profile.durability = QoSDurabilityPolicy.TRANSIENT_LOCAL
     create_string_bag(str(bag_path), [profile])
+    return str(bag_path)
+
+
+@pytest.fixture
+def tmp_transient_cut_bag(tmp_path):
+    bag_path = tmp_path / 'transient_cut.bag'
+    create_transient_cut_bag(str(bag_path))
     return str(bag_path)
 
 

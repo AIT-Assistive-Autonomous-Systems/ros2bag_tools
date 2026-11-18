@@ -24,6 +24,7 @@ import pytest
 
 from rclpy.serialization import deserialize_message
 from rclpy.serialization import serialize_message
+from rclpy.time import Time
 
 from ros2bag_tools.filter import FilterResult
 from ros2bag_tools.filter.add import AddFilter
@@ -40,6 +41,8 @@ from ros2bag_tools.topics import create_metadata
 from ros2bag_tools.verb.export import ExportVerb
 
 from rosbag2_py import Info
+
+from rosidl_runtime_py.utilities import get_message
 
 from std_msgs.msg import String as RosString
 
@@ -288,6 +291,66 @@ def test_cut_filter_transient_snap_last_after_end(tmp_string_transient_bag):
     result = test_filter.filter_msg(after_msg)
     assert (len(result) == 1 and result[0][2] == start_ns)
     assert (test_filter.filter_msg(after_msg) == FilterResult.STOP_CURRENT_BAG)
+
+
+def _read_cut_bag(bag_path, cut_args):
+    """Run CutFilter over a bag via FilteredReader, return (topic, msg, t) tuples."""
+    test_filter = CutFilter()
+    parser = argparse.ArgumentParser('cut')
+    test_filter.add_arguments(parser)
+    test_filter.set_args([read_metadata(bag_path)], parser.parse_args(cut_args))
+    reader = FilteredReader(bag_paths=[bag_path], extension=test_filter)
+    msg_types = {topic.name: topic.type for topic in reader.get_all_topics_and_types()}
+    return [(topic, deserialize_message(data, get_message(msg_types[topic])), t)
+            for (topic, data, t) in reader]
+
+
+def _cut_bag_ns(seconds):
+    # matches the time offset used in create_transient_cut_bag
+    return 1000 + int(seconds * 1000 * 1000 * 1000)
+
+
+def _summarize_cut_bag(msgs):
+    result = []
+    for (topic, msg, t) in msgs:
+        if topic == '/latched':
+            stamp = Time.from_msg(msg.header.stamp).nanoseconds
+            result.append((topic, msg.status[0].name, t, stamp))
+        else:
+            result.append((topic, msg.data, t))
+    return result
+
+
+def test_cut_bag_transient_snap(tmp_transient_cut_bag):
+    msgs = _read_cut_bag(tmp_transient_cut_bag, ['--start', '0.5'])
+    start = _cut_bag_ns(0.5)
+    assert _summarize_cut_bag(msgs) == [
+        ('/latched', 'latched_0', start, start),
+        ('/latched', 'latched_1', start, start),
+        ('/latched', 'latched_2', start, start),
+        ('/data', 'data_1', _cut_bag_ns(0.6)),
+    ]
+
+
+def test_cut_bag_transient_snap_last(tmp_transient_cut_bag):
+    msgs = _read_cut_bag(
+        tmp_transient_cut_bag, ['--start', '0.5', '--transient-local-policy', 'snap_last'])
+    start = _cut_bag_ns(0.5)
+    # only the latest prior latched message, snapped, written before the in-window message;
+    # the prior volatile message is dropped
+    assert _summarize_cut_bag(msgs) == [
+        ('/latched', 'latched_2', start, start),
+        ('/data', 'data_1', _cut_bag_ns(0.6)),
+    ]
+
+
+def test_cut_bag_transient_snap_last_empty_window(tmp_transient_cut_bag):
+    # window [0.3s, 0.4s] contains no message, the next message (0.6s) is past --end
+    msgs = _read_cut_bag(
+        tmp_transient_cut_bag,
+        ['--start', '0.3', '--end', '0.1', '--transient-local-policy', 'snap_last'])
+    start = _cut_bag_ns(0.3)
+    assert _summarize_cut_bag(msgs) == [('/latched', 'latched_2', start, start)]
 
 
 def test_cut_filter_args(tmp_day_time_bag):
