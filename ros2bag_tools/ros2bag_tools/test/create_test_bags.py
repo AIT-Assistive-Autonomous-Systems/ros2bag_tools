@@ -17,8 +17,10 @@ from typing import Sequence
 from typing import Tuple
 
 from diagnostic_msgs.msg import DiagnosticArray
+from diagnostic_msgs.msg import DiagnosticStatus
 from example_interfaces.msg import String
 
+from rclpy.qos import QoSDurabilityPolicy
 from rclpy.qos import QoSProfile
 from rclpy.serialization import serialize_message
 
@@ -68,6 +70,44 @@ def create_diagnostics_bag(path, qos_profiles: list[QoSProfile] = []):
 
         msg = DiagnosticArray()
         writer.write('/diagnostics', serialize_message(msg), 1000)
+
+
+def create_transient_cut_bag(path):
+    """
+    Create a bag with a transient_local and a volatile topic.
+
+    /latched (transient_local, DiagnosticArray): 'latched_0..2' at 0.0, 0.1, 0.2s
+    /data (volatile, String): 'data_0' at 0.0s, 'data_1' at 0.6s
+    All times are offset by 1000ns, header stamps equal the log times.
+    """
+    with closing(SequentialWriter()) as writer:
+        storage_options, converter_options = default_rosbag_options(path)
+        writer.open(storage_options, converter_options)
+
+        latched_profile = QoSProfile(depth=1)
+        latched_profile.durability = QoSDurabilityPolicy.TRANSIENT_LOCAL
+        writer.create_topic(create_metadata(
+            '/latched', 'diagnostic_msgs/msg/DiagnosticArray', 'cdr',
+            offered_qos_profiles=convert_rclpy_qos_to_rclcpp_qos([latched_profile])))
+        writer.create_topic(create_metadata(
+            '/data', 'example_interfaces/msg/String', 'cdr',
+            offered_qos_profiles=convert_rclpy_qos_to_rclcpp_qos([QoSProfile(depth=1)])))
+
+        def t_ns(seconds):
+            return 1000 + int(seconds * S_TO_NS)
+
+        def write_string(data, seconds):
+            msg = String()
+            msg.data = data
+            writer.write('/data', serialize_message(msg), t_ns(seconds))
+
+        write_string('data_0', 0.0)
+        for i, seconds in enumerate([0.0, 0.1, 0.2]):
+            msg = DiagnosticArray()
+            msg.header.stamp = Time(nanoseconds=t_ns(seconds)).to_msg()
+            msg.status = [DiagnosticStatus(name=f'latched_{i}')]
+            writer.write('/latched', serialize_message(msg), t_ns(seconds))
+        write_string('data_1', 0.6)
 
 
 def create_day_time_bag(path, qos_profiles: list[QoSProfile] = []):
